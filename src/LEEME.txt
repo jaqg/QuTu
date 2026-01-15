@@ -1,0 +1,2 @@
+Aqui, primero convierto xe y Vb a unidades atomicas y llevo a cabo los calculos en u.a.
+Tras completar los calculos, reconvierto los resultados
