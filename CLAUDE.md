@@ -75,3 +75,60 @@ The code works internally in atomic units and converts to/from:
 - Mass: electron mass ↔ amu
 
 Key constants are defined in the main program header (NIST CODATA-2018 values).
+
+## Git Workflow
+
+This project uses a simplified Git Flow workflow:
+
+### Branch Structure
+
+- **main**: Stable, production-ready code. Direct commits discouraged.
+- **develop**: Active development branch. Features are merged here first.
+- **feature/\***: Feature branches created from `develop` (e.g., `feature/new-potential`)
+- **hotfix/\***: Emergency fixes created from `main`
+
+### Workflow Guidelines
+
+```bash
+# Start new feature
+git checkout develop
+git pull origin develop
+git checkout -b feature/your-feature-name
+
+# Work on feature, commit regularly
+git add -A
+git commit -m "Description of changes"
+
+# When feature is complete, merge to develop
+git checkout develop
+git merge --no-ff feature/your-feature-name
+git branch -d feature/your-feature-name
+
+# For releases: merge develop to main
+git checkout main
+git merge --no-ff develop
+git tag -a v1.0.0 -m "Release version 1.0.0"
+```
+
+### Commit Message Convention
+
+Use clear, descriptive messages:
+- `Add`: New feature or file
+- `Update`: Enhancement to existing feature
+- `Fix`: Bug fix
+- `Refactor`: Code restructuring without behavior change
+- `Docs`: Documentation only
+
+### Files Tracked vs Ignored
+
+**Tracked (in git):**
+- All `.f90` source files
+- All `.py` visualization scripts
+- Input data files (`in-*.dat`)
+- Documentation and scripts
+
+**Ignored (not tracked):**
+- Compiled files (`*.o`, `*.mod`, executables)
+- Output data (`out-*.dat`)
+- Generated graphics (`*.pdf`, `*.svg`, `*.mp4`)
+- Backup files (`*.bak`)
