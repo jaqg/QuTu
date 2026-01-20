@@ -11,9 +11,11 @@ module io
     private
 
     ! Public procedures
-    public :: read_system_input
-    public :: read_grid_params
-    public :: read_masses
+    ! NOTE: read_system_input, read_grid_params, and read_masses are deprecated
+    ! Use input_reader module instead for unified INPUT file reading
+    public :: read_system_input  ! DEPRECATED - kept for reference only
+    public :: read_grid_params   ! DEPRECATED - kept for reference only
+    public :: read_masses        ! DEPRECATED - kept for reference only
     public :: write_energies
     public :: write_wavefunction
     public :: write_potential

@@ -1,24 +1,34 @@
 # =============================================================================
-# .gitignore for Quantum Tunnelling Project (Fortran/Python)
+# .gitignore for QuTu - Quantum Tunneling Simulation
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# Fortran compiled files
-# -----------------------------------------------------------------------------
+# Build artifacts
+build/
 *.o
 *.mod
+*.exe
+*.out
 *.a
 *.so
+QuTu
+qutu
+doble_pozo_NH3
 
-# Fortran executable (without extension)
-src/doble_pozo_NH3
+# Data and results (user-generated)
+data/
+results/
+*/data/
+*/results/
+**/data/
+**/results/
 
-# Backup files
-*.bak
+# Visualization output
+*.pdf
+*.png
+*.eps
+*.svg
 
-# -----------------------------------------------------------------------------
-# Python artifacts
-# -----------------------------------------------------------------------------
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -27,50 +37,39 @@ __pycache__/
 *.egg-info/
 .eggs/
 *.egg
-
-# Virtual environments
-venv/
 env/
-.venv/
+venv/
+ENV/
+.venv
 
-# -----------------------------------------------------------------------------
-# Output data files (regenerable from code)
-# -----------------------------------------------------------------------------
-src/data/out-*.dat
-
-# -----------------------------------------------------------------------------
-# Generated graphics (regenerable from scripts)
-# -----------------------------------------------------------------------------
-src/grafica/*.pdf
-src/grafica/*.svg
-
-# Animation outputs
-src/animacion/videos/*.mp4
-src/animacion/videos/*.avi
-src/animacion/graficas/*.png
-
-# -----------------------------------------------------------------------------
-# Editor and IDE files
-# -----------------------------------------------------------------------------
+# Editor files
+*~
 *.swp
 *.swo
-*~
-.idea/
 .vscode/
+.idea/
 *.sublime-*
 
-# -----------------------------------------------------------------------------
-# OS generated files
-# -----------------------------------------------------------------------------
+# OS files
 .DS_Store
 .DS_Store?
 ._*
 Thumbs.db
 ehthumbs.db
 
-# -----------------------------------------------------------------------------
+# LaTeX auxiliary files
+*.aux
+*.log
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
 # Temporary files
-# -----------------------------------------------------------------------------
+*.orig
+*.rej
+*.bak
 *.tmp
 *.temp
-*.log

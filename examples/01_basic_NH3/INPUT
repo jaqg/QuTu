@@ -1,0 +1,78 @@
+# =============================================================================
+# INPUT file for NH3 Double-Well Quantum Tunneling Simulation
+# Example 01: Basic NH3 Umbrella Inversion
+# =============================================================================
+#
+# This file contains all input parameters for the NH3 inversion simulation.
+# Format: key = value
+# Comments start with '#' and are ignored.
+# Blank lines are ignored.
+#
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Basis Set Parameters
+# -----------------------------------------------------------------------------
+
+# N_max: Maximum number of harmonic oscillator basis functions
+# This determines the accuracy of the variational calculation.
+# Typical values: 50-200 (higher = more accurate but slower)
+# Default: 200
+N_max = 200
+
+# -----------------------------------------------------------------------------
+# Double-Well Potential Parameters
+# -----------------------------------------------------------------------------
+
+# xe: Equilibrium position of the potential well (in Angstroms)
+# For NH3: distance of nitrogen from the plane of hydrogens
+# NIST value: 0.3816 Angstroms
+# Units: Angstroms
+xe = 0.3816
+
+# Vb: Barrier height of the double-well potential (in cm^-1)
+# This is the inversion barrier energy for NH3
+# NIST value: 2028.6 cm^-1
+# Units: cm^-1
+Vb = 2028.6
+
+# -----------------------------------------------------------------------------
+# Atomic Masses
+# -----------------------------------------------------------------------------
+
+# mass_H: Atomic mass of hydrogen (in atomic mass units)
+# NIST 2018 value: 1.00782503207 u
+# Units: amu (atomic mass units)
+mass_H = 1.00782503207
+
+# mass_N: Atomic mass of nitrogen (in atomic mass units)
+# NIST 2018 value: 14.0030740048 u
+# Units: amu (atomic mass units)
+mass_N = 14.0030740048
+
+# -----------------------------------------------------------------------------
+# Spatial Grid Parameters
+# -----------------------------------------------------------------------------
+
+# xmin: Minimum value of x coordinate for grid (in atomic units)
+# This should be negative and large enough to capture the wavefunction tails
+# Units: a0 (Bohr radii)
+xmin = -5.0
+
+# xmax: Maximum value of x coordinate for grid (in atomic units)
+# This should be positive and large enough to capture the wavefunction tails
+# Units: a0 (Bohr radii)
+xmax = 5.0
+
+# dx: Grid spacing (in atomic units)
+# Smaller values give more accurate wavefunction representation
+# Typical values: 0.01-0.05
+# Units: a0 (Bohr radii)
+dx = 0.02
+
+# =============================================================================
+# Notes:
+# - All calculations are performed in atomic units internally
+# - Results are converted to Angstroms and cm^-1 for output
+# - Output files are written to the 'data/' directory
+# =============================================================================

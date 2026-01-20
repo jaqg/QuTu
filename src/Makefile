@@ -24,7 +24,8 @@ MOD_SRCS = $(MOD_DIR)/constants.f90 \
            $(MOD_DIR)/harmonic_oscillator.f90 \
            $(MOD_DIR)/hamiltonian.f90 \
            $(MOD_DIR)/wavepacket.f90 \
-           $(MOD_DIR)/io.f90
+           $(MOD_DIR)/io.f90 \
+           $(MOD_DIR)/input_reader.f90
 
 # Main program
 MAIN_SRC = doble_pozo_NH3.f90
@@ -35,7 +36,8 @@ MOD_OBJS = $(BUILD_DIR)/constants.o \
            $(BUILD_DIR)/harmonic_oscillator.o \
            $(BUILD_DIR)/hamiltonian.o \
            $(BUILD_DIR)/wavepacket.o \
-           $(BUILD_DIR)/io.o
+           $(BUILD_DIR)/io.o \
+           $(BUILD_DIR)/input_reader.o
 
 MAIN_OBJ = $(BUILD_DIR)/doble_pozo_NH3.o
 
@@ -76,6 +78,9 @@ $(BUILD_DIR)/wavepacket.o: $(MOD_DIR)/wavepacket.f90 $(BUILD_DIR)/constants.o $(
 	$(FC) $(FFLAGS) -I$(BUILD_DIR) -J$(BUILD_DIR) -c -o $@ $<
 
 $(BUILD_DIR)/io.o: $(MOD_DIR)/io.f90 $(BUILD_DIR)/constants.o $(BUILD_DIR)/types.o | $(BUILD_DIR)
+	$(FC) $(FFLAGS) -I$(BUILD_DIR) -J$(BUILD_DIR) -c -o $@ $<
+
+$(BUILD_DIR)/input_reader.o: $(MOD_DIR)/input_reader.f90 $(BUILD_DIR)/constants.o | $(BUILD_DIR)
 	$(FC) $(FFLAGS) -I$(BUILD_DIR) -J$(BUILD_DIR) -c -o $@ $<
 
 # Compile main program
