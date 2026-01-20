@@ -1,1033 +1,876 @@
-! _____________________________________________________________________________
-! *****************************************************************************
-! Autor: Jose Antonio Quinonero Gris
-! Fecha de creacion: 28 de mayo de 2022
-! *****************************************************************************
-! -----------------------------------------------------------------------------
-
-! -----------------------------------------------------------------------------
-! PROGRAMA PRINCIPAL
-! -----------------------------------------------------------------------------
+! =============================================================================
+! Program: doble_pozo_NH3
+! Description: Quantum tunneling in double-well potential for NH3 umbrella mode
+!              Solves the Schrodinger equation using variational method
+!              with harmonic oscillator basis functions.
+!              Calculations are performed in atomic units and later converted
+!
+! Author: Jose Antonio Quinonero Gris
+! 
+! Creation date: 28/05/2022
+! + Update 20/01/2026: 
+!     - Refactored code (modules, types) and added comments
+! =============================================================================
 program doble_pozo_NH3
-
-    ! Problema del doble pozo para la molecula de NH3:
-    ! H = -hbar**2/(2*mu) <v|d2/dx2|v> + a <v|x4|v> - b <v|x2|v> + Vb
-    ! donde a,b > 0
-    ! Podemos escribir el potencial en funcion de las posiciones de los
-    ! pozos (xe) y la altura de la barrera (Vb) segun
-    ! V = (Vb/xe^4) <v|x4|v> - (2Vb/xe^2) <v|x2|v> + Vb
-    !   = Vb/xe^4 (x^2 - xe^2)^2
-    ! de manera que escribimos el hamiltoniano como
-    ! H = -(hbar**2/(2*mu))<v|d2/dx2|v>+(Vb/xe^4)<v|x4|v>-(2Vb/xe^2)<v|x2|v>+Vb
-
-    ! Programa para calcular las energias y parametros variacionales
-    ! diagonalizando la matriz del hamiltoniano, de manera que
-    ! Hc = Ec
-    ! donde H es una matriz real simetrica de elementos Hij=<i|H|j>
-    ! Obtendremos como autovalores las energias variacionales, E
-    ! y como autovectores los coeficientes variacionales c
-
-    ! IMPLICIT REAL*8(A-H,O-Z)
-    ! IMPLICIT INTEGER(I-N)
-
-    use caracterizacion_sistema
-    use modulo_OA1D
-    use integrales_Hamiltoniano
-    use probabilidad_supervivencia_general
-    use valores_esperados
-
+    use constants
+    use types
+    use harmonic_oscillator
+    use hamiltonian
+    use wavepacket
+    use io
     implicit none
 
-    ! =======================
-    ! Definicion de variables
-    ! =======================
+    ! System parameters
+    type(system_params_t) :: params
+    type(grid_params_t) :: grid
 
-    integer :: i,j,l,jj, j_arr, fu
-    logical :: True, False
+    ! Input parameters
+    integer :: N_max
+    real(dp) :: xe_A, Vb_cm, xmin, xmax, dx, mH_uma, mN_uma
 
-    COMMON hbar,m
-    ! Constantes fisicas (CGS) y factores de conversion tomadas del
-    ! NIST (CODATA-2018)
-    real*8, parameter :: RBOHR=0.529177210903D0    ! Radio de Bohr en angstrom
-    real*8, parameter :: EUACM=2.1947463136320D5   ! Conversion hartrees -> cm-1
-    real*8, parameter :: UMA=1.66053906660D-24     ! Unidad de masa atomica en gramos
-    real*8, parameter :: PELEC=9.1093837015D-28    ! Masa del electron en gramos
-    real*8, parameter :: EHAJ=4.3597447222071D-18  ! Conversion hartrees -> J
-    real*8            :: PUAUMA                    ! Conversion masa ua -> uma, PUAUMA=UMA/PELEC
-    real*8, parameter :: HP=6.62607015D-34         ! Constante de Planck en J s
-    real*8            :: hbar=1.0D0                !
-    real*8 :: pi
-    ! Masa reducida (m), del H y del N
-    real*8 :: m, mH, mN
-    ! Numero de funciones base
-    integer :: N, Nmax, Npar, Nimpar, N_conver
-    ! Resultado de la funcion para el parametro alpha
-    real*8 :: alpha
-    ! Resultado de la funcion para la integral sobre d2/dx2
-    real*8 :: derivada
-    ! Resultado de la funcion para la integral sobre x2
-    real*8 :: cuadratica
-    ! Resultado de la funcion para la integral sobre x4
-    real*8 :: cuartica
-    ! Matriz del hamiltoniano
-    real*8, dimension(:,:), allocatable :: H_par, H_impar, c_k
-    real*8, dimension(:), allocatable :: min_coef, max_coef
-    ! Array para los valores propios de la energia
-    real*8, dimension(:), allocatable :: E, E_par, E_impar, E_Nmax, E_Nmax_cm
-    ! Array de energias para cada N
-    real*8, dimension(:,:), allocatable :: E_arr
-    ! Variables para los valores de energia del bucle para hallar N_conver
-    real*8 :: E_sup, E_inf, Delta_E, E_conver, E_conver_cm
-    ! Array necesaria para la subrutina de diagonalizacion
-    real*8, dimension(:), allocatable :: work
-    ! Declaracion de parametros necesarios para la subrutina que calcula los
-    ! eigenvalues
-    integer :: nr, lwork, info
-    ! Array auxiliar para tabla de energias
-    real*8, dimension(21,4) :: E_tabla
-    ! Posicion de los minimos y altura de la barrera de potencial
-    real*8 :: xe, Vb, xe_A, Vb_cm
-    ! Variables para la posicion, x
-    real*8 :: x, xmin, xmax, dx, x_angstrom
-    ! Matriz de la posicion en la base armonica
-    real*8, dimension(:,:), allocatable :: mat_x_arm
-    ! Array posicion
-    real*8, dimension(:), allocatable :: x_vec, x_vec_angstrom
-    ! Array potencial
-    real*8, dimension(:), allocatable :: V_vec
-    ! Numero de valores de x
-    integer :: steps_x
-    ! Vector funcion de prueba y densidad de probabilidad
-    real*8 :: Phi0, Phi1, Phi2, Phi3, Phi4, Phi5
-    real*8 :: Phi0_A, Phi1_A, Phi2_A, Phi3_A, Phi4_A, Phi5_A
-    real*8, dimension(:), allocatable :: Phi0_vec, Phi1_vec, Phi2_vec, &
-                                         Phi3_vec, Phi4_vec, Phi5_vec
-    real*8, dimension(:), allocatable :: Phi0_vec_A, Phi1_vec_A, Phi2_vec_A,&
-                                         Phi3_vec_A, Phi4_vec_A, Phi5_vec_A
-    real*8 :: dPhi0, dPhi1, dPhi2, dPhi3, dPhi4, dPhi5
-    real*8 :: dPhi0_A, dPhi1_A, dPhi2_A, dPhi3_A, dPhi4_A, dPhi5_A
-    real*8, dimension(:), allocatable :: dPhi0_vec, dPhi1_vec, dPhi2_vec, &
-                                         dPhi3_vec, dPhi4_vec, dPhi5_vec
-    real*8, dimension(:), allocatable :: dPhi0_vec_A,dPhi1_vec_A,dPhi2_vec_A, &
-                                         dPhi3_vec_A,dPhi4_vec_A,dPhi5_vec_A
-    ! Puntos de corte de las energias con la curva de potencial
-    real*8 :: x1, x2, x3, x4
-    ! Funcion de onda
-    ! Array con los coeficientes de las combinaciones de los paquetes
-    real*8, dimension(:), allocatable :: c_psi1, c_psi2
-    ! Numero de funciones que conforman el paquete
-    integer :: n_func_comb
-    ! Energias de los paquetes
-    real*8 :: E_psi1, E_psi3, E_psi1_cm, E_psi3_cm
-    real*8, dimension(:), allocatable :: E_wp
-    ! Paquetes de onda
-    real*8, dimension(:), allocatable :: psi1_vec,psi2_vec,psi3_vec,psi4_vec
-    real*8, dimension(:), allocatable :: dpsi1_vec,dpsi2_vec,dpsi3_vec,&
-                                         dpsi4_vec
-    real*8, dimension(:), allocatable :: psi1_vec_A,psi2_vec_A,psi3_vec_A,&
-                                         psi4_vec_A
-    real*8, dimension(:), allocatable :: dpsi1_vec_A,dpsi2_vec_A,dpsi3_vec_A,&
-                                         dpsi4_vec_A
-    ! Subrutina para el calculo del tiempo de recurrencia
-    real*8 :: E0, E1, tr
-    ! Subrutina para el calculo la probabilidad de supervivencia
-    real*8, dimension(:), allocatable :: t_vec
-    real*8 :: t, t0, tf, dt, Ps
-    integer :: steps_t
-    ! Paquete de cuatro estados estacionarios
-    real*8, dimension(4) :: c_psi_4EE
-    real*8, dimension(:), allocatable :: psi_4EE_vec_A, dpsi_4EE_vec_A
-    real*8 :: psi_4EE, dpsi_4EE, E_4EE, E_4EE_cm, alfa_4EE
-    real*8, dimension(:), allocatable :: array_alfa_4EE
-    ! Funcion para la integral sobre x
-    real*8 :: val_esp_x
+    ! Hamiltonian matrices and eigenvalues
+    real(dp), allocatable :: H_even(:,:), H_odd(:,:)
+    real(dp), allocatable :: E_even(:), E_odd(:), E_all(:), E_all_cm(:)
+    real(dp), allocatable :: work(:)
+    integer :: lwork, info
 
-    ! ===================
-    ! INICIO DEL PROGRAMA
-    ! ===================
+    ! Coefficient matrices (eigenvectors from diagonalization)
+    real(dp), allocatable :: c_full(:,:)
 
-    ! Valor de pi
-    PI=4.D0*DATAN(1.D0)
+    ! Grid arrays
+    real(dp), allocatable :: x_grid(:), x_grid_A(:), V_grid(:), V_grid_cm(:)
 
-    ! Apertura y lectura del fichero con los datos iniciales
-    open(unit=1, file="data/in-doble_pozo_NH3.dat")
-    open(unit=2, file="data/in-potencial.dat")
-    open(unit=3, file="data/in-masas_atomicas.dat")
-    ! Omite la primera linea del archivo de datos de entrada
-    read(1,*)
-    read(2,*)
-    read(3,*)
-    ! Lee los datos de entrada
-    read(1,*) Nmax, xe_A, Vb_cm
-    ! Convierto xe y Vb a unidades atomicas
-    xe = xe_A/RBOHR
-    Vb = Vb_cm/EUACM
-    write(*,*) 'xe =', xe, 'Vb =', Vb
-    write(*,*) 'a =', Vb/xe**4, 'b=', 2.d0*Vb/xe**2
-    write(*,*) 'b/a =', (2.d0*Vb/xe**2)/(Vb/xe**4)
-    read(2,*) xmin, xmax, dx
-    read(3,*) mH, mN
-    ! Convierto mH y mN a unidades de masa ua
-    PUAUMA=UMA/PELEC ! Factor de conversion uma -> ua
-    mH = mH*PUAUMA
-    mN = mN*PUAUMA
-    ! Cierra los ficheros de entrada
-    close(1)
-    close(2)
-    close(3)
+    ! Wavefunction arrays
+    real(dp), allocatable :: psi_even(:,:), psi_odd(:,:)
+    real(dp), allocatable :: psi_even_A(:,:), psi_odd_A(:,:)
 
-    ! Apertura del fichero de resultados
-    ! open(unit=2,   file="data/out-energias_variacionales.dat")
-    ! open(unit=3,   file="data/out-Econver_n=0,5,10,15.dat")
-    ! open(unit=4,   file="data/out-E_arr.dat")
-    open(unit=7,   file="data/out-N_vs_W0.dat")
-    open(unit=8,   file="data/out-N_vs_W1.dat")
-    open(unit=9,   file="data/out-N_vs_W2.dat")
-    open(unit=10,  file="data/out-N_vs_W3.dat")
-    ! open(unit=11,  file="data/out-energias.dat")
-    open(unit=12,  file="data/out-conver_energias_hartrees.dat")
-    open(unit=13,  file="data/out-conver_energias_cm-1.dat")
-    open(unit=14,  file="data/out-masa_red_alfa.dat")
-    open(unit=20,  file="data/out-coeficientes_par.dat")
-    open(unit=21,  file="data/out-coeficientes_impar.dat")
-    open(unit=30,  file="data/out-potencial_hartrees.dat")
-    open(unit=31,  file="data/out-potencial_cm-1.dat")
-    open(unit=40,  file="data/out-funciones_pares_hartrees.dat")
-    open(unit=41,  file="data/out-densidad_prob_pares_hartrees.dat")
-    open(unit=42,  file="data/out-funciones_impares_hartrees.dat")
-    open(unit=43,  file="data/out-densidad_prob_impares_hartrees.dat")
-    open(unit=44,  file="data/out-funciones_pares_A.dat")
-    open(unit=45,  file="data/out-densidad_prob_pares_A.dat")
-    open(unit=46,  file="data/out-funciones_impares_A.dat")
-    open(unit=47,  file="data/out-densidad_prob_impares_A.dat")
-    open(unit=50,  file="data/out-psi1.dat")
-    open(unit=51,  file="data/out-psi2.dat")
-    open(unit=52,  file="data/out-psi3.dat")
-    open(unit=53,  file="data/out-psi4.dat")
-    open(unit=54,  file="data/out-psi1_A.dat")
-    open(unit=55,  file="data/out-psi2_A.dat")
-    open(unit=56,  file="data/out-psi3_A.dat")
-    open(unit=57,  file="data/out-psi4_A.dat")
-    open(unit=70,  file="data/out-tiempo_recurrencia.dat")
-    open(unit=80,  file="data/out-probabilidad_supervivencia_Psi0.dat")
-    open(unit=81,  file="data/out-probabilidad_supervivencia_Psi1.dat")
-    open(unit=82,  file="data/out-puntos_corte.dat")
-    open(unit=90,  file="data/out-psi_4EE_alfa=0.dat")
-    open(unit=91,  file="data/out-psi_4EE_alfa=10.dat")
-    open(unit=92,  file="data/out-psi_4EE_alfa=15.dat")
-    open(unit=93,  file="data/out-psi_4EE_alfa=20.dat")
-    open(unit=94,  file="data/out-psi_4EE_alfa=30.dat")
-    open(unit=95,  file="data/out-psi_4EE_alfa=40.dat")
-    open(unit=96,  file="data/out-psi_4EE_alfa=45.dat")
-    open(unit=97,  file="data/out-psi_4EE_alfa=50.dat")
-    open(unit=98,  file="data/out-psi_4EE_alfa=60.dat")
-    open(unit=99,  file="data/out-psi_4EE_alfa=70.dat")
-    open(unit=100, file="data/out-psi_4EE_alfa=75.dat")
-    open(unit=101, file="data/out-psi_4EE_alfa=80.dat")
-    open(unit=102, file="data/out-psi_4EE_alfa=90.dat")
-    open(unit=110, file="data/out-prob_sup_alfa=0.dat")
-    open(unit=111, file="data/out-prob_sup_alfa=10.dat")
-    open(unit=112, file="data/out-prob_sup_alfa=15.dat")
-    open(unit=113, file="data/out-prob_sup_alfa=20.dat")
-    open(unit=114, file="data/out-prob_sup_alfa=30.dat")
-    open(unit=115, file="data/out-prob_sup_alfa=40.dat")
-    open(unit=116, file="data/out-prob_sup_alfa=45.dat")
-    open(unit=117, file="data/out-prob_sup_alfa=50.dat")
-    open(unit=118, file="data/out-prob_sup_alfa=60.dat")
-    open(unit=119, file="data/out-prob_sup_alfa=70.dat")
-    open(unit=120, file="data/out-prob_sup_alfa=75.dat")
-    open(unit=121, file="data/out-prob_sup_alfa=80.dat")
-    open(unit=122, file="data/out-prob_sup_alfa=90.dat")
-    open(unit=130, file="data/out-val_esp_x_alfa=0.dat")
-    open(unit=131, file="data/out-val_esp_x_alfa=10.dat")
-    open(unit=132, file="data/out-val_esp_x_alfa=15.dat")
-    open(unit=133, file="data/out-val_esp_x_alfa=20.dat")
-    open(unit=134, file="data/out-val_esp_x_alfa=30.dat")
-    open(unit=135, file="data/out-val_esp_x_alfa=40.dat")
-    open(unit=136, file="data/out-val_esp_x_alfa=45.dat")
-    open(unit=137, file="data/out-val_esp_x_alfa=50.dat")
-    open(unit=138, file="data/out-val_esp_x_alfa=60.dat")
-    open(unit=139, file="data/out-val_esp_x_alfa=70.dat")
-    open(unit=140, file="data/out-val_esp_x_alfa=75.dat")
-    open(unit=141, file="data/out-val_esp_x_alfa=80.dat")
-    open(unit=142, file="data/out-val_esp_x_alfa=90.dat")
+    ! Position matrix for expectation values
+    real(dp), allocatable :: x_matrix(:,:)
 
-    ! Formatos
-    9999 format('====================================================&
-                    =============================')
-    9998 format('----------------------------------------------------&
-                    -----------------------------')
-    9997 format(2x, "N", 8x, "W0",  13x, "W1",  13x, "W2",  13x, "W3",  13x,&
-                             "W4",  13x, "W5",  13x, "W6",  13x, "W7",  13x,&
-                             "W8",  13x, "W9",  13x, "W10", 13x, "W11", 13x,&
-                             "W12", 13x, "W13", 13x, "W14", 13x, "W15", 13x,&
-                             "W16", 13x, "W17", 13x, "W18", 13x, "W19", 13x,&
-                             "W20")
-    9996 format(2x, "i", 6x,"c_i(Phi_0)", 5x,"c_i(Phi_2)", 5x,"c_i(Phi_4)",&
-                         5x,"c_i(Phi_6)", 5x,"c_i(Phi_8)", 5x,"c_i(Phi_10)")
-    9995 format(2x, "i", 6x,"c_i(Phi_1)", 5x,"c_i(Phi_3)", 5x,"c_i(Phi_5)",&
-                         5x,"c_i(Phi_7)", 5x,"c_i(Phi_9)")
-    9994 format(2x, "n", 3x, "N_conv", 2x, "W_n(conv.)", 5x, "W_n(max.)")
+    ! Turning points
+    real(dp), allocatable :: alpha_4EE(:)
+    real(dp), allocatable :: tp_x1(:), tp_x2(:), tp_x3(:), tp_x4(:), tp_E(:)
 
-    ! Bucle principal:
-    ! Para cada valor de d
-    !   Para N funciones base
-    !       Crea y escribe la matriz H
-    !       Halla los valores y vectores propios
-    !       Escribe los resultados
-    allocate(E_arr(Nmax,Nmax))
+    ! Loop variables and indices
+    integer :: i, j, ierr, N_loop
+    integer :: n_steps_x, n_alpha
+    real(dp) :: x_val
 
-    ! Calculo de la masa reducida
-    call masa_reducida(mH, mN, m)
-    ! write(*,*) 'mu =', m
+    ! Convergence analysis
+    real(dp), allocatable :: E_arr(:,:)
+    integer, allocatable :: N_conv(:)
+    real(dp), allocatable :: E_conv(:), E_max(:)
+    real(dp) :: E_sup, E_inf, delta_E
 
-    ! Calcula el valor de alpha optimizado para la perturbacion d
-    call alpha_opt(xe, Vb, alpha)
-    ! write(*,*) 'alfa =', alpha
-    write(14,'(3x, "mu (a.m.)", 17x, "alpha (a0^{-2})", 11x, "alpha (A^{-2})")')
-    write(14,*) m, alpha, alpha/RBOHR**2
+    character(len=256) :: data_dir
 
-    ! Escribe la primera fila de las tablas
-    ! - Fichero 2 -
-    write(2,9999)
-    write(2,9998)
-    write(2,'(2x, "N", 8x, "W0", 13x, "W1", 13x, "W2", 13x, "W3", 13x,&
-                "W4", 13x, "W5", 13x, "W6", 13x, "W7")')
-    ! - Fichero 3 -
-    write(3,9999)
-    write(3,9998)
-    write(3,9994)
-    write(3,9998)
-    ! - Fichero 4 -
-    write(4,9999)
-    write(4,9998)
-    ! - Ficheros 12 y 13 -
-    write(12,9994)
-    write(13,9994)
-    ! - Fichero 30 -
-    write(30,9998)
-    write(30,'(6x, "x (a0)", 12x, "V(x) (Ha)")')
-    write(31,9998)
-    write(31,'(6x, "x (A)", 12x, "V(x) (cm-1)")')
-    ! - Fichero 40 -
-    write(40,9998)
-    write(40,'(6x, "x (a0)", 11x, "Phi0(x)", 8x, "Phi2(x)", 8x, "Phi4(x)")')
-    write(44,9998)
-    write(44,'(6x, "x (A)", 11x, "Phi0(x)", 8x, "Phi2(x)", 8x, "Phi4(x)")')
-    ! - Fichero 41 -
-    write(41,9998)
-    write(41,'(6x, "x (a0)", 11x, "|Phi0|^2", 7x, "|Phi2|^2", 7x, "|Phi4|^2")')
-    write(45,9998)
-    write(45,'(6x, "x (A)", 11x, "|Phi0|^2", 7x, "|Phi2|^2", 7x, "|Phi4|^2")')
-    ! - Fichero 42 -
-    write(42,9998)
-    write(42,'(6x, "x (a0)", 11x, "Phi1(x)", 8x, "Phi3(x)", 8x, "Phi5(x)")')
-    write(46,9998)
-    write(46,'(6x, "x (A)", 11x, "Phi1(x)", 8x, "Phi3(x)", 8x, "Phi5(x)")')
-    ! - Fichero 43 -
-    write(43,9998)
-    write(43,'(6x, "x (a0)", 11x, "|Phi1|^2", 7x, "|Phi3|^2", 7x, "|Phi5|^2")')
-    write(47,9998)
-    write(47,'(6x, "x (A)", 11x, "|Phi1|^2", 7x, "|Phi3|^2", 7x, "|Phi5|^2")')
-    ! - Fichero 50, 51, 52, 53 -
-    do i=50, 53, 1
-        write(i,9999)
-    end do
-    write(50,'(5x, "psi = 1/dsqrt(2) Phi_0 + 1/dsqrt(2) Phi_1")')
-    write(51,'(5x, "psi = 1/dsqrt(2) Phi_0 - 1/dsqrt(2) Phi_1")')
-    write(52,'(5x, "psi = 1/dsqrt(2) Phi_2 + 1/dsqrt(2) Phi_3")')
-    write(53,'(5x, "psi = 1/dsqrt(2) Phi_2 - 1/dsqrt(2) Phi_3")')
-    write(54,'(5x, "psi = 1/dsqrt(2) Phi_0 + 1/dsqrt(2) Phi_1")')
-    write(55,'(5x, "psi = 1/dsqrt(2) Phi_0 - 1/dsqrt(2) Phi_1")')
-    write(56,'(5x, "psi = 1/dsqrt(2) Phi_2 + 1/dsqrt(2) Phi_3")')
-    write(57,'(5x, "psi = 1/dsqrt(2) Phi_2 - 1/dsqrt(2) Phi_3")')
-    !
-    do i=50, 53, 1
-        write(i,9998)
-        write(i,'(8x,"E (Ha)",8x,"x (a0)",11x,"psi(x)",8x,"|psi(x)|^2")')
-    end do
-    do i=54, 57, 1
-        write(i,9998)
-        write(i,'(5x, "E (cm-1)",6x,"x (A)",9x,"psi(x)",8x,"|psi(x)|^2")')
+    ! =========================================================================
+    ! INITIALIZATION
+    ! =========================================================================
+    data_dir = "data/"
+
+    ! Read input parameters
+    call read_system_input(trim(data_dir)//"in-doble_pozo_NH3.dat", N_max, xe_A, Vb_cm, ierr)
+    if (ierr /= 0) stop "Error reading system input"
+
+    call read_grid_params(trim(data_dir)//"in-potencial.dat", xmin, xmax, dx, ierr)
+    if (ierr /= 0) stop "Error reading grid parameters"
+
+    call read_masses(trim(data_dir)//"in-masas_atomicas.dat", mH_uma, mN_uma, ierr)
+    if (ierr /= 0) stop "Error reading atomic masses"
+
+    ! Initialize system parameters
+    call init_system_params(params, N_max, xe_A, Vb_cm, mH_uma, mN_uma)
+
+    ! Compute optimal alpha
+    params%alpha = compute_optimal_alpha(params%mass, params%xe, params%Vb)
+    params%alpha_angstrom = params%alpha / RBOHR**2
+
+    ! Initialize grid
+    call init_grid_params(grid, xmin, xmax, dx)
+    n_steps_x = grid%n_points
+
+    ! Print system information
+    write(*,'(A)') '=================================================='
+    write(*,'(A)') ' NH3 Double-Well Quantum Tunneling Simulation'
+    write(*,'(A)') '=================================================='
+    write(*,'(A,F10.5,A)') ' xe = ', params%xe, ' a0'
+    write(*,'(A,F10.5,A)') ' Vb = ', params%Vb, ' Ha'
+    write(*,'(A,F12.5,A)') ' a  = ', params%Vb/params%xe**4, ' Ha/a0^4'
+    write(*,'(A,F12.5,A)') ' b  = ', 2.0_dp*params%Vb/params%xe**2, ' Ha/a0^2'
+    write(*,'(A,F12.5)')   ' Reduced mass = ', params%mass
+    write(*,'(A,F12.5,A)') ' Alpha = ', params%alpha, ' a0^-2'
+    write(*,'(A,I6)')      ' N_max = ', N_max
+    write(*,'(A)') '=================================================='
+
+    ! Write mass and alpha parameters
+    call write_mass_alpha(params, data_dir, ierr)
+
+    ! =========================================================================
+    ! GRID AND POTENTIAL SETUP
+    ! =========================================================================
+    allocate(x_grid(n_steps_x), x_grid_A(n_steps_x))
+    allocate(V_grid(n_steps_x), V_grid_cm(n_steps_x))
+
+    ! create a grid over the 'x' dimension
+    do i = 1, n_steps_x
+        x_val = xmin + dx * real(i - 1, dp)  ! value of 'x' at grid point
+        x_grid(i) = x_val  ! store in an array
+        x_grid_A(i) = x_val * RBOHR  ! value of 'x' in Angstrom
+        V_grid(i) = potential(x_val, params%xe, params%Vb) ! value of the potential
+        V_grid_cm(i) = V_grid(i) * EUACM  ! value of the potential in cm-1
     end do
 
-    do i=90, 102, 1
-        write(i,9999)
-        write(i,'("Psi = cos(alfa)/dsqrt(2)*(Phi0 + Phi1) + &
-                  sen(alfa)/dsqrt(2)*(Phi2 + Phi3)")')
-        write(i,9998)
-        write(i,'("alfa",6x,"E (cm-1)",6x,"x (A)",9x,"psi(x)",&
-                  8x,"|psi(x)|^2")')
-    end do
+    ! Write potential to output files
+    call write_potential(trim(data_dir)//"out-potencial_hartrees.dat", &
+                         x_grid, V_grid, "a0", "Ha", ierr)
+    call write_potential(trim(data_dir)//"out-potencial_cm-1.dat", &
+                         x_grid_A, V_grid_cm, "A", "cm-1", ierr)
 
-    ! Bucle para crear array x y potencial
-    steps_x = int((xmax - xmin)/dx)
+    ! =========================================================================
+    ! VARIATIONAL METHOD - Loop over basis sizes
+    ! =========================================================================
+    allocate(E_arr(N_max - 1, N_max))
+    E_arr = 0.0_dp
 
-    allocate(x_vec(steps_x), x_vec_angstrom(steps_x), V_vec(steps_x))
-    allocate(Phi0_vec(steps_x), Phi1_vec(steps_x), Phi2_vec(steps_x), &
-             Phi3_vec(steps_x), Phi4_vec(steps_x), Phi5_vec(steps_x))
-    allocate(dPhi0_vec(steps_x), dPhi1_vec(steps_x), dPhi2_vec(steps_x), &
-             dPhi3_vec(steps_x), dPhi4_vec(steps_x), dPhi5_vec(steps_x))
-    allocate(Phi0_vec_A(steps_x), Phi1_vec_A(steps_x), Phi2_vec_A(steps_x), &
-             Phi3_vec_A(steps_x), Phi4_vec_A(steps_x), Phi5_vec_A(steps_x))
-    allocate(dPhi0_vec_A(steps_x), dPhi1_vec_A(steps_x), dPhi2_vec_A(steps_x),&
-             dPhi3_vec_A(steps_x), dPhi4_vec_A(steps_x), dPhi5_vec_A(steps_x))
-    allocate(psi1_vec(steps_x), psi2_vec(steps_x), psi3_vec(steps_x), &
-             psi4_vec(steps_x))
-    allocate(dpsi1_vec(steps_x), dpsi2_vec(steps_x), dpsi3_vec(steps_x), &
-             dpsi4_vec(steps_x))
-    allocate(psi1_vec_A(steps_x), psi2_vec_A(steps_x), psi3_vec_A(steps_x), &
-             psi4_vec_A(steps_x))
-    allocate(dpsi1_vec_A(steps_x), dpsi2_vec_A(steps_x), dpsi3_vec_A(steps_x),&
-             dpsi4_vec_A(steps_x))
-    allocate(psi_4EE_vec_A(steps_x), dpsi_4EE_vec_A(steps_x))
+    ! Split the loop by symmetry of the bais functions
+    do N_loop = 2, N_max
+        params%N = N_loop
+        params%N_odd = params%N / 2
+        params%N_even = params%N - params%N_odd
 
-    do i=1, steps_x+1, 1
-        x = xmin + (dx * float(i-1))
-        x_vec(i) = x
-        x_vec_angstrom(i) = x*RBOHR
-        V_vec(i) = V(xe,Vb,x)
-        ! Escribe los resultados en angstrom y cm-1
-        write(30,'(f10.3, 10000f15.5)') x_vec(i), V_vec(i)
-        write(31,'(f10.3, 10000f15.5)') x_vec_angstrom(i), V_vec(i)*EUACM
-    end do
+        ! ---------------------------------------------------------------------
+        ! Hamiltonian
+        ! ---------------------------------------------------------------------
+        ! Build Hamiltonian matrices
+        call build_hamiltonian_matrices(params, H_even, H_odd)
 
-    ! Halla los resultados para cada valor de N
-    j_arr = 0 ! Variable auxiliar
-    do_N: do N=2, Nmax, 1
-        ! Da dimensiones al array de energias variacionales
-        allocate(E(N))
-        ! y del array 'work' para la subrutina de diagonalizacion
-        allocate(work(3*N))
+        ! Diagonalize Hamiltonian matrices with DSYEV subroutine form LAPACK
+        ! First, allocate work array (dummy array needed for DSYEV)
+        lwork = 3 * params%N
+        if (allocated(work)) deallocate(work)
+        allocate(work(lwork))
 
-        ! Numero de funciones base pares e impares
-        Nimpar = N/2
-        Npar = N - Nimpar
-
-        ! ------------
-        ! MATRIZ PAR
-        ! ------------
-
-        ! Da dimensiones a la matriz par del hamiltoniano
-        allocate(H_par(Npar,Npar))
-        ! y de valores propios
-        allocate(E_par(Npar))
-
-        ! Crear la matriz del hamiltoniano par
-        H_par(:,:) = 0.0
-        do_filas_par: do i=1, Npar, 1
-            do_columnas_par: do j=1, Npar, 1
-                ! Calcula los elementos de la matriz y almacenalos
-                H_par(i,j) = H(2*(i-1),2*(j-1),xe,Vb,alpha)
-            end do do_columnas_par
-        end do do_filas_par
-        ! Rutina para calcular los valores propios
-        lwork = 3*N
-        call dsyev ( 'V', 'U', Npar, H_par, Npar, E_par,&
-                     work, lwork, info )
-        ! Los valores propios de la energia son guardados en E
-        ! Los vectores propios, los coeficientes de la combinacion lineal,
-        ! son guardados en la matriz H_mat a la salida
-        ! Cada columna de la matriz H_mat, a la salida, da un eigenvector
-        ! H_mat(j,i)
-        !   j = indice de la funcion base
-        !   i = indice del valor propio
-
-        ! Si la diagonalizacion ha funcionado, info = 0
-        if (info/= 0) then
-            write(*,*) 'La diagonalizacion de la matriz H_par ha fallado'
-            write(*,*) 'INFO =', info
+        ! Diagonalize even matrix
+        allocate(E_even(params%N_even))
+        call dsyev('V', 'U', params%N_even, H_even, params%N_even, E_even, work, lwork, info)
+        if (info /= 0) then
+            write(*,*) 'Error: Even matrix diagonalization failed, info =', info
             stop
         end if
 
-        ! Escribe el array E
-        do i=1, Npar, 1
-            ! Ordena los valores pares en las posiciones impares
-            E(2*i - 1) = E_par(i) + Vb
-        end do
-
-        ! Escribe los coeficientes variacionales de las funciones pares
-        if (N==Nmax) then
-            write(20,9996)
-            do j=1, Npar, 1
-            write(20,'(i3.1,100f15.5)') 2*(j-1),(H_par(j,i),i=1,3)
-            end do
-         end if
-
-        if (N==Nmax) then
-            do i=1, steps_x+1, 1
-                x = x_vec(i)
-                x_angstrom = x_vec_angstrom(i)
-                Phi0 = 0.0
-                Phi2 = 0.0
-                Phi4 = 0.0
-                Phi0_A = 0.0
-                Phi2_A = 0.0
-                Phi4_A = 0.0
-                do j=1, Npar, 1
-                    ! Para agilizar el calculo, impongo la condicion de que
-                    ! los coeficientes de la combinacion c<0.001 no
-                    ! contribuyan a la combinacion
-                    if (abs(H_par(j,1))>0.001) Phi0=Phi0+(-H_par(j,1))*&
-                                                    phi(2*(j-1),alpha,x)
-                    if (abs(H_par(j,2))>0.001) Phi2=Phi2+(H_par(j,2))*&
-                                                    phi(2*(j-1),alpha,x)
-                    if (abs(H_par(j,3))>0.001) Phi4=Phi4+(H_par(j,3))*&
-                                                    phi(2*(j-1),alpha,x)
-                    !
-                    if (abs(H_par(j,1))>0.001) Phi0_A=Phi0_A+(-H_par(j,1))*&
-                                         phi(2*(j-1),alpha/RBOHR**2,x_angstrom)
-                    if (abs(H_par(j,2))>0.001) Phi2_A=Phi2_A+(H_par(j,2))*&
-                                         phi(2*(j-1),alpha/RBOHR**2,x_angstrom)
-                    if (abs(H_par(j,3))>0.001) Phi4_A=Phi4_A+(H_par(j,3))*&
-                                         phi(2*(j-1),alpha/RBOHR**2,x_angstrom)
-                end do
-                Phi0_vec(i) = Phi0
-                Phi2_vec(i) = Phi2
-                Phi4_vec(i) = Phi4
-                dPhi0_vec(i) = Phi0**2
-                dPhi2_vec(i) = Phi2**2
-                dPhi4_vec(i) = Phi4**2
-                !
-                Phi0_vec_A(i) = Phi0_A
-                Phi2_vec_A(i) = Phi2_A
-                Phi4_vec_A(i) = Phi4_A
-                dPhi0_vec_A(i) = (Phi0_A**2)
-                dPhi2_vec_A(i) = (Phi2_A**2)
-                dPhi4_vec_A(i) = (Phi4_A**2)
-                write(40,'(f10.3, 10000f15.5)') x, Phi0_vec(i), &
-                                                   Phi2_vec(i), &
-                                                   Phi4_vec(i)
-                write(41,'(f10.3, 10000f15.5)') x, dPhi0_vec(i), &
-                                                   dPhi2_vec(i), &
-                                                   dPhi4_vec(i)
-                write(44,'(f10.3, 10000f15.5)') x_angstrom,&
-                                                Phi0_vec_A(i), &
-                                                Phi2_vec_A(i), &
-                                                Phi4_vec_A(i)
-                write(45,'(f10.3, 10000f15.5)') x_angstrom,&
-                                                dPhi0_vec_A(i), &
-                                                dPhi2_vec_A(i), &
-                                                dPhi4_vec_A(i)
-            end do
-        end if
-
-        ! Borra la matriz
-        deallocate(E_par)
-
-        ! ------------
-        ! MATRIZ IMPAR
-        ! ------------
-
-        ! Da dimensiones a la matriz impar del hamiltoniano
-        allocate(H_impar(Nimpar,Nimpar))
-        ! y de valores propios
-        allocate(E_impar(Nimpar))
-
-        ! Crear la matriz del hamiltoniano impar
-        H_impar(:,:) = 0.0
-        do_filas_impar: do i=1, Nimpar, 1
-            do_columnas_impar: do j=1, Nimpar, 1
-                ! Calcula los elementos de la matriz y almacenalos
-                H_impar(i,j) = H(2*i-1,2*j-1,xe,Vb,alpha)
-            end do do_columnas_impar
-        end do do_filas_impar
-        ! Rutina para calcular los valores propios
-        lwork = 3*N
-        call dsyev ( 'V', 'U', Nimpar, H_impar, Nimpar, E_impar,&
-                     work, lwork, info )
-
-        ! Los valores propios de la energia son guardados en E
-        ! Los vectores propios, los coeficientes de la combinacion lineal,
-        ! son guardados en la matriz H_mat a la salida
-        ! Cada columna de la matriz H_mat, a la salida, da un eigenvector
-        ! H_mat(j,i)
-        !   j = indice de la funcion base
-        !   i = indice del valor propio
-
-        ! Si la diagonalizacion ha funcionado, info = 0
-        if (info/= 0) then
-            write(*,*) 'La diagonalizacion de la matriz H_impar ha fallado'
-            write(*,*) 'INFO =', info
+        ! Diagonalize odd matrix
+        allocate(E_odd(params%N_odd))
+        call dsyev('V', 'U', params%N_odd, H_odd, params%N_odd, E_odd, work, lwork, info)
+        if (info /= 0) then
+            write(*,*) 'Error: Odd matrix diagonalization failed, info =', info
             stop
         end if
+        ! ---------------------------------------------------------------------
 
-        ! Escribe el array E
-        do i=1, Nimpar, 1
-            ! Ordena los valores impares en las posiciones impares
-            E(2*i) = E_impar(i) + Vb
+        ! ---------------------------------------------------------------------
+        ! Energy
+        ! ---------------------------------------------------------------------
+        ! Combine energies (interleave even and odd)
+        allocate(E_all(params%N))
+        do i = 1, params%N_even
+            E_all(2*i - 1) = E_even(i) + params%Vb
+        end do
+        do i = 1, params%N_odd
+            E_all(2*i) = E_odd(i) + params%Vb
         end do
 
-        ! Escribe los coeficientes variacionales de las funciones impares
-        if (N==Nmax) then
-            write(21,9995)
-            do j=1, Nimpar, 1
-                write(21,'(i3.1,100f15.5)') 2*j-1, (H_impar(j,i),i=1,3)
-            end do
-        end if
-        !
-        ! --- Creacion array de E_n para N=Nmax ---
-        !
-        if (N==Nmax) then
-            allocate(E_Nmax(Nmax), E_Nmax_cm(Nmax))
-            do i = 1, Nmax
-                E_Nmax(i) = E(i)                ! En unidades atomicas
-                E_Nmax_cm(i) = E(i) * EUACM     ! En cm-1
-            end do
-        end if
-        !
-        ! --- Creacion de la matriz de coeficientes de las combinaciones ---
-        !
-        if (N==Nmax) then
-            allocate(c_k(N,N))
-            ! Inicializacion de la matriz
-            do i = 1, N
-                do j = 1, i
-                    c_k(i,j) = 0.d0
-                end do
-            end do
-            ! Escritura de la matriz
-            do j = 1, Npar
-                ! Cambia el signo de los coeficientes de Phi_0
-                if (j==1) then
-                    do i = 1, Npar
-                        c_k(2*i-1,2*j-1) = -H_par(i,j)
-                    end do
-                else
-                    do i = 1, Npar
-                        c_k(2*i-1,2*j-1) = H_par(i,j)
-                    end do
-                end if
-            end do
-            do j = 1, Nimpar
-                ! Cambia el signo de los coeficientes de Phi_1 y Phi_3
-                if (j==1.or.j==2) then
-                    do i = 1, Nimpar
-                        c_k(2*i,2*j) = -H_impar(i,j)
-                    end do
-                else
-                    do i = 1, Nimpar
-                        c_k(2*i,2*j) = H_impar(i,j)
-                    end do
-                end if
-            end do
-        end if
-        !
-        if (N==Nmax) then
-            do i=1, steps_x+1, 1
-                x = x_vec(i)
-                x_angstrom = x_vec_angstrom(i)
-                Phi1 = 0.0
-                Phi3 = 0.0
-                Phi5 = 0.0
-                Phi1_A = 0.0
-                Phi3_A = 0.0
-                Phi5_A = 0.0
-                do j=1, Nimpar, 1
-                    ! Para agilizar el calculo, impongo la condicion de que
-                    ! los coeficientes de la combinacion c<0.001 no
-                    ! contribuyan a la combinacion
-                    if (abs(H_impar(j,1))>0.001) Phi1=Phi1+(-H_impar(j,1))*&
-                                                      phi(2*j-1,alpha,x)
-                    if (abs(H_impar(j,2))>0.001) Phi3=Phi3+(-H_impar(j,2))*&
-                                                      phi(2*j-1,alpha,x)
-                    if (abs(H_impar(j,3))>0.001) Phi5=Phi5+(H_impar(j,3))*&
-                                                      phi(2*j-1,alpha,x)
-                    if (abs(H_impar(j,1))>0.001) Phi1_A=Phi1_A+&
-                                                        (-H_impar(j,1))*&
-                                           phi(2*j-1,alpha/RBOHR**2,x_angstrom)
-                    if (abs(H_impar(j,2))>0.001) Phi3_A=Phi3_A+&
-                                                        (-H_impar(j,2))*&
-                                           phi(2*j-1,alpha/RBOHR**2,x_angstrom)
-                    if (abs(H_impar(j,3))>0.001) Phi5_A=Phi5_A+&
-                                                        (H_impar(j,3))*&
-                                           phi(2*j-1,alpha/RBOHR**2,x_angstrom)
-                end do
-                Phi1_vec(i) = Phi1
-                Phi3_vec(i) = Phi3
-                Phi5_vec(i) = Phi5
-                dPhi1_vec(i) = Phi1**2
-                dPhi3_vec(i) = Phi3**2
-                dPhi5_vec(i) = Phi5**2
-                Phi1_vec_A(i) = Phi1_A
-                Phi3_vec_A(i) = Phi3_A
-                Phi5_vec_A(i) = Phi5_A
-                dPhi1_vec_A(i) = Phi1_A**2
-                dPhi3_vec_A(i) = Phi3_A**2
-                dPhi5_vec_A(i) = Phi5_A**2
-                write(42,'(f10.3, 10000f15.5)') x, Phi1_vec(i), &
-                                                   Phi3_vec(i), &
-                                                   Phi5_vec(i)
-                write(43,'(f10.3, 10000f15.5)') x, dPhi1_vec(i), &
-                                                   dPhi3_vec(i), &
-                                                   dPhi5_vec(i)
-                write(46,'(f10.3, 10000f15.5)') x_angstrom,&
-                                                Phi1_vec_A(i), &
-                                                Phi3_vec_A(i), &
-                                                Phi5_vec_A(i)
-                write(47,'(f10.3, 10000f15.5)') x_angstrom,&
-                                                dPhi1_vec_A(i), &
-                                                dPhi3_vec_A(i), &
-                                                dPhi5_vec_A(i)
-            end do
-        end if
-        !
-        if (N==Nmax) then
-            n_func_comb = 2
-            allocate(c_psi1(n_func_comb), c_psi2(n_func_comb))
-            c_psi1(1) = 1.d0/dsqrt(2.d0)
-            c_psi1(2) = 1.d0/dsqrt(2.d0)
-            c_psi2(1) = 1.d0/dsqrt(2.d0)
-            c_psi2(2) = 1.d0/dsqrt(2.d0)
-            E_psi1 = abs(c_psi1(1))**2*E(1) + abs(c_psi1(2))**2*E(2)
-            E_psi3 = abs(c_psi2(1))**2*E(3) + abs(c_psi2(2))**2*E(4)
-            E_psi1_cm = E_psi1 * EUACM
-            E_psi3_cm = E_psi3 * EUACM
-            do i=1, steps_x+1, 1
-                x = x_vec(i)
-                x_angstrom = x_vec_angstrom(i)
-                !
-                psi1_vec(i) = c_psi1(1)*Phi0_vec(i) + c_psi1(2)*Phi1_vec(i)
-                psi2_vec(i) = c_psi1(1)*Phi0_vec(i) - c_psi1(2)*Phi1_vec(i)
-                psi3_vec(i) = c_psi2(1)*Phi2_vec(i) + c_psi2(2)*Phi3_vec(i)
-                psi4_vec(i) = c_psi2(1)*Phi2_vec(i) - c_psi2(2)*Phi3_vec(i)
-                !
-                dpsi1_vec(i) = psi1_vec(i)**2
-                dpsi2_vec(i) = psi2_vec(i)**2
-                dpsi3_vec(i) = psi3_vec(i)**2
-                dpsi4_vec(i) = psi4_vec(i)**2
-                !
-                psi1_vec_A(i) = c_psi1(1)*Phi0_vec_A(i) +&
-                                c_psi1(2)*Phi1_vec_A(i)
-                psi2_vec_A(i) = c_psi1(1)*Phi0_vec_A(i) -&
-                                c_psi1(2)*Phi1_vec_A(i)
-                psi3_vec_A(i) = c_psi2(1)*Phi2_vec_A(i) +&
-                                c_psi2(2)*Phi3_vec_A(i)
-                psi4_vec_A(i) = c_psi2(1)*Phi2_vec_A(i) -&
-                                c_psi2(2)*Phi3_vec_A(i)
-                !
-                dpsi1_vec_A(i) = psi1_vec_A(i)**2
-                dpsi2_vec_A(i) = psi2_vec_A(i)**2
-                dpsi3_vec_A(i) = psi3_vec_A(i)**2
-                dpsi4_vec_A(i) = psi4_vec_A(i)**2
-                !
-                write(50,'(f15.5, f10.3, 10000f15.5)') E_psi1, x,&
-                                                   psi1_vec(i), &
-                                                  dpsi1_vec(i)
-                write(51,'(f15.5, f10.3, 10000f15.5)') E_psi1, x,&
-                                                    psi2_vec(i), &
-                                                   dpsi2_vec(i)
-                write(52,'(f15.5, f10.3, 10000f15.5)') E_psi3, x,&
-                                                    psi3_vec(i), &
-                                                   dpsi3_vec(i)
-                write(53,'(f15.5, f10.3, 10000f15.5)') E_psi3, x,&
-                                                    psi4_vec(i), &
-                                                   dpsi4_vec(i)
-                write(54,'(f15.5, f10.3, 10000f15.5)') E_psi1_cm, x_angstrom,&
-                                                   psi1_vec_A(i), &
-                                                  dpsi1_vec_A(i)
-                write(55,'(f15.5, f10.3, 10000f15.5)') E_psi1_cm, x_angstrom,&
-                                                    psi2_vec_A(i), &
-                                                   dpsi2_vec_A(i)
-                write(56,'(f15.5, f10.3, 10000f15.5)') E_psi3_cm, x_angstrom,&
-                                                    psi3_vec_A(i), &
-                                                   dpsi3_vec_A(i)
-                write(57,'(f15.5, f10.3, 10000f15.5)') E_psi3_cm, x_angstrom,&
-                                                    psi4_vec_A(i), &
-                                                   dpsi4_vec_A(i)
-            end do
-        end if
-
-        if (N==Nmax) then
-            ! --- Calculo del tiempo de recurrencia ---
-            write(70,'("Psi", 26x, "tr (ps)")')
-            ! Primera combinacion lineal:
-            ! Psi = (Phi0 +- Phi1)/dsqrt(2)
-            E0 = E(1)*EHAJ   ! Energia del nivel v=0 en J
-            E1 = E(2)*EHAJ   ! Energia del nivel v=1 en J
-            call tiempo_recurrencia(E0, E1, HP, tr)
-            write(70,'("(Phi0+-Phi1)/dsqrt(2)", 2x, f15.5)') tr*1.D12 !tr en ps
-            !
-            ! Segunda combinacion lineal:
-            ! Psi = (Phi2 +- Phi3)/dsqrt(2)
-            E0 = E(3)*EHAJ   ! Energia del nivel v=0 en J
-            E1 = E(4)*EHAJ   ! Energia del nivel v=1 en J
-            call tiempo_recurrencia(E0, E1, HP, tr)
-            write(70,'("(Phi2+-Phi3)/dsqrt(2)", 2x, f15.5)') tr*1.D12 !tr en ps
-            !
-            ! --- Calculo la probabilidad de supervivencia ---
-            !
-            ! --- Primer paquete de ondas ---
-            ! Psi = (Phi0 +- Phi1)/dsqrt(2)
-            allocate(E_wp(n_func_comb))
-            E_wp(1) = E(1)   ! Energia del nivel v=0 en Ha
-            E_wp(2) = E(2)   ! Energia del nivel v=1 en Ha
-            t0 = 0.d0
-            dt = 0.1d0
-            tf = 100.d0
-            steps_t = int((tf - t0)/dt)
-            allocate(t_vec(steps_t))
-            write(80,'("t (ps)", 5x, "Ps(t)")')
-            do i=1, steps_t+1, 1
-                t = t0 + (dt * dble(i-1))
-                t_vec(i) = t
-                ! El tiempo es convertido a picosegundos por la subrutina
-                call probabilidad_supervivencia(c_psi1,E_wp,t,EHAJ,HP,pi,Ps)
-                write(80,'(f6.2, f15.5)') t, Ps
-            end do
-            deallocate(t_vec, E_wp)
-
-            ! --- Segundo paquete de ondas ---
-            ! Psi = (Phi2 +- Phi3)/dsqrt(2)
-            allocate(E_wp(n_func_comb))
-            E_wp(1) = E(3)   ! Energia del nivel v=0 en Ha
-            E_wp(2) = E(4)   ! Energia del nivel v=1 en Ha
-            t0 = 0.d0
-            dt = 0.01d0
-            tf = 1.d0
-            steps_t = int((tf - t0)/dt)
-            allocate(t_vec(steps_t))
-            write(81,'("t (ps)", 5x, "Ps(t)")')
-            do i=1, steps_t+1, 1
-                t = t0 + (dt * dble(i-1))
-                t_vec(i) = t
-                ! El tiempo es convertido a picosegundos por la subrutina
-                call probabilidad_supervivencia(c_psi2,E_wp,t,EHAJ,HP,pi,Ps)
-                write(81,'(f6.2, f15.5)') t, Ps
-            end do
-            deallocate(t_vec, E_wp)
-            deallocate(c_psi1, c_psi2)
-        end if
-
-        ! ==========================================
-        ! --- Paquete de 4 estados estacionarios ---
-        ! ==========================================
-        ! Psi = a0*Phi0 + a1*Phi1 + a2*Phi2 + a3*Phi3
-        ! a0 = a1 = 1/dsqrt(2) * cos(alfa)
-        ! a2 = a3 = 1/dsqrt(2) * sen(alfa)
-        ! Casos limites:
-        ! si alfa = 0  -> Psi = Psi1 = a0*Phi0 + a1*Phi1
-        ! si alfa = 90 -> Psi = Psi2 = a2*Phi2 + a3*Phi3
-        if (N==Nmax) then
-            ! Calcula la matriz posicion en la base armonica
-            call matriz_posicion(N, alpha/RBOHR**2, mat_x_arm)
-            ! Numero de funciones de estados estacionarios a usar en el paquete
-            n_func_comb = 4
-            allocate(E_wp(n_func_comb))
-            E_wp(1) = E(1)   ! Energia del nivel v=0 en Ha
-            E_wp(2) = E(2)   ! Energia del nivel v=1 en Ha
-            E_wp(3) = E(3)   ! Energia del nivel v=2 en Ha
-            E_wp(4) = E(4)   ! Energia del nivel v=3 en Ha
-            ! Valores de alfa = 0,10,15,20,30,40,45,50,60,70,75,80 y 90
-            allocate(array_alfa_4EE(13))
-            array_alfa_4EE(1)  = 0.d0
-            array_alfa_4EE(2)  = 10.d0
-            array_alfa_4EE(3)  = 15.d0
-            array_alfa_4EE(4)  = 20.d0
-            array_alfa_4EE(5)  = 30.d0
-            array_alfa_4EE(6)  = 40.d0
-            array_alfa_4EE(7)  = 45.d0
-            array_alfa_4EE(8)  = 50.d0
-            array_alfa_4EE(9)  = 60.d0
-            array_alfa_4EE(10) = 70.d0
-            array_alfa_4EE(11) = 75.d0
-            array_alfa_4EE(12) = 80.d0
-            array_alfa_4EE(13) = 90.d0
-            ! Calculo de los paquetes para cada alfa
-            write(82,9999)
-            write(82,'(2x, "alfa", 6x, "E (cm-1)", 8x, "Puntos de corte (A)")')
-            write(82,9998)
-            do j=1, size(array_alfa_4EE)
-                alfa_4EE = array_alfa_4EE(j)
-                ! Coeficientes de la combinacion
-                c_psi_4EE(1) = 1.d0/dsqrt(2.d0) * cos(alfa_4EE*PI/180.d0)
-                c_psi_4EE(2) = 1.d0/dsqrt(2.d0) * cos(alfa_4EE*PI/180.d0)
-                c_psi_4EE(3) = 1.d0/dsqrt(2.d0) * sin(alfa_4EE*PI/180.d0)
-                c_psi_4EE(4) = 1.d0/dsqrt(2.d0) * sin(alfa_4EE*PI/180.d0)
-                ! Energia del paquete
-                E_4EE = abs(c_psi_4EE(1))**2 * E(1) +&
-                        abs(c_psi_4EE(2))**2 * E(2) +&
-                        abs(c_psi_4EE(3))**2 * E(3) +&
-                        abs(c_psi_4EE(4))**2 * E(4)
-                ! Conversion de energia de UA -> cm-1
-                E_4EE_cm = E_4EE * EUACM
-                ! Calculo de los puntos de corte
-                call puntos_corte(E_4EE_cm, Vb_cm, xe_A, x1, x2, x3, x4)
-                write(82,'(f6.1, 100f15.5)') alfa_4EE, E_4EE_cm, x1, x2, x3, x4
-                ! Calculo de los paquetes
-                do i=1, steps_x+1, 1
-                    x_angstrom = x_vec_angstrom(i)
-
-                    psi_4EE_vec_A(i) = c_psi_4EE(1)*Phi0_vec_A(i) +&
-                                       c_psi_4EE(2)*Phi1_vec_A(i) +&
-                                       c_psi_4EE(3)*Phi2_vec_A(i) +&
-                                       c_psi_4EE(4)*Phi3_vec_A(i)
-                    dpsi_4EE_vec_A(i) = psi_4EE_vec_A(i)**2
-
-                    ! Escribe los resultados
-                    write(89+j,'(f4.1, f15.5, f10.3, 2f15.5)') &
-                          alfa_4EE, E_4EE_cm, x_angstrom,&
-                          psi_4EE_vec_A(i), dpsi_4EE_vec_A(i)
-                end do
-                !
-                ! --- Calculo de la probabilidad de supervivencia y
-                !     valor esperado de la posicion ---
-                !
-                t0 = 0.d0
-                tf = 50.d0
-                dt = 5.d-3
-                steps_t = int((tf - t0)/dt)
-                allocate(t_vec(steps_t))
-                write(109+j,9999)
-                write(109+j,'("---"," alfa =", f5.1, " ---")') alfa_4EE
-                write(109+j,9998)
-                write(109+j,'("t (ps)", 5x, "Ps(t)")')
-                write(129+j,9999)
-                write(129+j,'("---"," alfa =", f5.1, " ---")') alfa_4EE
-                write(129+j,9998)
-                write(129+j,'(2x, "t (ps)", 7x, "<x>t (A)")')
-                do i=1, steps_t+1, 1
-                    t = t0 + (dt * dble(i-1))
-                    t_vec(i) = t
-                    ! El tiempo es convertido a picosegundos por la subrutina
-                    call probabilidad_supervivencia(c_psi_4EE, E_wp, t, &
-                                                    EHAJ, HP, pi, Ps)
-                    write(109+j,'(f8.4, f15.5)') t, Ps
-                    ! Calculo del valor esperado de x
-                    call valor_esperado_x(N, c_psi_4EE, E_wp, t, c_k, &
-                                         mat_x_arm, EHAJ, HP, pi,&
-                                         val_esp_x)
-                    write(129+j,'(f8.4, f15.5)') t, val_esp_x
-                end do
-                deallocate(t_vec)
-            end do
-            deallocate(E_wp)
-        end if
-
-        ! borra las matrices
-        deallocate(H_par)
-        deallocate(H_impar)
-        deallocate(E_impar)
-        deallocate(work)
-
-        ! Escribe las 7 primeras energias variacionales cuando N>=8
-        jj = N  ! Variable auxiliar
-        if (jj<=8) then
-            write(2,' (i3.1, 100f15.5)') N, ( E(i), i=1,N ), &
-                                         ( j*0., j=1,8-jj )
-        else
-            write(2,' (i3.1, 100f15.5)') N, ( E(i), i=1,8 )
-        end if
-
-        ! Array auxiliar (E_arr) que almacena cada valor de Wn(N) para un
-        ! numero de funciones base N dado, de manera que
-        !           W0(N1)  W1(N1)  ..
-        ! E_arr =   W0(N2)  W1(N2)  ..
-        !            :       :
-        ! Uso este array para controlar el numero de funciones base para
-        ! la convergencia de cada nivel
-        j_arr = j_arr + 1
-        do i=1, N, 1
-            E_arr(j_arr, i) = E(i)
+        ! Store for convergence analysis
+        do i = 1, params%N
+            E_arr(params%N - 1, i) = E_all(i)
         end do
+        ! ---------------------------------------------------------------------
 
-        ! Borra la ultima matriz
-        deallocate(E)
-    end do do_N
+        ! At N_max: compute and save all results
+        if (params%N == N_max) then
+            ! Store final energies
+            allocate(E_all_cm(N_max))
+            E_all_cm = E_all * EUACM  ! convert to cm-1
 
-    ! Escribe el array E_arr
-    do i=1, Nmax-1, 1
-        write(4,'(1000f15.5)') ( E_arr(i,j), j=1, Nmax )
+            ! Build full coefficient matrix
+            call build_coefficient_matrix(H_even, H_odd, params%N_even, params%N_odd, c_full)
+
+            ! Write coefficients
+            call write_coefficients(trim(data_dir)//"out-coeficientes_par.dat", &
+                                    H_even, "even", ierr)
+            call write_coefficients(trim(data_dir)//"out-coeficientes_impar.dat", &
+                                    H_odd, "odd", ierr)
+
+            ! -----------------------------------------------------------------
+            ! Wavefunctions & wavepackets
+            ! -----------------------------------------------------------------
+            ! Compute wavefunctions on grid
+            call compute_wavefunctions(params, H_even, H_odd, x_grid, x_grid_A, &
+                                       psi_even, psi_odd, psi_even_A, psi_odd_A)
+
+            ! Write wavefunctions
+            call write_wavefunctions_to_files(data_dir, x_grid, x_grid_A, &
+                                              psi_even, psi_odd, psi_even_A, psi_odd_A, ierr)
+
+            ! Compute and write wavepackets (Phi0 +/- Phi1, Phi2 +/- Phi3)
+            call compute_and_write_wavepackets(data_dir, E_all, &
+                                               psi_even, psi_odd, psi_even_A, psi_odd_A, &
+                                               x_grid, x_grid_A, ierr)
+            ! -----------------------------------------------------------------
+
+            ! -----------------------------------------------------------------
+            ! Properties
+            ! -----------------------------------------------------------------
+            ! Recurrence time calculations
+            call compute_and_write_recurrence_times(data_dir, E_all, ierr)
+
+            ! Survival probability for first two wavepackets
+            call compute_and_write_survival_prob(data_dir, E_all, ierr)
+
+            ! Build position matrix in Angstrom for expectation values
+            call build_position_matrix(params%N, params%alpha_angstrom, x_matrix)
+            ! -----------------------------------------------------------------
+
+            ! -----------------------------------------------------------------
+            ! 4-state wavepacket calculations with varying alpha
+            ! -----------------------------------------------------------------
+            n_alpha = 13
+            allocate(alpha_4EE(n_alpha))
+            alpha_4EE = [0.0_dp, 10.0_dp, 15.0_dp, 20.0_dp, 30.0_dp, 40.0_dp, &
+                         45.0_dp, 50.0_dp, 60.0_dp, 70.0_dp, 75.0_dp, 80.0_dp, 90.0_dp]
+
+            allocate(tp_x1(n_alpha), tp_x2(n_alpha), tp_x3(n_alpha), tp_x4(n_alpha), tp_E(n_alpha))
+
+            call compute_4state_wavepackets(data_dir, params, E_all, alpha_4EE, &
+                                            psi_even_A, psi_odd_A, x_grid_A, &
+                                            c_full, x_matrix, tp_E, tp_x1, tp_x2, tp_x3, tp_x4, ierr)
+
+            ! Write turning points
+            call write_turning_points(trim(data_dir)//"out-puntos_corte.dat", &
+                                      alpha_4EE, tp_E, tp_x1, tp_x2, tp_x3, tp_x4, ierr)
+
+            deallocate(alpha_4EE, tp_x1, tp_x2, tp_x3, tp_x4, tp_E)
+            ! -----------------------------------------------------------------
+        end if
+
+        ! Cleanup for next iteration
+        deallocate(H_even, H_odd, E_even, E_odd, E_all)
     end do
+    ! =========================================================================
 
-    ! Bucle para encontrar el numero de funciones base de convergencia
-    do j=1, 6
-        do i=1, Nmax, 1
-            ! E_sup = E_arr(i+5,1) ! Cambiar limite del DO de Nmax a Nmax-5
-            E_sup = E_arr(Nmax-1,j)
-            E_inf = E_arr(i,j)
-            Delta_E = E_inf - E_sup
-            if (abs(Delta_E)<=0.000001) then
-                N_conver = i + 1
-                E_conver = E_inf
+    ! =========================================================================
+    ! CONVERGENCE ANALYSIS
+    ! =========================================================================
+    allocate(N_conv(21), E_conv(21), E_max(21))
+
+    do j = 1, 21
+        do i = 1, N_max - 1
+            E_sup = E_arr(N_max - 1, j)
+            E_inf = E_arr(i, j)
+            delta_E = E_inf - E_sup
+            if (abs(delta_E) < ENERGY_CONV_THRESHOLD) then
+                N_conv(j) = i + 1
+                E_conv(j) = E_inf
                 exit
             end if
         end do
-        if (N_conver<Nmax) then
-            write(3,'(i3.1, f15.5, i5.2)') j-1, E_conver, N_conver
-        else
-            write(3,'(i3.1, f15.5, "Aumentar Nmax")') j-1, E_conver
-        end if
-        ! Escribo los ficheros 7, 8, 9, 10
-        if (j==1) then
-            write(7,'(2x,"n =",i3.1,2x,"Nconverg. =",i3.1)') j, N_conver
-            write(7, '(2x, "N", 8x, "W0")')
-        elseif (j==2) then
-            write(8,'(2x,"n =",i3.1,2x,"Nconverg. =",i3.1)') j, N_conver
-            write(8, '(2x, "N", 8x, "W1")')
-        elseif (j==3) then
-            write(9,'(2x,"n =",i3.1,2x,"Nconverg. =",i3.1)') j, N_conver
-            write(9, '(2x, "N", 8x, "W2")')
-        elseif (j==4) then
-            write(10,'(2x,"n =",i3.1,2x,"Nconverg. =",i3.1)') j, N_conver
-            write(10, '(2x, "N", 8x, "W3")')
-        end if
+        E_max(j) = E_arr(N_max - 1, j)
     end do
 
-    ! Escribe n, W_n y Ncon. para los n=21 primeros niveles
-    do j=1, 21, 1
-        do i=1, Nmax, 1
-            ! E_sup = E_arr(i+5,1) ! Cambiar limite del DO de Nmax a Nmax-5
-            E_sup = E_arr(Nmax-1,j)
-            E_inf = E_arr(i,j)
-            Delta_E = E_inf - E_sup
-            if (abs(Delta_E)<0.00001) then
-                N_conver = i + 1
-                E_conver = E_inf
-                E_conver_cm = E_conver*EUACM
-                exit
+    ! Write convergence data
+    call write_convergence(trim(data_dir)//"out-conver_energias_hartrees.dat", &
+                           21, N_conv, E_conv, E_max, "Ha", ierr)
+
+    E_conv = E_conv * EUACM  ! convert to cm-1
+    E_max = E_max * EUACM    ! convert to cm-1
+    call write_convergence(trim(data_dir)//"out-conver_energias_cm-1.dat", &
+                           21, N_conv, E_conv, E_max, "cm-1", ierr)
+
+    ! Write N vs W files for first 4 levels
+    call write_N_vs_W_files(data_dir, E_arr, N_max, N_conv, ierr)
+
+    ! =========================================================================
+    ! CLEANUP
+    ! =========================================================================
+    deallocate(x_grid, x_grid_A, V_grid, V_grid_cm)
+    deallocate(E_arr, N_conv, E_conv, E_max)
+    if (allocated(E_all_cm)) deallocate(E_all_cm)
+    if (allocated(c_full)) deallocate(c_full)
+    if (allocated(psi_even)) deallocate(psi_even)
+    if (allocated(psi_odd)) deallocate(psi_odd)
+    if (allocated(psi_even_A)) deallocate(psi_even_A)
+    if (allocated(psi_odd_A)) deallocate(psi_odd_A)
+    if (allocated(x_matrix)) deallocate(x_matrix)
+    if (allocated(work)) deallocate(work)
+
+    write(*,'(A)') 'Program completed successfully.'
+
+contains
+
+    ! -------------------------------------------------------------------------
+    ! Write mass and alpha parameters
+    ! -------------------------------------------------------------------------
+    subroutine write_mass_alpha(params, data_dir, ierr)
+        type(system_params_t), intent(in) :: params
+        character(len=*), intent(in) :: data_dir
+        integer, intent(out) :: ierr
+        integer :: unit_num
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-masa_red_alfa.dat", &
+             status='replace', action='write', iostat=ierr)
+        if (ierr /= 0) return
+
+        write(unit_num, '(3X, A, 17X, A, 11X, A)') &
+              'mu (a.m.)', 'alpha (a0^{-2})', 'alpha (A^{-2})'
+        write(unit_num, *) params%mass, params%alpha, params%alpha_angstrom
+
+        close(unit_num)
+    end subroutine write_mass_alpha
+
+    ! -------------------------------------------------------------------------
+    ! Build full coefficient matrix from even/odd diagonalization results
+    ! -------------------------------------------------------------------------
+    subroutine build_coefficient_matrix(H_even, H_odd, N_even, N_odd, c_full)
+        real(dp), intent(in) :: H_even(:,:), H_odd(:,:)
+        integer, intent(in) :: N_even, N_odd
+        real(dp), allocatable, intent(out) :: c_full(:,:)
+        integer :: i, j, N_total
+
+        N_total = N_even + N_odd
+        allocate(c_full(N_total, N_total))
+        c_full = 0.0_dp
+
+        ! Even states (columns 1, 3, 5, ...) -> rows 1, 3, 5, ... of c_full
+        do j = 1, N_even
+            ! Flip sign for first state (Phi_0)
+            if (j == 1) then
+                do i = 1, N_even
+                    c_full(2*i - 1, 2*j - 1) = -H_even(i, j)
+                end do
+            else
+                do i = 1, N_even
+                    c_full(2*i - 1, 2*j - 1) = H_even(i, j)
+                end do
             end if
         end do
-        if (N_conver<Nmax) then
-            write(12,'(i3.1, i5.2, 2f15.5)') j-1, N_conver, E_conver, E_Nmax(j)
-            write(13,'(i3.1, i5.2, 2f15.5)') j-1, N_conver, E_conver_cm,&
-                                                                   E_Nmax_cm(j)
-        else
-            write(12,'(i3.1, "Aumentar Nmax", 2f15.5 )') j-1, E_conver
-            write(13,'(i3.1, "Aumentar Nmax", 2f15.5 )') j-1, E_conver_cm
-        end if
-    end do
 
-    ! Escribe los valores de W0, W1, W2 y W3 en sus ficheros para N pares.
-    ! Para N impares, cambiar el bucle DO.
-    do N=2, Nmax, 2
-        write(7,'  (i3.1, 100f15.5)') N, E_arr(N-1,1)*EUACM
-        write(8,'  (i3.1, 100f15.5)') N, E_arr(N-1,2)*EUACM
-        if (N>=3) then
-            write(9,'  (i3.1, 100f15.5)') N, E_arr(N-1,3)*EUACM
-        end if
-        if (N>=4) then
-            write(10,' (i3.1, 100f15.5)') N, E_arr(N-1,4)*EUACM
-        end if
-    end do
+        ! Odd states (columns 2, 4, 6, ...) -> rows 2, 4, 6, ... of c_full
+        do j = 1, N_odd
+            ! Flip sign for first two odd states (Phi_1, Phi_3)
+            if (j == 1 .or. j == 2) then
+                do i = 1, N_odd
+                    c_full(2*i, 2*j) = -H_odd(i, j)
+                end do
+            else
+                do i = 1, N_odd
+                    c_full(2*i, 2*j) = H_odd(i, j)
+                end do
+            end if
+        end do
+    end subroutine build_coefficient_matrix
 
-    ! Ficheros de E vs N
-    write(11,9997)
-    do i=1, Nmax-1, 2
-        write(11,'(i3.1, 1000f15.5)') i+1, ( E_arr(i,j), j=1, 21 )
-    end do
+    ! -------------------------------------------------------------------------
+    ! Compute wavefunctions on grid
+    ! -------------------------------------------------------------------------
+    subroutine compute_wavefunctions(params, H_even, H_odd, x_grid, x_grid_A, &
+                                     psi_even, psi_odd, psi_even_A, psi_odd_A)
+        type(system_params_t), intent(in) :: params
+        real(dp), intent(in) :: H_even(:,:), H_odd(:,:)
+        real(dp), intent(in) :: x_grid(:), x_grid_A(:)
+        real(dp), allocatable, intent(out) :: psi_even(:,:), psi_odd(:,:)
+        real(dp), allocatable, intent(out) :: psi_even_A(:,:), psi_odd_A(:,:)
+        integer :: i, j, k, n_x, n_states
+        real(dp) :: coeff, alpha_A, sign_factor
 
-    deallocate(E_arr)
+        n_x = size(x_grid)
+        n_states = 3  ! Compute first 3 states of each parity
+        alpha_A = params%alpha_angstrom
 
-    ! Cierra todos los ficheros
-    close(2)
-    close(3)
-    close(4)
-    do i=7, 142, 1
-        close(i)
-    end do
+        allocate(psi_even(n_x, n_states), psi_odd(n_x, n_states))
+        allocate(psi_even_A(n_x, n_states), psi_odd_A(n_x, n_states))
 
-    write(*,*) 'El programa ha finalizado'
+        psi_even = 0.0_dp
+        psi_odd = 0.0_dp
+        psi_even_A = 0.0_dp
+        psi_odd_A = 0.0_dp
 
-    stop
-endprogram doble_pozo_NH3
+        ! Even states (Phi_0, Phi_2, Phi_4)
+        do i = 1, n_x
+            do j = 1, n_states
+                ! Sign adjustment for eigenvector normalization
+                if (j == 1) then
+                    sign_factor = -1.0_dp
+                else
+                    sign_factor = 1.0_dp
+                end if
+
+                do k = 1, params%N_even
+                    coeff = H_even(k, j) * sign_factor
+                    if (abs(coeff) > COEFF_THRESHOLD) then
+                        psi_even(i, j) = psi_even(i, j) + coeff * phi(2*(k-1), params%alpha, x_grid(i))
+                        psi_even_A(i, j) = psi_even_A(i, j) + coeff * phi(2*(k-1), alpha_A, x_grid_A(i))
+                    end if
+                end do
+            end do
+        end do
+
+        ! Odd states (Phi_1, Phi_3, Phi_5)
+        do i = 1, n_x
+            do j = 1, min(n_states, params%N_odd)
+                ! Sign adjustment
+                if (j <= 2) then
+                    sign_factor = -1.0_dp
+                else
+                    sign_factor = 1.0_dp
+                end if
+
+                do k = 1, params%N_odd
+                    coeff = H_odd(k, j) * sign_factor
+                    if (abs(coeff) > COEFF_THRESHOLD) then
+                        psi_odd(i, j) = psi_odd(i, j) + coeff * phi(2*k-1, params%alpha, x_grid(i))
+                        psi_odd_A(i, j) = psi_odd_A(i, j) + coeff * phi(2*k-1, alpha_A, x_grid_A(i))
+                    end if
+                end do
+            end do
+        end do
+    end subroutine compute_wavefunctions
+
+    ! -------------------------------------------------------------------------
+    ! Write wavefunctions to output files
+    ! -------------------------------------------------------------------------
+    subroutine write_wavefunctions_to_files(data_dir, x_grid, x_grid_A, &
+                                            psi_even, psi_odd, psi_even_A, psi_odd_A, ierr)
+        character(len=*), intent(in) :: data_dir
+        real(dp), intent(in) :: x_grid(:), x_grid_A(:)
+        real(dp), intent(in) :: psi_even(:,:), psi_odd(:,:)
+        real(dp), intent(in) :: psi_even_A(:,:), psi_odd_A(:,:)
+        integer, intent(out) :: ierr
+        integer :: unit_num, i
+
+        ! Even states in atomic units
+        open(newunit=unit_num, file=trim(data_dir)//"out-funciones_pares_hartrees.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 11X, A, 8X, A, 8X, A)') 'x (a0)', 'Phi0(x)', 'Phi2(x)', 'Phi4(x)'
+        do i = 1, size(x_grid)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid(i), psi_even(i, 1), psi_even(i, 2), psi_even(i, 3)
+        end do
+        close(unit_num)
+
+        ! Even densities in atomic units
+        open(newunit=unit_num, file=trim(data_dir)//"out-densidad_prob_pares_hartrees.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 11X, A, 7X, A, 7X, A)') 'x (a0)', '|Phi0|^2', '|Phi2|^2', '|Phi4|^2'
+        do i = 1, size(x_grid)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid(i), psi_even(i,1)**2, psi_even(i,2)**2, psi_even(i,3)**2
+        end do
+        close(unit_num)
+
+        ! Odd states in atomic units
+        open(newunit=unit_num, file=trim(data_dir)//"out-funciones_impares_hartrees.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 11X, A, 8X, A, 8X, A)') 'x (a0)', 'Phi1(x)', 'Phi3(x)', 'Phi5(x)'
+        do i = 1, size(x_grid)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid(i), psi_odd(i, 1), psi_odd(i, 2), psi_odd(i, 3)
+        end do
+        close(unit_num)
+
+        ! Odd densities in atomic units
+        open(newunit=unit_num, file=trim(data_dir)//"out-densidad_prob_impares_hartrees.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 11X, A, 7X, A, 7X, A)') 'x (a0)', '|Phi1|^2', '|Phi3|^2', '|Phi5|^2'
+        do i = 1, size(x_grid)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid(i), psi_odd(i,1)**2, psi_odd(i,2)**2, psi_odd(i,3)**2
+        end do
+        close(unit_num)
+
+        ! Even states in Angstrom
+        open(newunit=unit_num, file=trim(data_dir)//"out-funciones_pares_A.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 12X, A, 8X, A, 8X, A)') 'x (A)', 'Phi0(x)', 'Phi2(x)', 'Phi4(x)'
+        do i = 1, size(x_grid_A)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid_A(i), psi_even_A(i, 1), psi_even_A(i, 2), psi_even_A(i, 3)
+        end do
+        close(unit_num)
+
+        ! Even densities in Angstrom
+        open(newunit=unit_num, file=trim(data_dir)//"out-densidad_prob_pares_A.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 12X, A, 7X, A, 7X, A)') 'x (A)', '|Phi0|^2', '|Phi2|^2', '|Phi4|^2'
+        do i = 1, size(x_grid_A)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid_A(i), psi_even_A(i,1)**2, psi_even_A(i,2)**2, psi_even_A(i,3)**2
+        end do
+        close(unit_num)
+
+        ! Odd states in Angstrom
+        open(newunit=unit_num, file=trim(data_dir)//"out-funciones_impares_A.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 12X, A, 8X, A, 8X, A)') 'x (A)', 'Phi1(x)', 'Phi3(x)', 'Phi5(x)'
+        do i = 1, size(x_grid_A)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid_A(i), psi_odd_A(i, 1), psi_odd_A(i, 2), psi_odd_A(i, 3)
+        end do
+        close(unit_num)
+
+        ! Odd densities in Angstrom
+        open(newunit=unit_num, file=trim(data_dir)//"out-densidad_prob_impares_A.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(6X, A, 12X, A, 7X, A, 7X, A)') 'x (A)', '|Phi1|^2', '|Phi3|^2', '|Phi5|^2'
+        do i = 1, size(x_grid_A)
+            write(unit_num, '(F10.3, 3F15.5)') x_grid_A(i), psi_odd_A(i,1)**2, psi_odd_A(i,2)**2, psi_odd_A(i,3)**2
+        end do
+        close(unit_num)
+    end subroutine write_wavefunctions_to_files
+
+    ! -------------------------------------------------------------------------
+    ! Compute and write two-state wavepackets
+    ! -------------------------------------------------------------------------
+    subroutine compute_and_write_wavepackets(data_dir, E_all, &
+                                             psi_even, psi_odd, psi_even_A, psi_odd_A, &
+                                             x_grid, x_grid_A, ierr)
+        character(len=*), intent(in) :: data_dir
+        real(dp), intent(in) :: E_all(:)
+        real(dp), intent(in) :: psi_even(:,:), psi_odd(:,:)
+        real(dp), intent(in) :: psi_even_A(:,:), psi_odd_A(:,:)
+        real(dp), intent(in) :: x_grid(:), x_grid_A(:)
+        integer, intent(out) :: ierr
+        integer :: unit_num, i
+        real(dp) :: c1, c2, E_psi, E_psi_cm
+        real(dp), allocatable :: psi1(:), psi2(:), psi3(:), psi4(:)
+        real(dp), allocatable :: psi1_A(:), psi2_A(:), psi3_A(:), psi4_A(:)
+        integer :: n_x
+
+        n_x = size(x_grid)
+        c1 = 1.0_dp / sqrt(2.0_dp)
+        c2 = 1.0_dp / sqrt(2.0_dp)
+
+        allocate(psi1(n_x), psi2(n_x), psi3(n_x), psi4(n_x))
+        allocate(psi1_A(n_x), psi2_A(n_x), psi3_A(n_x), psi4_A(n_x))
+
+        ! Psi1 = (Phi0 + Phi1)/sqrt(2), Psi2 = (Phi0 - Phi1)/sqrt(2)
+        psi1 = c1 * psi_even(:,1) + c2 * psi_odd(:,1)
+        psi2 = c1 * psi_even(:,1) - c2 * psi_odd(:,1)
+        psi1_A = c1 * psi_even_A(:,1) + c2 * psi_odd_A(:,1)
+        psi2_A = c1 * psi_even_A(:,1) - c2 * psi_odd_A(:,1)
+
+        ! Psi3 = (Phi2 + Phi3)/sqrt(2), Psi4 = (Phi2 - Phi3)/sqrt(2)
+        psi3 = c1 * psi_even(:,2) + c2 * psi_odd(:,2)
+        psi4 = c1 * psi_even(:,2) - c2 * psi_odd(:,2)
+        psi3_A = c1 * psi_even_A(:,2) + c2 * psi_odd_A(:,2)
+        psi4_A = c1 * psi_even_A(:,2) - c2 * psi_odd_A(:,2)
+
+        ! Energy of first wavepacket
+        E_psi = 0.5_dp * E_all(1) + 0.5_dp * E_all(2)
+        E_psi_cm = E_psi * EUACM
+
+        ! Write psi1 (atomic units)
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi1.dat", status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('=', 70)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_0 + 1/dsqrt(2) Phi_1'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(8X, A, 8X, A, 11X, A, 8X, A)') 'E (Ha)', 'x (a0)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi, x_grid(i), psi1(i), psi1(i)**2
+        end do
+        close(unit_num)
+
+        ! Write psi2 (atomic units)
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi2.dat", status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('=', 70)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_0 - 1/dsqrt(2) Phi_1'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(8X, A, 8X, A, 11X, A, 8X, A)') 'E (Ha)', 'x (a0)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi, x_grid(i), psi2(i), psi2(i)**2
+        end do
+        close(unit_num)
+
+        ! Energy of second wavepacket
+        E_psi = 0.5_dp * E_all(3) + 0.5_dp * E_all(4)
+        E_psi_cm = E_psi * EUACM
+
+        ! Write psi3 (atomic units)
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi3.dat", status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('=', 70)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_2 + 1/dsqrt(2) Phi_3'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(8X, A, 8X, A, 11X, A, 8X, A)') 'E (Ha)', 'x (a0)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi, x_grid(i), psi3(i), psi3(i)**2
+        end do
+        close(unit_num)
+
+        ! Write psi4 (atomic units)
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi4.dat", status='replace', iostat=ierr)
+        write(unit_num, '(A)') repeat('=', 70)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_2 - 1/dsqrt(2) Phi_3'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(8X, A, 8X, A, 11X, A, 8X, A)') 'E (Ha)', 'x (a0)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi, x_grid(i), psi4(i), psi4(i)**2
+        end do
+        close(unit_num)
+
+        ! Write Angstrom versions (psi1_A through psi4_A)
+        E_psi = 0.5_dp * E_all(1) + 0.5_dp * E_all(2)
+        E_psi_cm = E_psi * EUACM
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi1_A.dat", status='replace', iostat=ierr)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_0 + 1/dsqrt(2) Phi_1'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(5X, A, 6X, A, 9X, A, 8X, A)') 'E (cm-1)', 'x (A)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi_cm, x_grid_A(i), psi1_A(i), psi1_A(i)**2
+        end do
+        close(unit_num)
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi2_A.dat", status='replace', iostat=ierr)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_0 - 1/dsqrt(2) Phi_1'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(5X, A, 6X, A, 9X, A, 8X, A)') 'E (cm-1)', 'x (A)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi_cm, x_grid_A(i), psi2_A(i), psi2_A(i)**2
+        end do
+        close(unit_num)
+
+        E_psi = 0.5_dp * E_all(3) + 0.5_dp * E_all(4)
+        E_psi_cm = E_psi * EUACM
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi3_A.dat", status='replace', iostat=ierr)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_2 + 1/dsqrt(2) Phi_3'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(5X, A, 6X, A, 9X, A, 8X, A)') 'E (cm-1)', 'x (A)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi_cm, x_grid_A(i), psi3_A(i), psi3_A(i)**2
+        end do
+        close(unit_num)
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-psi4_A.dat", status='replace', iostat=ierr)
+        write(unit_num, '(5X, A)') 'psi = 1/dsqrt(2) Phi_2 - 1/dsqrt(2) Phi_3'
+        write(unit_num, '(A)') repeat('-', 70)
+        write(unit_num, '(5X, A, 6X, A, 9X, A, 8X, A)') 'E (cm-1)', 'x (A)', 'psi(x)', '|psi(x)|^2'
+        do i = 1, n_x
+            write(unit_num, '(F15.5, F10.3, 2F15.5)') E_psi_cm, x_grid_A(i), psi4_A(i), psi4_A(i)**2
+        end do
+        close(unit_num)
+
+        deallocate(psi1, psi2, psi3, psi4)
+        deallocate(psi1_A, psi2_A, psi3_A, psi4_A)
+    end subroutine compute_and_write_wavepackets
+
+    ! -------------------------------------------------------------------------
+    ! Compute and write recurrence times
+    ! -------------------------------------------------------------------------
+    subroutine compute_and_write_recurrence_times(data_dir, E_all, ierr)
+        character(len=*), intent(in) :: data_dir
+        real(dp), intent(in) :: E_all(:)
+        integer, intent(out) :: ierr
+        integer :: unit_num
+        real(dp) :: tr1, tr2
+
+        tr1 = recurrence_time(E_all(1), E_all(2)) * 1.0e12_dp  ! Convert to ps
+        tr2 = recurrence_time(E_all(3), E_all(4)) * 1.0e12_dp
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-tiempo_recurrencia.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A, 26X, A)') 'Psi', 'tr (ps)'
+        write(unit_num, '(A, 2X, F15.5)') '(Phi0+-Phi1)/dsqrt(2)', tr1
+        write(unit_num, '(A, 2X, F15.5)') '(Phi2+-Phi3)/dsqrt(2)', tr2
+        close(unit_num)
+    end subroutine compute_and_write_recurrence_times
+
+    ! -------------------------------------------------------------------------
+    ! Compute and write survival probability for two-state wavepackets
+    ! -------------------------------------------------------------------------
+    subroutine compute_and_write_survival_prob(data_dir, E_all, ierr)
+        character(len=*), intent(in) :: data_dir
+        real(dp), intent(in) :: E_all(:)
+        integer, intent(out) :: ierr
+        integer :: unit_num, i, n_steps
+        real(dp) :: t0, tf, dt, t_val, Ps
+        real(dp) :: c_wp(2), E_wp(2)
+
+        ! First wavepacket: (Phi0 + Phi1)/sqrt(2)
+        c_wp = [1.0_dp/sqrt(2.0_dp), 1.0_dp/sqrt(2.0_dp)]
+        E_wp = [E_all(1), E_all(2)]
+
+        t0 = 0.0_dp
+        tf = 100.0_dp
+        dt = 0.1_dp
+        n_steps = int((tf - t0) / dt) + 1
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-probabilidad_supervivencia_Psi0.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') 't (ps)      Ps(t)'
+        do i = 1, n_steps
+            t_val = t0 + dt * real(i - 1, dp)
+            Ps = survival_probability(c_wp, E_wp, t_val)
+            write(unit_num, '(F6.2, F15.5)') t_val, Ps
+        end do
+        close(unit_num)
+
+        ! Second wavepacket: (Phi2 + Phi3)/sqrt(2)
+        E_wp = [E_all(3), E_all(4)]
+
+        t0 = 0.0_dp
+        tf = 1.0_dp
+        dt = 0.01_dp
+        n_steps = int((tf - t0) / dt) + 1
+
+        open(newunit=unit_num, file=trim(data_dir)//"out-probabilidad_supervivencia_Psi1.dat", &
+             status='replace', iostat=ierr)
+        write(unit_num, '(A)') 't (ps)      Ps(t)'
+        do i = 1, n_steps
+            t_val = t0 + dt * real(i - 1, dp)
+            Ps = survival_probability(c_wp, E_wp, t_val)
+            write(unit_num, '(F6.2, F15.5)') t_val, Ps
+        end do
+        close(unit_num)
+    end subroutine compute_and_write_survival_prob
+
+    ! -------------------------------------------------------------------------
+    ! Compute 4-state wavepackets with varying mixing angle alpha
+    ! -------------------------------------------------------------------------
+    subroutine compute_4state_wavepackets(data_dir, params, E_all, alpha_arr, &
+                                          psi_even_A, psi_odd_A, x_grid_A, &
+                                          c_matrix, x_matrix, tp_E, tp_x1, tp_x2, tp_x3, tp_x4, ierr)
+        character(len=*), intent(in) :: data_dir
+        type(system_params_t), intent(in) :: params
+        real(dp), intent(in) :: E_all(:), alpha_arr(:)
+        real(dp), intent(in) :: psi_even_A(:,:), psi_odd_A(:,:)
+        real(dp), intent(in) :: x_grid_A(:)
+        real(dp), intent(in) :: c_matrix(:,:), x_matrix(:,:)
+        real(dp), intent(out) :: tp_E(:), tp_x1(:), tp_x2(:), tp_x3(:), tp_x4(:)
+        integer, intent(out) :: ierr
+
+        integer :: unit_psi, unit_ps, unit_x, i, j, n_x, n_alpha, n_steps
+        real(dp) :: alpha_deg, alpha_rad, cos_a, sin_a
+        real(dp) :: c_4(4), E_4(4), E_total, E_total_cm
+        real(dp), allocatable :: psi_4(:)
+        real(dp) :: t0, tf, dt, t_val, Ps, x_exp
+        character(len=256) :: filename
+        character(len=16) :: alpha_str
+
+        n_x = size(x_grid_A)
+        n_alpha = size(alpha_arr)
+        allocate(psi_4(n_x))
+
+        E_4 = [E_all(1), E_all(2), E_all(3), E_all(4)]
+
+        ! Alpha values correspond to file numbers: 90+j, 110+j, 130+j
+        do j = 1, n_alpha
+            alpha_deg = alpha_arr(j)
+            alpha_rad = alpha_deg * PI / 180.0_dp
+            cos_a = cos(alpha_rad)
+            sin_a = sin(alpha_rad)
+
+            ! Coefficients: a0 = a1 = cos(alpha)/sqrt(2), a2 = a3 = sin(alpha)/sqrt(2)
+            c_4(1) = cos_a / sqrt(2.0_dp)
+            c_4(2) = cos_a / sqrt(2.0_dp)
+            c_4(3) = sin_a / sqrt(2.0_dp)
+            c_4(4) = sin_a / sqrt(2.0_dp)
+
+            ! Total energy
+            E_total = c_4(1)**2 * E_all(1) + c_4(2)**2 * E_all(2) + &
+                      c_4(3)**2 * E_all(3) + c_4(4)**2 * E_all(4)
+            E_total_cm = E_total * EUACM
+
+            ! Turning points
+            call turning_points(E_total_cm, params%Vb_cm, params%xe_angstrom, &
+                               tp_x1(j), tp_x2(j), tp_x3(j), tp_x4(j))
+            tp_E(j) = E_total_cm
+
+            ! Compute wavepacket
+            psi_4 = c_4(1) * psi_even_A(:,1) + c_4(2) * psi_odd_A(:,1) + &
+                    c_4(3) * psi_even_A(:,2) + c_4(4) * psi_odd_A(:,2)
+
+            ! Write wavepacket file
+            write(alpha_str, '(I0)') int(alpha_deg)
+            filename = trim(data_dir)//"out-psi_4EE_alfa="//trim(alpha_str)//".dat"
+            open(newunit=unit_psi, file=trim(filename), status='replace', iostat=ierr)
+            write(unit_psi, '(A)') repeat('=', 70)
+            write(unit_psi, '(A)') 'Psi = cos(alfa)/dsqrt(2)*(Phi0 + Phi1) + sen(alfa)/dsqrt(2)*(Phi2 + Phi3)'
+            write(unit_psi, '(A)') repeat('-', 70)
+            write(unit_psi, '(A, 6X, A, 6X, A, 9X, A, 8X, A)') 'alfa', 'E (cm-1)', 'x (A)', 'psi(x)', '|psi(x)|^2'
+            do i = 1, n_x
+                write(unit_psi, '(F4.1, F15.5, F10.3, 2F15.5)') &
+                      alpha_deg, E_total_cm, x_grid_A(i), psi_4(i), psi_4(i)**2
+            end do
+            close(unit_psi)
+
+            ! Time dynamics
+            t0 = 0.0_dp
+            tf = 50.0_dp
+            dt = 5.0e-3_dp
+            n_steps = int((tf - t0) / dt) + 1
+
+            ! Write survival probability
+            filename = trim(data_dir)//"out-prob_sup_alfa="//trim(alpha_str)//".dat"
+            open(newunit=unit_ps, file=trim(filename), status='replace', iostat=ierr)
+            write(unit_ps, '(A)') repeat('=', 70)
+            write(unit_ps, '(A, A, F5.1, A)') '---', ' alfa =', alpha_deg, ' ---'
+            write(unit_ps, '(A)') repeat('-', 70)
+            write(unit_ps, '(A)') 't (ps)      Ps(t)'
+            do i = 1, n_steps
+                t_val = t0 + dt * real(i - 1, dp)
+                Ps = survival_probability(c_4, E_4, t_val)
+                write(unit_ps, '(F8.4, F15.5)') t_val, Ps
+            end do
+            close(unit_ps)
+
+            ! Write expectation value <x>(t)
+            filename = trim(data_dir)//"out-val_esp_x_alfa="//trim(alpha_str)//".dat"
+            open(newunit=unit_x, file=trim(filename), status='replace', iostat=ierr)
+            write(unit_x, '(A)') repeat('=', 70)
+            write(unit_x, '(A, A, F5.1, A)') '---', ' alfa =', alpha_deg, ' ---'
+            write(unit_x, '(A)') repeat('-', 70)
+            write(unit_x, '(2X, A, 7X, A)') 't (ps)', '<x>t (A)'
+            do i = 1, n_steps
+                t_val = t0 + dt * real(i - 1, dp)
+                x_exp = expectation_value_x(params%N, c_4, E_4, t_val, c_matrix, x_matrix)
+                write(unit_x, '(F8.4, F15.5)') t_val, x_exp
+            end do
+            close(unit_x)
+        end do
+
+        deallocate(psi_4)
+    end subroutine compute_4state_wavepackets
+
+    ! -------------------------------------------------------------------------
+    ! Write N vs W files for convergence visualization
+    ! -------------------------------------------------------------------------
+    subroutine write_N_vs_W_files(data_dir, E_arr, N_max, N_conv, ierr)
+        character(len=*), intent(in) :: data_dir
+        real(dp), intent(in) :: E_arr(:,:)
+        integer, intent(in) :: N_max
+        integer, intent(in) :: N_conv(:)
+        integer, intent(out) :: ierr
+        integer :: unit_num, i, level
+        character(len=256) :: filename
+        character(len=8) :: level_str
+
+        do level = 0, 3
+            write(level_str, '(I0)') level
+            filename = trim(data_dir)//"out-N_vs_W"//trim(level_str)//".dat"
+            open(newunit=unit_num, file=trim(filename), status='replace', iostat=ierr)
+
+            write(unit_num, '(2X, A, I3, 2X, A, I3)') 'n =', level + 1, 'Nconverg. =', N_conv(level + 1)
+            write(unit_num, '(2X, A, 8X, A, I0)') 'N', 'W', level
+
+            do i = 2, N_max, 2
+                if (i - 1 <= size(E_arr, 1) .and. level + 1 <= size(E_arr, 2)) then
+                    write(unit_num, '(I3, F15.5)') i, E_arr(i - 1, level + 1) * EUACM
+                end if
+            end do
+
+            close(unit_num)
+        end do
+    end subroutine write_N_vs_W_files
+
+end program doble_pozo_NH3
