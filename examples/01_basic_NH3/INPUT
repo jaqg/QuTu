@@ -70,9 +70,27 @@ xmax = 5.0
 # Units: a0 (Bohr radii)
 dx = 0.02
 
+# -----------------------------------------------------------------------------
+# 4-State Wavepacket Parameters (Optional)
+# -----------------------------------------------------------------------------
+
+# alpha_values: List of alpha values for 4-state wavepacket calculations
+# These are mixing angle parameters for the wavepackets used in tunneling dynamics
+# Can specify a single value or comma-separated list
+# Units: degrees
+# Default: 0.0 (single value)
+# Examples:
+#   alpha_values = 45.0                    # Single value
+#   alpha_values = 0.0, 45.0, 90.0         # Three values
+#   alpha_values = 0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0  # Multiple values
+
+# Uncomment to specify custom alpha values (otherwise defaults to 0.0):
+# alpha_values = 0.0, 10.0, 15.0, 20.0, 30.0, 40.0, 45.0, 50.0, 60.0, 70.0, 75.0, 80.0, 90.0
+
 # =============================================================================
 # Notes:
 # - All calculations are performed in atomic units internally
 # - Results are converted to Angstroms and cm^-1 for output
 # - Output files are written to the 'data/' directory
+# - If alpha_values is not specified, defaults to 0.0 (single value)
 # =============================================================================

@@ -1,17 +1,18 @@
 ! =============================================================================
-! Program: doble_pozo_NH3
-! Description: Quantum tunneling in double-well potential for NH3 umbrella mode
+! Program: Quantum Tunneling (QuTu)
+! Description: Quantum tunneling simulation in double-well potentials.
 !              Solves the Schrodinger equation using variational method
 !              with harmonic oscillator basis functions.
 !              Calculations are performed in atomic units and later converted
+!              to SI units.
 !
 ! Author: Jose Antonio Quinonero Gris
 ! 
-! Creation date: 28/05/2022
-! + Update 20/01/2026: 
+! Creation date v0: 28/05/2022
+! + Update v1.0.0: 20/01/2026: 
 !     - Refactored code (modules, types) and added comments
 ! =============================================================================
-program doble_pozo_NH3
+program qutu
     use constants
     use types
     use harmonic_oscillator
@@ -247,11 +248,11 @@ program doble_pozo_NH3
 
             ! -----------------------------------------------------------------
             ! 4-state wavepacket calculations with varying alpha
+            ! Use alpha values from INPUT file (or defaults if not specified)
             ! -----------------------------------------------------------------
-            n_alpha = 13
+            n_alpha = input_params%n_alpha_values
             allocate(alpha_4EE(n_alpha))
-            alpha_4EE = [0.0_dp, 10.0_dp, 15.0_dp, 20.0_dp, 30.0_dp, 40.0_dp, &
-                         45.0_dp, 50.0_dp, 60.0_dp, 70.0_dp, 75.0_dp, 80.0_dp, 90.0_dp]
+            alpha_4EE = input_params%alpha_values
 
             allocate(tp_x1(n_alpha), tp_x2(n_alpha), tp_x3(n_alpha), tp_x4(n_alpha), tp_E(n_alpha))
 
@@ -887,4 +888,4 @@ contains
         end do
     end subroutine write_N_vs_W_files
 
-end program doble_pozo_NH3
+end program qutu

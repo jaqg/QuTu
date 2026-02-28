@@ -73,3 +73,13 @@ ehthumbs.db
 *.bak
 *.tmp
 *.temp
+
+# AI assistant and internal planning files
+CLAUDE*.md
+notas-*.md
+*_PLAN.md
+*_SUMMARY.md
+*_STATUS.md
+*_COMPLETE.md
+*_BRIEF.md
+restructure*.sh

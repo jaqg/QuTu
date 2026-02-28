@@ -20,12 +20,62 @@ module input_reader
         real(dp) :: xmin
         real(dp) :: xmax
         real(dp) :: dx
+        ! Alpha values for 4-state wavepacket calculations
+        real(dp), allocatable :: alpha_values(:)
+        integer :: n_alpha_values
     end type input_params_t
 
     ! Public procedures
     public :: read_input_file
 
 contains
+
+    ! -------------------------------------------------------------------------
+    ! Parse comma-separated real values
+    ! -------------------------------------------------------------------------
+    subroutine parse_real_array(value_str, values, n_values, ierr)
+        character(len=*), intent(in) :: value_str
+        real(dp), allocatable, intent(out) :: values(:)
+        integer, intent(out) :: n_values
+        integer, intent(out) :: ierr
+
+        integer :: i, comma_pos, n_commas
+        character(len=len(value_str)) :: remaining
+
+        ierr = 0
+        n_values = 0
+
+        ! Count commas to determine array size
+        n_commas = 0
+        do i = 1, len_trim(value_str)
+            if (value_str(i:i) == ',') n_commas = n_commas + 1
+        end do
+        n_values = n_commas + 1
+
+        ! Allocate array
+        if (allocated(values)) deallocate(values)
+        allocate(values(n_values))
+
+        ! Parse values
+        remaining = adjustl(value_str)
+        do i = 1, n_values
+            if (i < n_values) then
+                comma_pos = index(remaining, ',')
+                if (comma_pos == 0) then
+                    ierr = 1
+                    return
+                end if
+                read(remaining(1:comma_pos-1), *, iostat=ierr) values(i)
+                if (ierr /= 0) return
+                remaining = adjustl(remaining(comma_pos+1:))
+            else
+                ! Last value
+                read(remaining, *, iostat=ierr) values(i)
+                if (ierr /= 0) return
+            end if
+        end do
+
+    end subroutine parse_real_array
 
     ! -------------------------------------------------------------------------
     ! Read unified INPUT file
@@ -35,11 +85,11 @@ contains
         type(input_params_t), intent(out) :: params
         integer, intent(out) :: ierr
 
-        integer :: unit_num, io_stat
+        integer :: unit_num, io_stat, parse_ierr
         character(len=256) :: line, key, value_str
         integer :: eq_pos, comment_pos
         logical :: found_N_max, found_xe, found_Vb, found_mass_H, found_mass_N
-        logical :: found_xmin, found_xmax, found_dx
+        logical :: found_xmin, found_xmax, found_dx, found_alpha_values
 
         ! Initialize flags
         found_N_max = .false.
@@ -50,7 +100,14 @@ contains
         found_xmin = .false.
         found_xmax = .false.
         found_dx = .false.
+        found_alpha_values = .false.
         ierr = 0
+
+        ! Initialize alpha_values with defaults (single value: 0.0)
+        params%n_alpha_values = 1
+        if (allocated(params%alpha_values)) deallocate(params%alpha_values)
+        allocate(params%alpha_values(1))
+        params%alpha_values = [0.0_dp]
 
         ! Open INPUT file
         open(newunit=unit_num, file=filename, status='old', action='read', iostat=ierr)
@@ -126,6 +183,14 @@ contains
                 case ('dx')
                     read(value_str, *, iostat=io_stat) params%dx
                     if (io_stat == 0) found_dx = .true.
+
+                case ('alpha_values')
+                    call parse_real_array(value_str, params%alpha_values, params%n_alpha_values, parse_ierr)
+                    if (parse_ierr == 0) then
+                        found_alpha_values = .true.
+                    else
+                        write(*,'(A)') ' Warning: Failed to parse alpha_values, using defaults'
+                    end if
 
                 case default
                     ! Unknown key, just skip with a warning

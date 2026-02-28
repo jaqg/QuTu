@@ -23,7 +23,7 @@ The multi-agent coordinator completed **all three phases** of project restructur
 ### Step 1: Execute Restructuring (2 minutes)
 
 ```bash
-cd /home/jose/Documents/Universidad/aac-INVESTIGACION/zuñiga/quantum-tunnelling
+cd quantum-tunnelling
 chmod +x restructure.sh
 ./restructure.sh
 ```
@@ -75,7 +75,7 @@ chmod +x run.sh
 
 Check the new structure:
 ```bash
-tree -L 2 -d /home/jose/Documents/Universidad/aac-INVESTIGACION/zuñiga/quantum-tunnelling
+tree -L 2 -d quantum-tunnelling
 ```
 
 **Key directories**:
@@ -88,7 +88,7 @@ tree -L 2 -d /home/jose/Documents/Universidad/aac-INVESTIGACION/zuñiga/quantum-
 ### 2. Generalization Plan (Important!)
 
 ```bash
-cd /home/jose/Documents/Universidad/aac-INVESTIGACION/zuñiga/quantum-tunnelling
+cd quantum-tunnelling
 less GENERALIZATION_PLAN.md
 ```
 

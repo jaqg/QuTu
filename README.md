@@ -3,7 +3,7 @@
 **Quantum mechanical simulation of tunneling in one-dimensional double-well potentials using the variational method with harmonic oscillator basis functions.**
 
 [![Fortran](https://img.shields.io/badge/Fortran-2008-blue.svg)](https://fortran-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)]()
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
 ## Features
 
@@ -113,7 +113,7 @@ quantum-tunnelling/
 ├── INPUT                  # Example input file
 ├── Makefile               # Build system
 ├── README.md              # This file
-└── CLAUDE.md              # AI assistant instructions
+└── CITATION.cff           # Citation metadata
 ```
 
 ## Usage
@@ -280,9 +280,22 @@ Scales approximately as O(N³) due to matrix diagonalization.
 - NIST Atomic Spectra Database: https://www.nist.gov/pml/atomic-spectra-database
 - CODATA Fundamental Physical Constants (2018)
 
+## Student Version
+
+A simplified version of the code (Spanish variable names, single-file structure) is
+available on the `v1` branch, intended as a starting point for students:
+
+```bash
+git clone --branch v1 https://github.com/jaqg/QuTu
+```
+
+This version matches the reference used in the associated bachelor's thesis (TFG).
+
 ## License
 
-[Specify license - e.g., MIT, GPL, or Academic Use Only]
+This program is free software: you can redistribute it and/or modify it under the terms
+of the **GNU General Public License v3** as published by the Free Software Foundation.
+See the [LICENSE](LICENSE) file for details.
 
 ## Citation
 
@@ -290,18 +303,22 @@ If you use this code in your research, please cite:
 
 ```bibtex
 @software{qutu2026,
-  author = {Quinonero Gris, Jose Antonio},
-  title = {QuTu: Quantum Tunneling Simulation in 1D Potentials},
-  year = {2026},
-  url = {https://github.com/[your-repo]/quantum-tunnelling}
+  author       = {Quinonero Gris, Jose Antonio},
+  title        = {QuTu: Quantum Tunneling Simulation in 1D Double-Well Potentials},
+  year         = {2026},
+  url          = {https://github.com/jaqg/QuTu},
+  license      = {GPL-3.0},
+  version      = {2.0.0}
 }
 ```
+
+A `CITATION.cff` file is also provided for GitHub's "Cite this repository" button.
 
 ## Contact
 
 **Author**: Jose Antonio Quinonero Gris
-**Institution**: [Your institution]
-**Email**: [Your email]
+**Institution**: Universidad de Murcia
+**Repository**: https://github.com/jaqg/QuTu
 
 ## Acknowledgments
 
@@ -311,6 +328,6 @@ If you use this code in your research, please cite:
 
 ---
 
-**Version**: 1.0.0
-**Last Updated**: 2026-01-20
+**Version**: 2.0.0
+**Last Updated**: 2026-02-28
 **Status**: Production Ready

@@ -28,7 +28,7 @@ MOD_SRCS = $(MOD_DIR)/constants.f90 \
            $(MOD_DIR)/input_reader.f90
 
 # Main program
-MAIN_SRC = doble_pozo_NH3.f90
+MAIN_SRC = main/qutu.f90
 
 # Object files
 MOD_OBJS = $(BUILD_DIR)/constants.o \
@@ -39,10 +39,10 @@ MOD_OBJS = $(BUILD_DIR)/constants.o \
            $(BUILD_DIR)/io.o \
            $(BUILD_DIR)/input_reader.o
 
-MAIN_OBJ = $(BUILD_DIR)/doble_pozo_NH3.o
+MAIN_OBJ = $(BUILD_DIR)/qutu.o
 
 # Executable
-EXEC = doble_pozo_NH3
+EXEC = qutu
 
 # =============================================================================
 # Targets
@@ -84,7 +84,7 @@ $(BUILD_DIR)/input_reader.o: $(MOD_DIR)/input_reader.f90 $(BUILD_DIR)/constants.
 	$(FC) $(FFLAGS) -I$(BUILD_DIR) -J$(BUILD_DIR) -c -o $@ $<
 
 # Compile main program
-$(BUILD_DIR)/doble_pozo_NH3.o: $(MAIN_SRC) $(MOD_OBJS) | $(BUILD_DIR)
+$(BUILD_DIR)/qutu.o: $(MAIN_SRC) $(MOD_OBJS) | $(BUILD_DIR)
 	$(FC) $(FFLAGS) -I$(BUILD_DIR) -c -o $@ $<
 
 # Debug build

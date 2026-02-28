@@ -6,10 +6,7 @@ The NH3 quantum tunneling simulation now uses a single unified `INPUT` file inst
 
 ## File Location
 
-The `INPUT` file must be placed in the project root directory:
-```
-/home/jose/Documents/Universidad/aac-INVESTIGACION/zuñiga/quantum-tunnelling/INPUT
-```
+The `INPUT` file must be placed in the project root director
 
 ## Format
 
@@ -69,7 +66,7 @@ dx = 0.02        # Grid spacing (Bohr)
 
 2. **Navigate to source directory**:
    ```bash
-   cd /home/jose/Documents/Universidad/aac-INVESTIGACION/zuñiga/quantum-tunnelling/src
+   cd quantum-tunnelling/src
    ```
 
 3. **Compile** (if not already compiled):
