@@ -11,7 +11,7 @@ abstract: >
   potentials using the variational method with harmonic oscillator basis
   functions. The primary application is the ammonia (NH3) umbrella inversion.
   Written in Fortran 2008 with LAPACK for Hamiltonian diagonalization.
-version: 2.0.0
+version: "2.0.0-dev"
 date-released: 2026-02-28
 url: "https://github.com/jaqg/QuTu"
 repository-code: "https://github.com/jaqg/QuTu"
