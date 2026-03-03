@@ -280,16 +280,12 @@ Scales approximately as O(N³) due to matrix diagonalization.
 - NIST Atomic Spectra Database: https://www.nist.gov/pml/atomic-spectra-database
 - CODATA Fundamental Physical Constants (2018)
 
-## Student Version
+## Related Repositories
 
-A simplified version of the code (Spanish variable names, single-file structure) is
-available on the `v1` branch, intended as a starting point for students:
-
-```bash
-git clone --branch v1 https://github.com/jaqg/QuTu
-```
-
-This version matches the reference used in the associated bachelor's thesis (TFG).
+- **[NH3-double-well-v1](https://github.com/jaqg/NH3-double-well-v1)** —
+  Intermediate refactored version, used as a starting point for student TFG projects.
+- **[NH3-double-well-v0-TFG](https://github.com/jaqg/NH3-double-well-v0-TFG)** —
+  Original Bachelor's Thesis code (archived). Historical reference only.
 
 ## License
 
