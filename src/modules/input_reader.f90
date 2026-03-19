@@ -20,6 +20,8 @@ module input_reader
         real(dp) :: xmin
         real(dp) :: xmax
         real(dp) :: dx
+        ! Output verbosity: 0=minimal, 1=full OUTPUT (default), 2=full OUTPUT + dat files
+        integer :: print_level
         ! Alpha values for 4-state wavepacket calculations
         real(dp), allocatable :: alpha_values(:)
         integer :: n_alpha_values
@@ -91,7 +93,8 @@ contains
         logical :: found_N_max, found_xe, found_Vb, found_mass_H, found_mass_N
         logical :: found_xmin, found_xmax, found_dx, found_alpha_values
 
-        ! Initialize flags
+        ! Initialize flags and defaults
+        params%print_level = 1
         found_N_max = .false.
         found_xe = .false.
         found_Vb = .false.
@@ -183,6 +186,9 @@ contains
                 case ('dx')
                     read(value_str, *, iostat=io_stat) params%dx
                     if (io_stat == 0) found_dx = .true.
+
+                case ('print_level')
+                    read(value_str, *, iostat=io_stat) params%print_level
 
                 case ('alpha_values')
                     call parse_real_array(value_str, params%alpha_values, params%n_alpha_values, parse_ierr)

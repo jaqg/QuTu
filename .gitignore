@@ -14,6 +14,9 @@ QuTu
 qutu
 doble_pozo_NH3
 
+# Program output (generated at runtime)
+OUTPUT
+
 # Data and results (user-generated)
 data/
 results/

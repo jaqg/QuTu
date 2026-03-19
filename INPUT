@@ -69,9 +69,22 @@ xmax = 5.0
 # Units: a0 (Bohr radii)
 dx = 0.02
 
+# -----------------------------------------------------------------------------
+# Output Control
+# -----------------------------------------------------------------------------
+
+# print_level: controls verbosity of output
+#   0 = minimal: OUTPUT file with scalar results only (energies, recurrence
+#       times, turning points) -- no grid or time-series data
+#   1 = normal:  OUTPUT file with all sections including grid data (default)
+#   2 = debug:   OUTPUT file (full) + individual out-*.dat files in data/
+# Default: 1
+print_level = 1
+
 # =============================================================================
 # Notes:
 # - All calculations are performed in atomic units internally
 # - Results are converted to Angstroms and cm^-1 for output
-# - Output files are written to the 'data/' directory
+# - OUTPUT file is written to the current directory
+# - Individual dat files (print_level = 2) are written to the 'data/' directory
 # =============================================================================
