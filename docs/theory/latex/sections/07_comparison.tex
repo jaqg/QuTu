@@ -1,0 +1,184 @@
+\section{Basis Set Comparison}\label{sec:comparison}
+% ============================================================
+% ============================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{lcccc}
+  \toprule
+  Property & Basis I (HO) & Basis II (Shifted HO) & Basis III (Gaussian) & Basis IV (DVR) \\
+  \midrule
+  Orthogonal          & Yes & No  & No  & Yes \\
+  Overlap $\mathbf{S}$ & $\mathbf{I}$ & Non-trivial & Non-trivial & $\mathbf{I}$ \\
+  $\mathbf{H}$ structure & Banded & Dense & Dense & Dense \\
+  Parity factorization & Yes (symmetric $V$) & Possible & No & No \\
+  $\mathbf{V}$ matrix  & Analytic & Analytic & Analytic & Diagonal \\
+  Parameters           & $\alpha$ & $\alpha, \xe$ & $\{x_i, \alpha_i\}$ & $\Delta x, N$ \\
+  Typical $N$ for $10^{-8}$ & 30--50 & 15--25 & 20--40 & 200--500 \\
+  Benchmark quality    & No & No & No & Yes \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ------------------------------------------------------------
+\subsection{Analytical comparison for the asymmetric double well}\label{sec:basis_asym}
+% ------------------------------------------------------------
+
+The summary above compares the four bases in generic terms.  For the \emph{asymmetric}
+potential $V(x) = ax^4 - bx^2 + cx$ ($c \neq 0$), several properties change qualitatively,
+making the DVR (Basis~IV) analytically preferable to the shifted-HO (Basis~II) despite
+Basis~II achieving faster convergence per function.  This subsection examines that
+trade-off in detail.
+
+\subsubsection{Matrix element complexity}
+
+\textbf{DVR/PIB basis.}
+The kinetic energy matrix is given by the closed-form Colbert--Miller expressions
+(\cref{eq:T_DVR_diag,eq:T_DVR_offdiag}).  The potential matrix is diagonal:
+$V_{jl} = V(x_j)\,\delta_{jl}$ (\cref{eq:V_DVR}).  No integral is ever computed;
+the Hamiltonian is assembled solely from point evaluations of $V(x)$ and the analytic
+kinetic-energy formula.  Changing the potential requires changing only the function
+evaluation, not any integral routine.
+
+\textbf{Shifted-HO basis.}
+Same-center matrix elements reduce to origin-centered HO results via the binomial shift
+(\cref{sec:shifted_potential}), but the cross-center blocks $\langle\varphi_m^{(L)}|x^k|
+\varphi_n^{(R)}\rangle$ require: (i)~computing the exponential overlap factor
+$S_{mn}^{LR}$ involving associated Laguerre polynomials (\cref{eq:S_LR}); (ii)~expanding
+$x^k$ in displacements about the right center; and (iii)~contracting the result with
+$S_{mn}^{LR}$.  The bookkeeping grows with $k$ and becomes substantially heavier when
+$\alpha_L \neq \alpha_R$ (which is the generic asymmetric case, see below).
+
+\subsubsection{Orthogonality and the eigenvalue problem}
+
+The DVR basis is orthonormal, giving the standard eigenvalue problem $\mathbf{H}\mathbf{c}
+= E\mathbf{c}$.
+
+The shifted-HO basis is non-orthogonal, requiring the generalized problem
+$\mathbf{H}\mathbf{c} = E\,\mathbf{S}\mathbf{c}$.  The overlap matrix $\mathbf{S}$ must
+be computed, stored, and factored (e.g.\ via Cholesky or L\"owdin orthogonalization
+$\mathbf{S}^{-1/2}$) before the standard solver can be applied.  This introduces an
+additional source of numerical ill-conditioning: if the two well centers are close (shallow
+barrier, strong asymmetry pushing $x_-$ and $x_+$ together), the cross-center overlaps
+$S_{mn}^{LR}$ approach unity and $\mathbf{S}$ develops near-linear dependencies.  A
+regularization or basis truncation is then required.
+
+\begin{remark}
+  The variational theorem (Hylleraas--Undheim--MacDonald) holds for the generalized
+  eigenvalue problem, so monotone convergence with basis size is guaranteed in principle.
+  In practice, however, near-linear dependence limits the useful basis size before
+  numerical noise dominates.
+\end{remark}
+
+\subsubsection{Asymmetry-specific complications for Basis~II}
+
+In the \emph{symmetric} case the shifted-HO basis benefits from:
+\begin{itemize}
+  \item $x_L = -\xe$, $x_R = +\xe$ known analytically;
+  \item $\alpha_L = \alpha_R = \alpha_{\text{local}}$ by symmetry;
+  \item a parity decomposition that halves the dimension of each block.
+\end{itemize}
+
+For $c \neq 0$, all three advantages are lost:
+\begin{enumerate}
+  \item \textbf{Shifted centers.}  The minima $x_\pm$ are roots of the depressed cubic
+    $4ax^3 - 2bx + c = 0$ (\cref{eq:cubic_roots}), which must be solved (numerically
+    or via the trigonometric formula) at each value of $c$.
+  \item \textbf{Unequal widths.}  The curvatures $V''(x_\pm) = 12ax_\pm^2 - 2b$ differ,
+    so $\omega_L \neq \omega_R$ and the natural width parameters $\alpha_L = \mu\omega_L$,
+    $\alpha_R = \mu\omega_R$ must be computed separately.  With $\alpha_L \neq \alpha_R$,
+    the displacement-operator formula \cref{eq:S_LR} no longer applies directly; the
+    overlap integrals must be evaluated by combining two Gaussians of different widths,
+    leading to a more involved computation.
+  \item \textbf{No parity block structure.}  The linear term $cx$ couples even and odd
+    functions (\cref{sec:parity}), so the full $N\times N$ generalized eigenvalue problem
+    must be solved without any block decomposition.
+  \item \textbf{Basis partitioning.}  The optimal split $N_L$ vs.\ $N_R$ between the two
+    centers is not obvious a priori when the wells are unequal, and an inappropriate
+    partition may under-represent one well.
+  \item \textbf{Discontinuous basis under parameter variation.}  A sweep over $c$ requires
+    recomputing centers, widths, and overlaps at every parameter value, making the basis
+    non-uniform across the sweep.
+\end{enumerate}
+
+The DVR basis is entirely unaffected by all five points: the same grid with the same
+parameters applies for any $c$.
+
+\subsubsection{The DVR/FGH connection: elimination of all integrals}
+
+The deepest analytical advantage of the DVR basis is the
+\emph{integral-free representation} of any potential.  The Fourier Grid Hamiltonian
+(\cref{sec:FGH}) exploits the fact that the PIB/sinusoidal functions define a unitary
+transformation between the finite basis representation (FBR) and a uniform grid of
+quadrature points $\{x_j\}$.  In the DVR, the potential matrix becomes exactly diagonal
+(\cref{eq:V_DVR}):
+\begin{equation}
+  V_{jl} = V(x_j)\,\delta_{jl}\,.
+\end{equation}
+No integrals need to be computed for any potential, polynomial or otherwise.  The
+Hamiltonian matrix is assembled in $\mathcal{O}(N^2)$ operations (one potential
+evaluation per grid point, plus the analytic kinetic-energy formula).
+
+The shifted-HO basis has no natural DVR.  A Gauss--Hermite quadrature exists for
+each individual center, but combining two centers with different widths requires a
+non-standard bi-centric quadrature that negates the simplicity of the approach.
+
+\subsubsection{Time-dependent dynamics}
+
+For wavepacket propagation studies (e.g.\ survival probability, expectation values as
+functions of time), the DVR/PIB basis connects naturally to the \emph{split-operator}
+method via the Fast Fourier Transform:
+\begin{equation}
+  e^{-i\hat{H}\Delta t/\hb}
+  \approx e^{-i\hat{V}\Delta t/(2\hb)}\,\mathcal{F}^{-1}\,
+          e^{-i\hat{T}\Delta t/\hb}\,\mathcal{F}\,
+          e^{-i\hat{V}\Delta t/(2\hb)}
+  + \mathcal{O}(\Delta t^3)\,,
+\end{equation}
+where $\mathcal{F}$ is the discrete Fourier transform.  Each step costs
+$\mathcal{O}(N\log N)$.  The potential exponential is diagonal in the position
+representation; the kinetic exponential is diagonal in momentum space.  This requires
+no matrix diagonalization whatsoever.
+
+For the shifted-HO basis, the propagator $e^{-i\mathbf{S}^{-1}\mathbf{H}\Delta t/\hb}$
+must be computed as a dense matrix exponential, costing $\mathcal{O}(N^3)$ per
+time step.
+
+\subsubsection{Summary}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lcc}
+  \toprule
+  Criterion & DVR (Basis~IV) & Shifted-HO (Basis~II) \\
+  \midrule
+  Convergence rate (eigenstates needed) & Slower & \textbf{Faster} \\
+  Matrix element simplicity & \textbf{Integral-free} & Heavy (cross-center) \\
+  Eigenvalue problem type & \textbf{Standard} & Generalized \\
+  Overlap conditioning & \textbf{None} & Risk near $\Delta E \to 0$ \\
+  Parity exploitation ($c=0$) & No & Yes \\
+  Robustness for $c \neq 0$ & \textbf{Full} & Loses parity; re-parameterize \\
+  Parameter sweep ($c$ varies) & \textbf{Trivial} & Recompute basis each step \\
+  Time-dependent propagation & \textbf{FFT split-op} $\mathcal{O}(N\log N)$ & Dense expm $\mathcal{O}(N^3)$ \\
+  Physical transparency & Less & \textbf{More} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Conclusion.}
+The shifted-HO basis (Basis~II) is physically transparent and achieves excellent
+convergence per function in the symmetric case, where the well centers and widths are
+known analytically and parity halves the problem size.  In the asymmetric case these
+advantages largely disappear: the basis must be redesigned at every parameter value,
+the generalized eigenvalue problem introduces conditioning risk, and the integral-free
+simplicity of the DVR is foregone.
+
+The DVR/FGH basis (Basis~IV) requires modestly more grid points to reach the same
+accuracy, but this cost is offset by: (i)~zero integral computation for any potential;
+(ii)~a standard, well-conditioned eigenvalue problem; (iii)~complete insensitivity to
+$c$; and (iv)~the ability to perform time-dependent propagation at $\mathcal{O}(N\log N)$
+cost.  For the asymmetric double well---and particularly for parameter sweeps over the
+asymmetry coefficient $c$---the DVR is the analytically and computationally preferred basis.
+
+% ============================================================
+% ============================================================

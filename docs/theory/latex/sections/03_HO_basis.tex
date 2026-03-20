@@ -1,0 +1,365 @@
+\section{Basis Set~I: Harmonic Oscillator Basis (Centered at Origin)}\label{sec:HO}
+% ============================================================
+% ============================================================
+
+This is the current implementation in QuTu. The basis functions are the eigenstates of the
+one-dimensional harmonic oscillator centered at the origin:
+\begin{equation}\label{eq:HO_basis}
+  \varphi_n(x) \equiv \varphi_n(x;\alpha)
+  = \mathcal{N}_n\,H_n\!\bigl(\sqrt{\alpha}\,x\bigr)\,e^{-\alpha x^2/2}\,,
+  \qquad n = 0, 1, 2, \ldots,
+\end{equation}
+with normalization constant
+\begin{equation}\label{eq:Nn}
+  \mathcal{N}_n = \left(\frac{\alpha}{\pi}\right)^{1/4}\frac{1}{\sqrt{2^n\,n!}}\,.
+\end{equation}
+Here $H_n(\xi)$ are the (``physicist's'') Hermite polynomials satisfying the recurrence
+\begin{equation}
+  H_{n+1}(\xi) = 2\xi\,H_n(\xi) - 2n\,H_{n-1}(\xi)\,,\quad
+  H_0(\xi) = 1,\;H_1(\xi) = 2\xi\,.
+\end{equation}
+The basis is orthonormal: $\braket{\varphi_m}{\varphi_n} = \delta_{mn}$.
+
+% ------------------------------------------------------------
+\subsection{Ladder operators}\label{sec:ladder}
+% ------------------------------------------------------------
+
+We define the lowering and raising operators
+\begin{equation}\label{eq:ladder_def}
+  \hat{a} = \sqrt{\frac{\alpha}{2}}\,x + \frac{1}{\sqrt{2\alpha}}\frac{d}{dx}\,,
+  \qquad
+  \adag = \sqrt{\frac{\alpha}{2}}\,x - \frac{1}{\sqrt{2\alpha}}\frac{d}{dx}\,,
+\end{equation}
+satisfying $[\hat{a}, \adag] = 1$ and
+\begin{equation}
+  \hat{a}\ket{n} = \sqrt{n}\,\ket{n-1}\,,\qquad
+  \adag\ket{n} = \sqrt{n+1}\,\ket{n+1}\,.
+\end{equation}
+
+\subsubsection{Position and derivative in terms of ladder operators}
+
+Solving \cref{eq:ladder_def} for $x$ and $d/dx$:
+\begin{equation}\label{eq:x_and_ddx}
+  \boxed{x = \frac{1}{\sqrt{2\alpha}}\bigl(\hat{a} + \adag\bigr)\,,\qquad
+  \frac{d}{dx} = \sqrt{\frac{\alpha}{2}}\bigl(\hat{a} - \adag\bigr)\,.}
+\end{equation}
+One verifies:
+\begin{equation}
+  \hat{a} + \adag = 2\sqrt{\frac{\alpha}{2}}\,x = \sqrt{2\alpha}\,x \implies x = \frac{\hat{a}+\adag}{\sqrt{2\alpha}}\,.
+\end{equation}
+
+% ------------------------------------------------------------
+\subsection{Matrix elements of $x^k$}\label{sec:HO_matrix_elements}
+% ------------------------------------------------------------
+
+\subsubsection{$\mel{m}{x}{n}$}
+
+Using \cref{eq:x_and_ddx}:
+\begin{align}
+  \mel{m}{x}{n}
+  &= \frac{1}{\sqrt{2\alpha}}\mel{m}{\hat{a}+\adag}{n}\notag\\
+  &= \frac{1}{\sqrt{2\alpha}}\bigl(\sqrt{n}\,\delta_{m,n-1} + \sqrt{n+1}\,\delta_{m,n+1}\bigr)\,.
+\end{align}
+Defining $m_* = \min(m,n)$:
+\begin{equation}\label{eq:x1_HO}
+  \boxed{\mel{m}{x}{n} = \frac{\sqrt{m_*+1}}{\sqrt{2\alpha}}\,\delta_{|m-n|,1}\,.}
+\end{equation}
+\textbf{Selection rule:} nonzero only for $|m-n| = 1$ (tridiagonal matrix).
+
+\subsubsection{$\mel{m}{x^2}{n}$}
+
+We compute $x^2 = (\hat{a}+\adag)^2/(2\alpha)$ and expand:
+\begin{equation}
+  (\hat{a}+\adag)^2 = \hat{a}^2 + \hat{a}\adag + \adag\hat{a} + (\adag)^2
+  = \hat{a}^2 + (\adag)^2 + 2\hat{N} + 1\,,
+\end{equation}
+where $\hat{N} = \adag\hat{a}$ is the number operator and we used $\hat{a}\adag = \hat{N} + 1$.
+
+Acting on $\ket{n}$:
+\begin{align}
+  (\hat{a}+\adag)^2\ket{n}
+  &= \sqrt{n(n-1)}\,\ket{n-2} + (2n+1)\ket{n} + \sqrt{(n+1)(n+2)}\,\ket{n+2}\,.
+\end{align}
+Therefore:
+\begin{equation}\label{eq:x2_HO}
+  \boxed{\mel{m}{x^2}{n} = \frac{1}{2\alpha}
+  \begin{cases}
+    \sqrt{(m_*+1)(m_*+2)} & |m-n| = 2\,,\\
+    2n+1 & m = n\,,\\
+    0 & \text{otherwise}\,.
+  \end{cases}}
+\end{equation}
+Equivalently, the diagonal element is $(n+\half)/\alpha$.
+
+\textbf{Selection rule:} nonzero for $|m-n| = 0$ or $2$ (pentadiagonal matrix).
+
+% ------------------------------------------------------------
+\subsubsection{$\mel{m}{x^3}{n}$}
+% ------------------------------------------------------------
+
+We compute $(\hat{a}+\adag)^3\ket{n}$ by applying $(\hat{a}+\adag)$ to
+$(\hat{a}+\adag)^2\ket{n} = \sqrt{n(n-1)}\ket{n-2}+(2n+1)\ket{n}+\sqrt{(n+1)(n+2)}\ket{n+2}$
+and collecting terms:
+\begin{align}
+  (\hat{a}+\adag)^3\ket{n}
+  &= \sqrt{n(n-1)(n-2)}\,\ket{n-3} + 3n^{3/2}\,\ket{n-1}\notag\\
+  &\quad + 3(n+1)^{3/2}\,\ket{n+1} + \sqrt{(n+1)(n+2)(n+3)}\,\ket{n+3}\,.
+\end{align}
+Since $\hat{x}^3 = (\hat{a}+\adag)^3/(2\alpha)^{3/2}$:
+\begin{equation}\label{eq:x3_HO}
+  \boxed{\mel{m}{x^3}{n} = \frac{1}{(2\alpha)^{3/2}}
+  \begin{cases}
+    3(m_*+1)^{3/2} & |m-n| = 1\,,\\[4pt]
+    \sqrt{(m_*+1)(m_*+2)(m_*+3)} & |m-n| = 3\,,\\[4pt]
+    0 & \text{otherwise}\,.
+  \end{cases}}
+\end{equation}
+
+\textbf{Selection rule:} nonzero for $|m-n| = 1$ or $3$ (the odd-power operator
+connects states of opposite parity). This is the term that appears in the
+asymmetric potential $V(x) = ax^4 - bx^2 + \varepsilon x$ (see \cref{sec:V_asym})
+and breaks the parity-block structure of the Hamiltonian matrix.
+
+\subsubsection{$\mel{m}{x^4}{n}$: complete derivation}
+
+We need $x^4 = (\hat{a}+\adag)^4/(2\alpha)^2$. We compute $(\hat{a}+\adag)^4\ket{n}$
+by applying $(\hat{a}+\adag)$ to $(\hat{a}+\adag)^2\ket{n}$ twice, or equivalently by
+applying $(\hat{a}+\adag)$ to $(\hat{a}+\adag)^3\ket{n}$.
+
+\textbf{Step~1:} Compute $(\hat{a}+\adag)^3\ket{n}$.
+
+Apply $(\hat{a}+\adag)$ to $(\hat{a}+\adag)^2\ket{n}$:
+\begin{align}
+  &(\hat{a}+\adag)\bigl[\sqrt{n(n-1)}\ket{n-2} + (2n+1)\ket{n} + \sqrt{(n+1)(n+2)}\ket{n+2}\bigr]\notag\\
+  &= \sqrt{n(n-1)}\bigl[\sqrt{n-2}\ket{n-3}+\sqrt{n-1}\ket{n-1}\bigr]\notag\\
+  &\quad + (2n+1)\bigl[\sqrt{n}\ket{n-1}+\sqrt{n+1}\ket{n+1}\bigr]\notag\\
+  &\quad + \sqrt{(n+1)(n+2)}\bigl[\sqrt{n+2}\ket{n+1}+\sqrt{n+3}\ket{n+3}\bigr]\,.
+\end{align}
+Collecting coefficients for each ket:
+\begin{align}
+  \ket{n-3}&:\quad \sqrt{n(n-1)(n-2)}\,,\notag\\
+  \ket{n-1}&:\quad (n-1)\sqrt{n} + (2n+1)\sqrt{n} = 3n\sqrt{n} = 3n^{3/2}\,,\notag\\
+  \ket{n+1}&:\quad (2n+1)\sqrt{n+1} + (n+2)\sqrt{n+1} = 3(n+1)^{3/2}\,,\notag\\
+  \ket{n+3}&:\quad \sqrt{(n+1)(n+2)(n+3)}\,.\notag
+\end{align}
+So:
+\begin{align}\label{eq:aad3}
+  (\hat{a}+\adag)^3\ket{n}
+  &= \sqrt{n(n-1)(n-2)}\ket{n-3} + 3n\sqrt{n}\ket{n-1}\notag\\
+  &\quad + 3(n+1)\sqrt{n+1}\ket{n+1} + \sqrt{(n+1)(n+2)(n+3)}\ket{n+3}\,.
+\end{align}
+
+\textbf{Step~2:} Compute $(\hat{a}+\adag)^4\ket{n} = (\hat{a}+\adag)\cdot[(\hat{a}+\adag)^3\ket{n}]$.
+
+Applying $(\hat{a}+\adag)$ to each term in \cref{eq:aad3}:
+\begin{align}
+  &(\hat{a}+\adag)\sqrt{n(n-1)(n-2)}\ket{n-3}\notag\\
+  &\qquad= \sqrt{n(n-1)(n-2)}\bigl[\sqrt{n-3}\ket{n-4}+\sqrt{n-2}\ket{n-2}\bigr]\,,\\[4pt]
+  &(\hat{a}+\adag)\cdot 3n\sqrt{n}\ket{n-1}\notag\\
+  &\qquad= 3n\sqrt{n}\bigl[\sqrt{n-1}\ket{n-2}+\sqrt{n}\ket{n}\bigr]\,,\\[4pt]
+  &(\hat{a}+\adag)\cdot 3(n+1)\sqrt{n+1}\ket{n+1}\notag\\
+  &\qquad= 3(n+1)\sqrt{n+1}\bigl[\sqrt{n+1}\ket{n}+\sqrt{n+2}\ket{n+2}\bigr]\,,\\[4pt]
+  &(\hat{a}+\adag)\sqrt{(n+1)(n+2)(n+3)}\ket{n+3}\notag\\
+  &\qquad= \sqrt{(n+1)(n+2)(n+3)}\bigl[\sqrt{n+3}\ket{n+2}+\sqrt{n+4}\ket{n+4}\bigr]\,.
+\end{align}
+
+Collecting coefficients:
+\begin{align}
+  \ket{n-4}&:\quad \sqrt{n(n-1)(n-2)(n-3)}\,,\notag\\[3pt]
+  \ket{n-2}&:\quad (n-2)\sqrt{n(n-1)} + 3n\sqrt{n(n-1)}\notag\\
+            &\phantom{:}\quad = (n-2+3n)\sqrt{n(n-1)} = (4n-2)\sqrt{n(n-1)}\notag\\
+            &\phantom{:}\quad = 2(2n-1)\sqrt{n(n-1)}\,,\notag\\[3pt]
+  \ket{n}&:\quad 3n^2 + 3(n+1)^2 = 3(2n^2+2n+1)\,,\notag\\[3pt]
+  \ket{n+2}&:\quad 3(n+1)\sqrt{(n+1)(n+2)} + (n+3)\sqrt{(n+1)(n+2)}\notag\\
+            &\phantom{:}\quad = (3n+3+n+3)\sqrt{(n+1)(n+2)} = (4n+6)\sqrt{(n+1)(n+2)}\notag\\
+            &\phantom{:}\quad = 2(2n+3)\sqrt{(n+1)(n+2)}\,,\notag\\[3pt]
+  \ket{n+4}&:\quad \sqrt{(n+1)(n+2)(n+3)(n+4)}\,.\notag
+\end{align}
+
+Therefore, since $x^4 = (\hat{a}+\adag)^4/(4\alpha^2)$:
+
+\begin{equation}\label{eq:x4_HO}
+  \boxed{\mel{m}{x^4}{n} = \frac{1}{4\alpha^2}
+  \begin{cases}
+    \sqrt{(m_*\!+\!1)(m_*\!+\!2)(m_*\!+\!3)(m_*\!+\!4)} & |m-n| = 4\,,\\[4pt]
+    2(2m_*+3)\sqrt{(m_*\!+\!1)(m_*\!+\!2)} & |m-n| = 2\,,\\[4pt]
+    3(2n^2+2n+1) & m = n\,,\\[4pt]
+    0 & \text{otherwise}\,.
+  \end{cases}}
+\end{equation}
+
+\textbf{Selection rule:} nonzero for $|m-n| = 0, 2, 4$.
+
+% ------------------------------------------------------------
+\subsection{Kinetic energy matrix elements}\label{sec:HO_kinetic}
+% ------------------------------------------------------------
+
+The kinetic energy operator in atomic units ($\hb = 1$) is
+\begin{equation}
+  \hat{T} = -\frac{1}{2\mu}\frac{d^2}{dx^2}\,.
+\end{equation}
+Using $d/dx = \sqrt{\alpha/2}(\hat{a} - \adag)$:
+\begin{align}
+  \frac{d^2}{dx^2} &= \frac{\alpha}{2}(\hat{a}-\adag)^2
+  = \frac{\alpha}{2}\bigl(\hat{a}^2 + (\adag)^2 - 2\hat{N} - 1\bigr)\,.
+\end{align}
+Therefore:
+\begin{align}
+  \hat{T} &= -\frac{1}{2\mu}\cdot\frac{\alpha}{2}\bigl(\hat{a}^2 + (\adag)^2 - 2\hat{N} - 1\bigr)\notag\\
+  &= \frac{\alpha}{4\mu}\bigl(2\hat{N}+1 - \hat{a}^2 - (\adag)^2\bigr)\,.
+\end{align}
+
+Matrix elements:
+\begin{align}
+  T_{mn} &= \mel{m}{\hat{T}}{n}
+  = \frac{\alpha}{4\mu}\mel{m}{2\hat{N}+1-\hat{a}^2-(\adag)^2}{n}\notag\\
+  &= \frac{\alpha}{4\mu}\Bigl[(2n+1)\delta_{mn} - \sqrt{n(n-1)}\,\delta_{m,n-2} - \sqrt{(n+1)(n+2)}\,\delta_{m,n+2}\Bigr]\,.
+\end{align}
+Using $m_* = \min(m,n)$:
+\begin{equation}\label{eq:T_HO}
+  \boxed{T_{mn} = \frac{\alpha}{4\mu}
+  \begin{cases}
+    2n + 1 & m = n\,,\\[4pt]
+    -\sqrt{(m_*+1)(m_*+2)} & |m-n| = 2\,,\\[4pt]
+    0 & \text{otherwise}\,.
+  \end{cases}}
+\end{equation}
+Equivalently, $T_{nn} = \frac{\alpha}{2\mu}(n+\half)$.
+
+\textbf{Verification:} For the harmonic oscillator with $V = \half\mu\omega^2 x^2$
+and $\alpha = \mu\omega$, the total energy should be $E_n = \omega(n+\half)$.
+The kinetic energy contribution to the diagonal is $T_{nn} = \frac{\mu\omega}{2\mu}(n+\half)
+= \frac{\omega}{2}(n+\half)$, which equals exactly half the total energy, consistent
+with the virial theorem for a harmonic potential.
+
+% ------------------------------------------------------------
+\subsection{Symmetry factorization: even and odd subspaces}\label{sec:parity}
+% ------------------------------------------------------------
+
+For the symmetric double-well $V(x) = ax^4 - bx^2$, the potential satisfies $V(-x) = V(x)$.
+The parity operator $\hat{\Pi}$ acts as $\hat{\Pi}\varphi_n(x) = \varphi_n(-x) = (-1)^n\varphi_n(x)$
+(since $H_n(-\xi) = (-1)^n H_n(\xi)$).
+
+\textbf{Claim:} $H_{mn} = 0$ whenever $m + n$ is odd.
+
+\textbf{Proof:} The Hamiltonian matrix element consists of:
+\begin{enumerate}
+  \item $T_{mn}$: nonzero only for $|m-n| = 0$ or $2$, both of which require $m+n$ even.
+  \item $\mel{m}{x^2}{n}$: nonzero only for $|m-n| = 0$ or $2$, requiring $m+n$ even.
+  \item $\mel{m}{x^4}{n}$: nonzero only for $|m-n| = 0$, $2$, or $4$, all requiring $m+n$ even.
+\end{enumerate}
+Since all terms vanish when $m+n$ is odd, $H_{mn} = 0$ for $m+n$ odd. $\square$
+
+Therefore, the Hamiltonian matrix decouples into two blocks:
+\begin{equation}
+  \mathbf{H} = \begin{pmatrix} \mathbf{H}_{\text{even}} & \mathbf{0} \\ \mathbf{0} & \mathbf{H}_{\text{odd}} \end{pmatrix},
+\end{equation}
+where $\mathbf{H}_{\text{even}}$ is built from $\{|0\rangle, |2\rangle, |4\rangle, \ldots\}$
+and $\mathbf{H}_{\text{odd}}$ from $\{|1\rangle, |3\rangle, |5\rangle, \ldots\}$.
+
+\textbf{Dimensions.} For a total of $N$ basis functions $\{|0\rangle, |1\rangle, \ldots, |N-1\rangle\}$:
+\begin{equation}
+  N_{\text{even}} = \left\lceil\frac{N}{2}\right\rceil\,,\qquad
+  N_{\text{odd}} = \left\lfloor\frac{N}{2}\right\rfloor\,.
+\end{equation}
+The even-parity block yields the even-parity eigenstates $\Phi_0, \Phi_2, \Phi_4, \ldots$
+(including the ground state), and the odd-parity block yields $\Phi_1, \Phi_3, \Phi_5, \ldots$.
+The combined sorted spectrum is $E_0 < E_1 < E_2 < E_3 < \cdots$.
+
+The computational cost is $2 \times (N/2)^3 = N^3/4$, a factor of 4 savings over full
+$N\times N$ diagonalization.
+
+For the \emph{asymmetric} potential $V(x) = ax^4 - bx^2 + cx$, the linear term couples
+even and odd states ($\mel{m}{x}{n}$ is nonzero for $|m-n|=1$, i.e., $m+n$ odd), and the
+full $N\times N$ matrix must be diagonalized.
+
+\subsubsection*{Asymmetric case: full $N\times N$ matrix structure}
+
+The asymmetric Hamiltonian matrix element combines the symmetric double-well terms with
+the linear perturbation $\varepsilon\hat{x}$:
+\begin{equation}\label{eq:H_asym}
+  H_{mn}^{\text{asym}} = H_{mn}^{\text{sym}} + \varepsilon\mel{m}{\hat{x}}{n}\,.
+\end{equation}
+The $\mel{m}{\hat{x}}{n}$ term (see \cref{eq:x1_HO}) is nonzero for $|m-n|=1$, which
+connects even and odd basis functions. The result is a real symmetric \emph{pentadiagonal}
+matrix of bandwidth~4 (nonzero off-diagonals at $|m-n|=1,2,4$):
+\begin{equation}
+  \mathbf{H}^{\text{asym}} =
+  \begin{pmatrix}
+    D_0    & L_{01} & S_{02} & 0      & Q_{04} & \cdots \\
+    L_{01} & D_1    & L_{12} & S_{13} & 0      & \cdots \\
+    S_{02} & L_{12} & D_2    & L_{23} & S_{24} & \cdots \\
+    0      & S_{13} & L_{23} & D_3    & L_{34} & \cdots \\
+    Q_{04} & 0      & S_{24} & L_{34} & D_4    & \cdots \\
+    \vdots & \vdots & \vdots & \vdots & \vdots & \ddots
+  \end{pmatrix},
+\end{equation}
+where $D_n$ are diagonal elements; $L_{n,n\pm1} = \varepsilon\sqrt{\minn+1}/\sqrt{2\alpha}$
+are the linear couplings ($|m-n|=1$) from $\mel{m}{\hat{x}}{n}$; $S_{mn}$ are the
+quadratic couplings ($|m-n|=2$) from $\mel{m}{x^2}{n}$ (see \cref{eq:x2_HO}); and
+$Q_{mn}$ are the quartic couplings ($|m-n|=4$) from $\mel{m}{x^4}{n}$ (see
+\cref{eq:x4_HO}). Note that $|m-n|=3$ remains zero because there is no cubic term
+in the symmetric part, and $\mel{m}{\hat{x}}{n}$ does not contribute at $|m-n|=3$.
+The full matrix is diagonalized by a real symmetric eigensolver (e.g., LAPACK
+\texttt{DSYEV}).
+
+% ------------------------------------------------------------
+\subsection{Optimal $\alpha$ parameter}\label{sec:alpha_opt}
+% ------------------------------------------------------------
+
+The width parameter $\alpha$ determines the spatial extent of the basis functions.
+We seek $\alpha_{\text{opt}}$ that minimizes the ground-state energy.
+
+\subsubsection{Variational optimization}
+
+Consider the ground-state expectation value of the Hamiltonian $\hat{H} = \hat{T} + ax^4 - bx^2$
+in the state $\ket{0}$:
+\begin{align}
+  E_0(\alpha) &= T_{00} + a\mel{0}{x^4}{0} - b\mel{0}{x^2}{0}\notag\\
+  &= \frac{\alpha}{4\mu} + a\cdot\frac{3}{4\alpha^2} - b\cdot\frac{1}{2\alpha}\,.
+\end{align}
+Setting $dE_0/d\alpha = 0$:
+\begin{align}
+  \frac{dE_0}{d\alpha} &= \frac{1}{4\mu} - \frac{3a}{2\alpha^3} + \frac{b}{2\alpha^2} = 0\,.
+\end{align}
+This is a cubic equation in $\alpha$ that does not have a simple closed-form solution
+in general. However, in two limiting regimes, simple expressions emerge.
+
+\subsubsection{Deep-well limit: harmonic approximation}
+
+When the barrier is much higher than the zero-point energy, the particle is well-localized
+in one of the wells. Near the minimum at $x_{\min}$, the potential is approximately
+harmonic: $V(x) \approx V(x_{\min}) + \half V''(x_{\min})(x-x_{\min})^2$ with
+$V''(x_{\min}) = 4b$ (see \cref{sec:V_sym}). The harmonic oscillator with frequency
+$\omega_{\text{local}} = \sqrt{4b/\mu}$ has the optimal width parameter
+\begin{equation}\label{eq:alpha_local_opt}
+  \boxed{\alpha_{\text{opt}} = \mu\,\omega_{\text{local}} = 2\sqrt{\mu\,b}\,.}
+\end{equation}
+This follows from the standard HO result $\alpha = m\omega/\hb$, with $m = \mu$,
+$\omega = \omega_{\text{local}}$, and $\hb = 1$ in atomic units.
+
+\subsubsection{Pure quartic limit}
+
+When $b = 0$ (no quadratic term, pure quartic oscillator $V = ax^4$), the optimization
+condition becomes
+\begin{equation}
+  \frac{1}{4\mu} = \frac{3a}{2\alpha^3}
+  \implies \alpha^3 = 6a\mu
+  \implies \alpha_{\text{opt}} = (6a\mu)^{1/3}\,.
+\end{equation}
+Substituting $a = \Vb/\xe^4$:
+\begin{equation}\label{eq:alpha_quartic}
+  \boxed{\alpha_{\text{opt}} = \left(\frac{6\mu\Vb}{\xe^4}\right)^{1/3}\,.}
+\end{equation}
+This is the expression used when the quartic confinement dominates.
+
+\begin{remark}
+In practice, a numerical optimization of $\alpha$ with respect to the full
+ground-state energy (not just the $\ket{0}$ expectation value) yields the best results.
+This involves repeatedly diagonalizing the Hamiltonian for different $\alpha$ values.
+The analytical estimates \eqref{eq:alpha_local_opt} and \eqref{eq:alpha_quartic}
+serve as excellent starting points for such an optimization.
+\end{remark}
+
+% ============================================================
+% ============================================================

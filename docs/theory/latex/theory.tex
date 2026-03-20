@@ -1,0 +1,134 @@
+\documentclass[12pt, a4paper, final]{article}
+
+% ============================================================
+% Base packages (mirrors template main.tex)
+% ============================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, amsthm}
+
+% ============================================================
+% Load custom configuration (template schema)
+% ============================================================
+\input{./configuration/packages}
+\input{./configuration/functions}
+\input{./configuration/code-style}
+\input{./configuration/style}
+\input{./configuration/newcommands}
+\input{./front-page/info}
+% \input{./configuration/embed_video}   % Uncomment to enable PDF video embedding
+\usepackage{./configuration/mybraket}
+
+% ============================================================
+% Document-level settings
+% ============================================================
+\graphicspath{{./figures/}}
+
+\AtBeginDocument{%
+  \hypersetup{
+    pdfauthor   = {\authorname},
+    pdftitle    = {\ttitle},
+    pdfsubject  = {Quantum Mechanics, Variational Method, Tunneling},
+    pdfkeywords = {\kkeywords},
+  }%
+}
+
+\author{\authorname}
+\title{
+  \vspace{-1cm}
+  \textbf{\ttitle}\\[0.8em]
+  \large\stitle\\[0.4em]
+  \normalsize A Graduate-Level Theory Reference for the QuTu Project
+}
+\date{\today}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+%
+% --- Title ---
+%
+% Option 1: simple title block (default)
+%
+\maketitle
+%
+% Option 2: minimal info block — same page
+%
+% \thispagestyle{empty}
+% \input{front-page/minimal}
+%
+% Option 3: minimal separate title page
+%
+% \thispagestyle{empty}
+% \input{front-page/minimal-titlepage}\clearpage
+%
+% Option 4: elaborated title page
+%
+% \input{front-page/elaborated-titlepage}\afterpage{\blankpage}
+
+% ============================================================
+%                       Abstract
+% ============================================================
+\begin{abstract}
+This document presents the complete analytical framework underlying the
+\textbf{QuTu} quantum tunneling simulation code. We treat the
+one-dimensional double-well problem motivated by the ammonia inversion
+mode. Four basis-set representations are developed in full detail:
+(I)~harmonic oscillator functions centered at the origin,
+(II)~shifted harmonic oscillator functions forming a two-center basis,
+(III)~Gaussian basis functions, and (IV)~the Fourier Grid Hamiltonian
+(DVR). For each basis, all Hamiltonian matrix elements are derived
+analytically with complete intermediate algebra. The theory of
+wavepacket construction (two-state, four-state, and Gaussian initial
+states), time evolution, and the computation of physical observables
+(survival probability, position expectation value, tunneling splitting,
+turning points) is presented in a self-contained manner.
+For the asymmetric double well we analyse in detail the construction of
+localized states via the two-level effective Hamiltonian and the
+mixing-angle formalism, the sign convention for selecting the initial
+well, the contrast between the parity-based localization mechanism of
+the symmetric case and the two-dimensional eigenstate rotation of the
+asymmetric case, and the fundamental complementarity between
+localization quality and tunneling efficiency~$\eta = \sin^2(2\theta)$.
+An analytical comparison of basis sets for the asymmetric case
+establishes the practical advantages of the DVR over the shifted-HO
+basis when parity symmetry is broken: the DVR eliminates all integral
+computation through the Fourier Grid Hamiltonian representation,
+provides a standard (rather than generalized) eigenvalue problem, and
+is insensitive to changes in the asymmetry parameter.
+The general case of arbitrary polynomial potentials and custom
+wavepackets is also treated. Throughout, atomic units
+($\hb = m_e = e = a_0 = 1$) are employed unless stated otherwise.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+%                       Sections
+% ============================================================
+\input{sections/01_potential}
+\input{sections/02_variational}
+\input{sections/03_HO_basis}
+\input{sections/04_shifted_HO}
+\input{sections/05_gaussian}
+\input{sections/06_DVR}
+\input{sections/07_comparison}
+\input{sections/08_wavepackets}
+\input{sections/09_observables}
+\input{sections/10_numerical_impl}
+\input{sections/11_additional_obs}
+\input{sections/12_summary}
+\input{sections/13_multidim}
+\input{sections/14_general_case}
+
+% ============================================================
+%                       References
+% ============================================================
+% \clearpage
+% \printbibliography[title={References}]
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

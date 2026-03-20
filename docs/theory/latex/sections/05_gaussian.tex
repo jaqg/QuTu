@@ -1,0 +1,435 @@
+\section{Basis Set~III: Gaussian Basis Functions}\label{sec:gaussian}
+% ============================================================
+% ============================================================
+
+An alternative non-orthogonal basis consists of unnormalized Gaussians:
+\begin{equation}\label{eq:Gaussian_def}
+  G_i(x) = \exp\bigl[-\alpha_i(x - x_i)^2\bigr]\,,\qquad i = 1, 2, \ldots, N\,,
+\end{equation}
+where $\alpha_i > 0$ is the width parameter and $x_i$ is the center of the $i$-th Gaussian.
+
+% ------------------------------------------------------------
+\subsection{Product of two Gaussians}\label{sec:Gauss_product}
+% ------------------------------------------------------------
+
+\begin{result}[Gaussian product theorem]
+\begin{equation}\label{eq:Gauss_product}
+  G_i(x)\,G_j(x) = e^{-\Qij}\,e^{-\Aij(x - \Xij)^2}\,,
+\end{equation}
+where
+\begin{equation}\label{eq:AXQ}
+  \Aij = \alpha_i + \alpha_j\,,\qquad
+  \Xij = \frac{\alpha_i x_i + \alpha_j x_j}{\Aij}\,,\qquad
+  \Qij = \frac{\alpha_i\alpha_j(x_i - x_j)^2}{\Aij}\,.
+\end{equation}
+\end{result}
+
+\textbf{Complete derivation.} The product is
+\begin{align}
+  G_i(x)\,G_j(x) &= \exp\bigl[-\alpha_i(x-x_i)^2 - \alpha_j(x-x_j)^2\bigr]\,.
+\end{align}
+Expand the exponent:
+\begin{align}
+  f(x) &\equiv \alpha_i(x-x_i)^2 + \alpha_j(x-x_j)^2\notag\\
+  &= \alpha_i(x^2 - 2x\,x_i + x_i^2) + \alpha_j(x^2 - 2x\,x_j + x_j^2)\notag\\
+  &= (\alpha_i+\alpha_j)x^2 - 2(\alpha_i x_i + \alpha_j x_j)x + \alpha_i x_i^2 + \alpha_j x_j^2\notag\\
+  &= \Aij\,x^2 - 2\Aij\Xij\,x + \alpha_i x_i^2 + \alpha_j x_j^2\,.
+\end{align}
+Complete the square in $x$:
+\begin{align}
+  f(x) &= \Aij\bigl(x^2 - 2\Xij\,x + \Xij^2\bigr) - \Aij\Xij^2 + \alpha_i x_i^2 + \alpha_j x_j^2\notag\\
+  &= \Aij(x - \Xij)^2 + \bigl(\alpha_i x_i^2 + \alpha_j x_j^2 - \Aij\Xij^2\bigr)\,.
+\end{align}
+Now compute the constant term. Note:
+\begin{align}
+  \Aij\Xij^2 &= \frac{(\alpha_i x_i + \alpha_j x_j)^2}{\Aij}
+  = \frac{\alpha_i^2 x_i^2 + 2\alpha_i\alpha_j x_i x_j + \alpha_j^2 x_j^2}{\alpha_i+\alpha_j}\,.
+\end{align}
+Therefore:
+\begin{align}
+  &\alpha_i x_i^2 + \alpha_j x_j^2 - \Aij\Xij^2\notag\\
+  &= \frac{(\alpha_i x_i^2 + \alpha_j x_j^2)(\alpha_i+\alpha_j) - (\alpha_i x_i + \alpha_j x_j)^2}{\alpha_i+\alpha_j}\notag\\
+  &= \frac{\alpha_i^2 x_i^2 + \alpha_i\alpha_j x_j^2 + \alpha_i\alpha_j x_i^2 + \alpha_j^2 x_j^2
+       - \alpha_i^2 x_i^2 - 2\alpha_i\alpha_j x_i x_j - \alpha_j^2 x_j^2}{\alpha_i+\alpha_j}\notag\\
+  &= \frac{\alpha_i\alpha_j(x_i^2 + x_j^2 - 2x_i x_j)}{\alpha_i+\alpha_j}
+  = \frac{\alpha_i\alpha_j(x_i-x_j)^2}{\Aij} = \Qij\,.
+\end{align}
+Hence $f(x) = \Aij(x-\Xij)^2 + \Qij$, and $G_i G_j = e^{-f(x)} = e^{-\Qij}e^{-\Aij(x-\Xij)^2}$. $\square$
+
+\textbf{Physical interpretation:} The product of two Gaussians is again a Gaussian (up to a
+constant factor $e^{-\Qij}$), centered at the weighted average position $\Xij$ with combined
+width $\Aij$. The pre-exponential factor $e^{-\Qij}$ quantifies how much the two Gaussians
+overlap: it equals 1 when $x_i = x_j$ and decays exponentially as $|x_i - x_j|$ increases.
+
+% ------------------------------------------------------------
+\subsection{Overlap integral $S_{ij}$}\label{sec:Gauss_overlap}
+% ------------------------------------------------------------
+
+\begin{equation}
+  S_{ij} = \int_{-\infty}^{\infty}G_i(x)\,G_j(x)\,dx
+  = e^{-\Qij}\int_{-\infty}^{\infty}e^{-\Aij(x-\Xij)^2}\,dx\,.
+\end{equation}
+Using the standard Gaussian integral $\int_{-\infty}^{\infty}e^{-Au^2}\,du = \sqrt{\pi/A}$ with
+the substitution $u = x - \Xij$:
+\begin{equation}\label{eq:Gauss_S}
+  \boxed{S_{ij} = \sqrt{\frac{\pi}{\Aij}}\,e^{-\Qij}\,.}
+\end{equation}
+
+\textbf{Diagonal case} ($i = j$, $x_i = x_j$, $\alpha_i = \alpha_j = \alpha$):
+$\Aij = 2\alpha$, $\Qij = 0$, $S_{ii} = \sqrt{\pi/(2\alpha)}$.
+
+% ------------------------------------------------------------
+\subsection{Gaussian moments $I_n$}\label{sec:Gauss_moments}
+% ------------------------------------------------------------
+
+Define the moment integrals
+\begin{equation}\label{eq:In_def}
+  I_n(A, X) = \int_{-\infty}^{\infty}x^n\,e^{-A(x-X)^2}\,dx\,.
+\end{equation}
+These are the building blocks for all potential energy matrix elements.
+
+\subsubsection{Derivation of the general formula}
+
+Substitute $u = x - X$, so $x = u + X$ and $dx = du$:
+\begin{equation}
+  I_n = \int_{-\infty}^{\infty}(u+X)^n\,e^{-Au^2}\,du
+  = \sum_{k=0}^{n}\binom{n}{k}X^{n-k}\int_{-\infty}^{\infty}u^k\,e^{-Au^2}\,du\,.
+\end{equation}
+The Gaussian moments of $u$ are:
+\begin{equation}\label{eq:u_moments}
+  \int_{-\infty}^{\infty}u^k\,e^{-Au^2}\,du =
+  \begin{cases}
+    0 & k\;\text{odd}\,,\\[4pt]
+    \dfrac{(k-1)!!}{(2A)^{k/2}}\sqrt{\dfrac{\pi}{A}} & k\;\text{even}\,,
+  \end{cases}
+\end{equation}
+where $(k-1)!! = 1\cdot 3\cdot 5\cdots(k-1)$ is the double factorial (with $(-1)!! = 1$ by convention).
+
+\textbf{Derivation of \cref{eq:u_moments}:} The odd moments vanish by symmetry.
+For even moments, starting from the base case
+\begin{equation}
+  \int_{-\infty}^{\infty}e^{-Au^2}\,du = \sqrt{\frac{\pi}{A}} = I_0(A,0)\,,
+\end{equation}
+differentiate $n$ times with respect to $-A$ (or equivalently, use the generating function):
+\begin{equation}
+  \int_{-\infty}^{\infty}u^{2k}e^{-Au^2}\,du
+  = \left(-\frac{\partial}{\partial A}\right)^k\sqrt{\frac{\pi}{A}}
+  = \frac{(2k-1)!!}{(2A)^k}\sqrt{\frac{\pi}{A}}\,.
+\end{equation}
+This can be verified by induction: writing $J_k = \int u^{2k}e^{-Au^2}du$, integration
+by parts gives $J_k = \frac{2k-1}{2A}J_{k-1}$, confirming the recurrence.
+
+Therefore, the general moment is:
+\begin{equation}\label{eq:In_general}
+  \boxed{I_n(A, X) = \sqrt{\frac{\pi}{A}}\sum_{\substack{k=0\\k\;\text{even}}}^{n}\binom{n}{k}\frac{(k-1)!!}{(2A)^{k/2}}\,X^{n-k}\,.}
+\end{equation}
+
+\subsubsection{Recursion relation}
+
+A useful recursion can be derived from the substitution $x = (x - X) + X$:
+\begin{align}
+  I_n &= \int x^n e^{-A(x-X)^2}dx = \int [(x-X)+X]x^{n-1}e^{-A(x-X)^2}dx\notag\\
+  &= \int(x-X)x^{n-1}e^{-A(x-X)^2}dx + X\,I_{n-1}\,.
+\end{align}
+For the first term, integrate by parts with $f = x^{n-1}$ and $dg = (x-X)e^{-A(x-X)^2}dx$,
+giving $g = -\frac{1}{2A}e^{-A(x-X)^2}$:
+\begin{align}
+  \int(x-X)x^{n-1}e^{-A(x-X)^2}dx
+  &= \underbrace{\left[-\frac{x^{n-1}}{2A}e^{-A(x-X)^2}\right]_{-\infty}^{\infty}}_{=\,0}
+  + \frac{n-1}{2A}\int x^{n-2}e^{-A(x-X)^2}dx\notag\\
+  &= \frac{n-1}{2A}\,I_{n-2}\,.
+\end{align}
+Therefore:
+\begin{equation}\label{eq:In_recursion}
+  \boxed{I_n = X\,I_{n-1} + \frac{n-1}{2A}\,I_{n-2}\,,\qquad n \geq 2\,.}
+\end{equation}
+Starting values: $I_0 = \sqrt{\pi/A}$, $I_1 = X\sqrt{\pi/A}$.
+
+\subsubsection{Explicit tabulation of $I_0$ through $I_4$}
+
+Applying the recursion:
+\begin{alignat}{2}
+  I_0 &= \sqrt{\frac{\pi}{A}}\,, &\qquad& \label{eq:I0}\\[6pt]
+  I_1 &= X\,I_0 = X\sqrt{\frac{\pi}{A}}\,, && \label{eq:I1}\\[6pt]
+  I_2 &= X\,I_1 + \frac{1}{2A}\,I_0
+       = \left(X^2 + \frac{1}{2A}\right)\sqrt{\frac{\pi}{A}}\,, && \label{eq:I2}\\[6pt]
+  I_3 &= X\,I_2 + \frac{2}{2A}\,I_1
+       = X\left(X^2 + \frac{1}{2A}\right)\sqrt{\frac{\pi}{A}} + \frac{X}{A}\sqrt{\frac{\pi}{A}}\notag\\
+      &= \left(X^3 + \frac{3X}{2A}\right)\sqrt{\frac{\pi}{A}}\,, && \label{eq:I3}\\[6pt]
+  I_4 &= X\,I_3 + \frac{3}{2A}\,I_2
+       = X\left(X^3 + \frac{3X}{2A}\right)\sqrt{\frac{\pi}{A}} + \frac{3}{2A}\left(X^2+\frac{1}{2A}\right)\sqrt{\frac{\pi}{A}}\notag\\
+      &= \left(X^4 + \frac{3X^2}{A}\cdot\frac{1}{2}+\frac{3X^2}{2A}+\frac{3}{4A^2}\right)\sqrt{\frac{\pi}{A}}\notag\\
+      &= \left(X^4 + \frac{6X^2}{2A} + \frac{3}{4A^2}\right)\sqrt{\frac{\pi}{A}}\notag\\
+      &= \left(X^4 + \frac{3X^2}{A} + \frac{3}{4A^2}\right)\sqrt{\frac{\pi}{A}}\,. && \label{eq:I4}
+\end{alignat}
+
+Let us verify \cref{eq:I4} using \cref{eq:In_general}. The even values of $k$ in $\sum_{k=0,2,4}\binom{4}{k}\frac{(k-1)!!}{(2A)^{k/2}}X^{4-k}$:
+\begin{align}
+  k=0&:\quad \binom{4}{0}\cdot 1 \cdot X^4 = X^4\,,\notag\\
+  k=2&:\quad \binom{4}{2}\cdot\frac{1}{2A}\cdot X^2 = \frac{6X^2}{2A} = \frac{3X^2}{A}\,,\notag\\
+  k=4&:\quad \binom{4}{4}\cdot\frac{3!!}{(2A)^2} = \frac{3}{4A^2}\,.
+\end{align}
+Sum: $(X^4 + 3X^2/A + 3/(4A^2))\sqrt{\pi/A}$. Consistent. $\checkmark$
+
+\begin{center}
+\renewcommand{\arraystretch}{1.8}
+\begin{tabular}{cl}
+  \toprule
+  $n$ & $I_n(A,X) / \sqrt{\pi/A}$ \\
+  \midrule
+  0 & $1$ \\
+  1 & $X$ \\
+  2 & $X^2 + \dfrac{1}{2A}$ \\
+  3 & $X^3 + \dfrac{3X}{2A}$ \\
+  4 & $X^4 + \dfrac{3X^2}{A} + \dfrac{3}{4A^2}$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ------------------------------------------------------------
+\subsection{Potential energy matrix elements: symmetric case}\label{sec:Gauss_V_sym}
+% ------------------------------------------------------------
+
+For $V(x) = ax^4 - bx^2$:
+\begin{align}
+  V_{ij} &= \int_{-\infty}^{\infty}G_i(x)\,V(x)\,G_j(x)\,dx
+  = a\int x^4\,G_i G_j\,dx - b\int x^2\,G_i G_j\,dx\notag\\
+  &= e^{-\Qij}\bigl[a\,I_4(\Aij,\Xij) - b\,I_2(\Aij,\Xij)\bigr]\,.
+\end{align}
+Substituting the explicit forms of $I_4$ and $I_2$:
+\begin{align}\label{eq:Vij_sym}
+  V_{ij} &= e^{-\Qij}\sqrt{\frac{\pi}{\Aij}}\left\{
+    a\left[\Xij^4 + \frac{3\Xij^2}{\Aij} + \frac{3}{4\Aij^2}\right]
+    - b\left[\Xij^2 + \frac{1}{2\Aij}\right]
+  \right\}\,.
+\end{align}
+\begin{equation}\label{eq:Vij_sym_boxed}
+  \boxed{V_{ij} = e^{-\Qij}\sqrt{\frac{\pi}{\Aij}}\left\{
+    a\Xij^4 + \frac{3a\Xij^2}{\Aij} + \frac{3a}{4\Aij^2}
+    - b\Xij^2 - \frac{b}{2\Aij}
+  \right\}}
+\end{equation}
+
+\textbf{Dimensional verification.} In atomic units:
+$[a] = E_h/a_0^4$, $[b] = E_h/a_0^2$, $[\alpha] = a_0^{-2}$, $[x] = a_0$.
+Then $[\Xij] = a_0$, $[\Aij] = a_0^{-2}$, $[\Qij] = \text{dimensionless}$, and
+$[\sqrt{\pi/\Aij}] = a_0$. Check: $[a\Xij^4\sqrt{\pi/\Aij}] = (E_h/a_0^4)(a_0^4)(a_0) = E_h\cdot a_0$.
+Wait --- this should have dimensions of energy times length (since $V_{ij}$ is an integral
+over $x$ of an energy density times a dimensionless integrand). Indeed, $V_{ij}$ as defined
+is not yet an energy: it must be combined with the overlap to form a ratio, or the basis
+functions must be normalized. Since we use unnormalized Gaussians, $V_{ij}$ has dimensions
+$[V_{ij}] = E_h \cdot a_0$ (energy $\times$ length), consistent with $S_{ij} = \sqrt{\pi/\Aij}\,e^{-\Qij}$
+also having dimensions of length. The ratio $V_{ij}/S_{ij}$ has dimensions of energy, as required.
+
+\textbf{Diagonal case} ($i = j$, $x_i = x_j$, $\alpha_i = \alpha_j = \alpha$):
+$\Aij = 2\alpha$, $\Xij = x_i$, $\Qij = 0$. Then:
+\begin{equation}
+  V_{ii} = \sqrt{\frac{\pi}{2\alpha}}\left\{
+    a\,x_i^4 + \frac{3a\,x_i^2}{2\alpha} + \frac{3a}{16\alpha^2}
+    - b\,x_i^2 - \frac{b}{4\alpha}
+  \right\}\,.
+\end{equation}
+
+% ------------------------------------------------------------
+\subsection{Potential energy matrix elements: asymmetric case}\label{sec:Gauss_V_asym}
+% ------------------------------------------------------------
+
+For $V(x) = ax^4 - bx^2 + cx$:
+\begin{equation}\label{eq:Vij_asym}
+  V_{ij} = e^{-\Qij}\bigl[a\,I_4(\Aij,\Xij) - b\,I_2(\Aij,\Xij) + c\,I_1(\Aij,\Xij)\bigr]\,.
+\end{equation}
+Using $I_1 = \Xij\sqrt{\pi/\Aij}$:
+\begin{equation}
+  \boxed{V_{ij} = e^{-\Qij}\sqrt{\frac{\pi}{\Aij}}\left\{
+    a\Xij^4 + \frac{3a\Xij^2}{\Aij} + \frac{3a}{4\Aij^2}
+    - b\Xij^2 - \frac{b}{2\Aij}
+    + c\Xij
+  \right\}}
+\end{equation}
+
+% ------------------------------------------------------------
+\subsection{Kinetic energy matrix elements $T_{ij}$}\label{sec:Gauss_kinetic}
+% ------------------------------------------------------------
+
+The kinetic energy matrix element in atomic units ($\hb = 1$) is
+\begin{equation}
+  T_{ij} = -\frac{1}{2\mu}\int_{-\infty}^{\infty}G_i(x)\,\frac{d^2}{dx^2}G_j(x)\,dx\,.
+\end{equation}
+
+\subsubsection{Step 1: Compute the second derivative of $G_j$}
+
+\begin{align}
+  \frac{d}{dx}G_j(x) &= -2\alpha_j(x-x_j)\,G_j(x)\,,\\
+  \frac{d^2}{dx^2}G_j(x) &= \frac{d}{dx}\bigl[-2\alpha_j(x-x_j)G_j(x)\bigr]\notag\\
+  &= -2\alpha_j\,G_j(x) + 4\alpha_j^2(x-x_j)^2\,G_j(x)\notag\\
+  &= \bigl[-2\alpha_j + 4\alpha_j^2(x-x_j)^2\bigr]G_j(x)\,.
+\end{align}
+Therefore:
+\begin{equation}\label{eq:d2Gj}
+  \frac{d^2}{dx^2}G_j(x) = \bigl[-2\alpha_j + 4\alpha_j^2(x-x_j)^2\bigr]G_j(x)\,.
+\end{equation}
+
+\subsubsection{Step 2: Assemble the integral}
+
+\begin{align}
+  T_{ij} &= -\frac{1}{2\mu}\int G_i(x)\bigl[-2\alpha_j + 4\alpha_j^2(x-x_j)^2\bigr]G_j(x)\,dx\notag\\
+  &= -\frac{1}{2\mu}\left\{-2\alpha_j\int G_i G_j\,dx + 4\alpha_j^2\int(x-x_j)^2\,G_i G_j\,dx\right\}\notag\\
+  &= \frac{\alpha_j}{\mu}\,S_{ij} - \frac{2\alpha_j^2}{\mu}\int(x-x_j)^2\,G_i G_j\,dx\,.
+\end{align}
+
+\subsubsection{Step 3: Evaluate $\int(x-x_j)^2\,G_i\,G_j\,dx$}
+
+Using the Gaussian product formula, $G_i G_j = e^{-\Qij}e^{-\Aij(x-\Xij)^2}$.
+Write $x - x_j = (x - \Xij) + (\Xij - x_j)$. Define
+\begin{equation}\label{eq:Delta_j}
+  \delta_j \equiv \Xij - x_j = \frac{\alpha_i x_i + \alpha_j x_j}{\Aij} - x_j
+  = \frac{\alpha_i(x_i - x_j)}{\Aij}\,.
+\end{equation}
+Then:
+\begin{align}
+  (x-x_j)^2 &= (x-\Xij)^2 + 2\delta_j(x-\Xij) + \delta_j^2\,.
+\end{align}
+Integrating against $e^{-\Aij(x-\Xij)^2}$ (substituting $u = x - \Xij$):
+\begin{align}
+  &\int(x-x_j)^2\,e^{-\Aij(x-\Xij)^2}\,dx\notag\\
+  &= \int u^2\,e^{-\Aij u^2}\,du + 2\delta_j\underbrace{\int u\,e^{-\Aij u^2}\,du}_{=\,0} + \delta_j^2\int e^{-\Aij u^2}\,du\notag\\
+  &= \frac{1}{2\Aij}\sqrt{\frac{\pi}{\Aij}} + \delta_j^2\sqrt{\frac{\pi}{\Aij}}\notag\\
+  &= \left(\frac{1}{2\Aij} + \delta_j^2\right)\sqrt{\frac{\pi}{\Aij}}\,.
+\end{align}
+Multiplying by $e^{-\Qij}$:
+\begin{equation}
+  \int(x-x_j)^2\,G_i G_j\,dx = e^{-\Qij}\sqrt{\frac{\pi}{\Aij}}\left(\frac{1}{2\Aij}+\delta_j^2\right)
+  = S_{ij}\left(\frac{1}{2\Aij}+\delta_j^2\right)\,.
+\end{equation}
+
+\subsubsection{Step 4: Combine}
+
+\begin{align}
+  T_{ij} &= \frac{\alpha_j}{\mu}\,S_{ij} - \frac{2\alpha_j^2}{\mu}\,S_{ij}\left(\frac{1}{2\Aij}+\delta_j^2\right)\notag\\
+  &= \frac{\alpha_j}{\mu}\,S_{ij}\left[1 - \frac{\alpha_j}{\Aij} - 2\alpha_j\delta_j^2\right]\,.
+\end{align}
+Substituting $\delta_j = \alpha_i(x_i-x_j)/\Aij$ gives $\delta_j^2 = \alpha_i^2(x_i-x_j)^2/\Aij^2$.
+Therefore:
+\begin{equation}\label{eq:Tij_Gauss}
+  \boxed{T_{ij} = \frac{\alpha_j}{\mu}\,S_{ij}\left[1 - \frac{\alpha_j}{\Aij} - \frac{2\alpha_j\alpha_i^2(x_i-x_j)^2}{\Aij^2}\right]}
+\end{equation}
+
+Equivalently, using $\Qij = \alpha_i\alpha_j(x_i-x_j)^2/\Aij$:
+\begin{equation}
+  T_{ij} = \frac{\alpha_j}{\mu}\,S_{ij}\left[1 - \frac{\alpha_j}{\Aij} - \frac{2\alpha_i\Qij}{\Aij}\right]\,.
+\end{equation}
+
+Or substituting $S_{ij} = \sqrt{\pi/\Aij}\,e^{-\Qij}$:
+\begin{equation}\label{eq:Tij_explicit}
+  T_{ij} = \frac{\alpha_j}{\mu}\,e^{-\Qij}\sqrt{\frac{\pi}{\Aij}}
+  \left[1 - \frac{\alpha_j}{\Aij} - \frac{2\alpha_j\alpha_i^2(x_i-x_j)^2}{\Aij^2}\right]\,.
+\end{equation}
+
+\subsubsection{Verification: diagonal case}
+
+For $i = j$ (same center, same width): $\alpha_i = \alpha_j = \alpha$, $x_i = x_j$,
+$\Aij = 2\alpha$, $\Qij = 0$, $\delta_j = 0$.
+\begin{equation}
+  T_{ii} = \frac{\alpha}{\mu}\sqrt{\frac{\pi}{2\alpha}}\left[1 - \frac{\alpha}{2\alpha} - 0\right]
+  = \frac{\alpha}{\mu}\sqrt{\frac{\pi}{2\alpha}}\cdot\frac{1}{2}
+  = \frac{\alpha}{2\mu}\,S_{ii}\,.
+\end{equation}
+\textbf{Check:} For a single Gaussian $G(x) = e^{-\alpha x^2}$, the expectation value of kinetic
+energy is $\langle T\rangle = T_{ii}/S_{ii} = \alpha/(2\mu)$. This equals $p^2/(2\mu)$ with
+$\langle p^2\rangle = \alpha$ (the variance of the momentum distribution for a Gaussian
+of width $1/\sqrt{2\alpha}$ in position space is $\Delta p^2 = \alpha$,
+and $\langle p\rangle = 0$, so $\langle p^2\rangle = \alpha$).
+This is correct for a minimum-uncertainty state with $\Delta x = 1/(2\sqrt{\alpha})$ and
+$\Delta p = \sqrt{\alpha}$, satisfying $\Delta x\Delta p = 1/2 = \hb/2$. $\checkmark$
+
+\subsubsection{Alternative derivation via integration by parts}
+
+One may also compute $T_{ij}$ using
+\begin{equation}
+  T_{ij} = \frac{1}{2\mu}\int\frac{dG_i}{dx}\frac{dG_j}{dx}\,dx\,,
+\end{equation}
+where $dG_i/dx = -2\alpha_i(x-x_i)G_i(x)$. This gives:
+\begin{equation}
+  T_{ij} = \frac{2\alpha_i\alpha_j}{\mu}\int(x-x_i)(x-x_j)\,G_i G_j\,dx\,.
+\end{equation}
+Writing $(x-x_i)(x-x_j) = (x-\Xij+\Xij-x_i)(x-\Xij+\Xij-x_j) = (u+\delta_i)(u+\delta_j)$
+where $u = x - \Xij$, $\delta_i = \Xij - x_i$, $\delta_j = \Xij - x_j$:
+\begin{align}
+  &\int(u+\delta_i)(u+\delta_j)e^{-\Aij u^2}\,du
+  = \frac{1}{2\Aij}\sqrt{\frac{\pi}{\Aij}} + \delta_i\delta_j\sqrt{\frac{\pi}{\Aij}}\,.
+\end{align}
+Therefore:
+\begin{equation}
+  T_{ij} = \frac{2\alpha_i\alpha_j}{\mu}\,e^{-\Qij}\sqrt{\frac{\pi}{\Aij}}\left(\frac{1}{2\Aij}+\delta_i\delta_j\right)\,.
+\end{equation}
+Since $\delta_i = \alpha_j(x_j-x_i)/\Aij$ and $\delta_j = \alpha_i(x_i-x_j)/\Aij$,
+we have $\delta_i\delta_j = -\alpha_i\alpha_j(x_i-x_j)^2/\Aij^2$:
+\begin{equation}
+  T_{ij} = \frac{2\alpha_i\alpha_j}{\mu}\,S_{ij}\left(\frac{1}{2\Aij} - \frac{\alpha_i\alpha_j(x_i-x_j)^2}{\Aij^2}\right)\,.
+\end{equation}
+This is equivalent to \cref{eq:Tij_Gauss}, as can be verified by algebraic simplification.
+For equal widths $\alpha_i = \alpha_j = \alpha$: $\delta_i = -\delta_j$, $\delta_i\delta_j = -\delta_j^2$, and
+\begin{equation}
+  T_{ij}^{(\alpha_i=\alpha_j=\alpha)} = \frac{2\alpha^2}{\mu}\,S_{ij}\left(\frac{1}{4\alpha} - \frac{(x_i-x_j)^2\alpha^2}{4\alpha^2}\right)
+  = \frac{\alpha}{2\mu}\,S_{ij}\left(1 - \frac{\alpha(x_i-x_j)^2}{2}\right)\,,
+\end{equation}
+which from \cref{eq:Tij_Gauss} with $\Aij = 2\alpha$:
+$\frac{\alpha}{\mu}\left[1 - \frac{1}{2} - \frac{2\alpha^3(x_i-x_j)^2}{4\alpha^2}\right]
+= \frac{\alpha}{\mu}\left[\frac{1}{2} - \frac{\alpha(x_i-x_j)^2}{2}\right]
+= \frac{\alpha}{2\mu}\left[1 - \alpha(x_i-x_j)^2\right]$. This matches (note $\Qij = \alpha(x_i-x_j)^2/2$ for equal widths). $\checkmark$
+
+% ------------------------------------------------------------
+\subsection{L\"owdin orthogonalization for the Gaussian basis}\label{sec:Gauss_Lowdin}
+% ------------------------------------------------------------
+
+The Gaussian basis functions are not orthogonal ($S_{ij} \neq \delta_{ij}$ in general).
+The overlap matrix can become nearly singular when Gaussians are placed too close together
+or have very different widths. The L\"owdin procedure (\cref{sec:Lowdin}) handles this:
+
+\begin{enumerate}
+  \item Diagonalize $\mathbf{S}$: $\mathbf{S} = \mathbf{U}\,\bm{\sigma}\,\mathbf{U}^T$.
+  \item Discard eigenvectors with $\sigma_i < \eps_{\text{thresh}}$ (typically $10^{-8}$).
+  \item Construct $\mathbf{X} = \mathbf{U}'(\bm{\sigma}')^{-1/2}$.
+  \item Transform: $\tilde{\mathbf{H}} = \mathbf{X}^T(\mathbf{T}+\mathbf{V})\mathbf{X}$.
+  \item Diagonalize $\tilde{\mathbf{H}}$ to get energies and eigenvectors in the orthogonalized basis.
+  \item Back-transform: $\mathbf{c} = \mathbf{X}\tilde{\mathbf{c}}$.
+\end{enumerate}
+
+The reduced dimension $N' < N$ implies that some linearly dependent combinations of
+Gaussians have been projected out. This is physically benign provided $N'$ is still
+large enough for convergence.
+
+% ------------------------------------------------------------
+\subsection{Parameter selection for the double well}\label{sec:Gauss_params}
+% ------------------------------------------------------------
+
+\subsubsection{Centers: uniform grid}
+
+A simple choice is a uniform grid of $N$ centers spanning the classically accessible region:
+\begin{equation}
+  x_i = x_{\min}^{\text{grid}} + (i-1)\,\Delta x\,,\qquad i = 1, \ldots, N\,,
+\end{equation}
+where $\Delta x = (x_{\max}^{\text{grid}} - x_{\min}^{\text{grid}})/(N-1)$.
+The grid boundaries $x_{\min,\max}^{\text{grid}}$ should extend well beyond the
+classical turning points of the highest energy level of interest, typically
+$x_{\max}^{\text{grid}} \approx 2$--$3\,\xe$.
+
+\subsubsection{Common width parameter}
+
+A natural choice is the local harmonic width at the potential minima:
+\begin{equation}
+  \alpha = \alpha_{\text{local}} = \mu\,\omega_{\text{local}} = 2\sqrt{\mu\,b}\,,
+\end{equation}
+or alternatively $\alpha = \mu\omega_{\text{local}}/2 = \sqrt{\mu\,b}$.
+The optimal width can also be determined variationally by minimizing the ground-state
+energy with respect to a common $\alpha$.
+
+\subsubsection{Number of Gaussians}
+
+The required number depends on the grid spacing relative to the Gaussian width:
+$\Delta x \lesssim 1/\sqrt{2\alpha}$ ensures sufficient overlap between adjacent Gaussians.
+For the double-well with typical parameters, $N \sim 20$--$60$ Gaussians suffice
+for spectroscopic accuracy of the lowest 4--8 levels.
+
+% ============================================================
+% ============================================================
