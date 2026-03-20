@@ -477,7 +477,7 @@ This example demonstrates:
 - Try exercises above
 - Explore other examples in `examples/` directory
 - Read generalization plan: `docs/developer_guide/GENERALIZATION_PLAN.md`
-- Contribute your own potential: `docs/developer_guide/CUSTOM_POTENTIALS.md`
+- Use polynomial mode for custom potentials: `docs/user_guide/INPUT_GUIDE.md`
 
 ---
 

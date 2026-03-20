@@ -1,0 +1,16 @@
+# PH3 umbrella inversion — polynomial mode
+# V(x) = v0 + v2*x^2 + v4*x^4  (symmetric: v1=v3=0)
+# Parameters: Spirko (1983), Sousa-Silva et al. (2013)
+# Vb ~ 11500 cm-1 = 0.05239 Ha, xe ~ 0.76 A = 1.43681 a0
+# v2 = -2*Vb/xe^2 = -2*0.05239/1.43681^2 = -0.05080 Ha/a0^2
+# v4 = Vb/xe^4 = 0.05239/1.43681^4 = 0.01236 Ha/a0^4
+poly_degree = 4
+v_coeffs = 0.05239, 0.0, -0.05080, 0.0, 0.01236
+mass_central = 30.97376
+mass_ligand  = 1.00782503
+n_ligands    = 3
+alpha = 8.0
+N_max = 200
+xmin = -8.0
+xmax =  8.0
+dx   = 0.02
