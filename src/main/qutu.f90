@@ -273,9 +273,9 @@ program qutu
 
         allocate(E_all(params%N))
 
-        if (params%use_polynomial .and. .not. params%is_symmetric) then
+        if (params%use_polynomial) then
             ! ------------------------------------------------------------------
-            ! Full N×N path — polynomial asymmetric/general case
+            ! Full N×N path — all polynomial cases (symmetric or asymmetric)
             ! ------------------------------------------------------------------
             call build_hamiltonian_full(params, H_full)
 
@@ -292,7 +292,7 @@ program qutu
 
         else
             ! ------------------------------------------------------------------
-            ! Block-diagonal path — legacy or symmetric polynomial case
+            ! Block-diagonal path — legacy xe/Vb case only
             ! ------------------------------------------------------------------
             call build_hamiltonian_matrices(params, H_even, H_odd)
 
@@ -314,21 +314,12 @@ program qutu
                 stop
             end if
 
-            ! Combine energies (interleave even and odd)
+            ! Combine energies (interleave even and odd) + add Vb shift
             do i = 1, params%N_even
-                ! Add Vb shift only in legacy mode (polynomial constant term is in the matrix)
-                if (params%use_polynomial) then
-                    E_all(2*i - 1) = E_even(i)
-                else
-                    E_all(2*i - 1) = E_even(i) + params%Vb
-                end if
+                E_all(2*i - 1) = E_even(i) + params%Vb
             end do
             do i = 1, params%N_odd
-                if (params%use_polynomial) then
-                    E_all(2*i) = E_odd(i)
-                else
-                    E_all(2*i) = E_odd(i) + params%Vb
-                end if
+                E_all(2*i) = E_odd(i) + params%Vb
             end do
 
             if (allocated(E_even)) deallocate(E_even)
@@ -437,38 +428,30 @@ program qutu
             ! -----------------------------------------------------------------
             ! Wavefunctions & wavepackets
             ! -----------------------------------------------------------------
-            if (params%is_symmetric) then
-                ! Symmetric path: use existing even/odd wavefunction routines
+            if (.not. params%use_polynomial) then
+                ! Legacy path: use existing even/odd wavefunction routines
                 call build_coefficient_matrix(H_even, H_odd, params%N_even, params%N_odd, c_full)
                 call compute_wavefunctions(params, H_even, H_odd, x_grid, x_grid_A, &
                                            psi_even, psi_odd, psi_even_A, psi_odd_A)
-
-                ! Section 6: EIGENSTATES
-                call write_eigenstates(x_grid, x_grid_A, psi_even, psi_odd, &
-                                       psi_even_A, psi_odd_A)
-
-                ! Section 7 + 8: TWO-STATE WAVEPACKETS + SURVIVAL PROBABILITY
-                call write_two_state_sections(E_all, psi_even, psi_odd, &
-                                              psi_even_A, psi_odd_A, x_grid, x_grid_A)
             else
-                ! Asymmetric path: full eigenvectors in H_full
+                ! Polynomial path: full eigenvectors in H_full
                 call compute_wavefunctions_full(params, H_full, x_grid, x_grid_A, &
                                                 psi_even, psi_odd, psi_even_A, psi_odd_A)
-
-                ! Section 6: EIGENSTATES (using unified psi arrays)
-                call write_eigenstates(x_grid, x_grid_A, psi_even, psi_odd, &
-                                       psi_even_A, psi_odd_A)
-
-                ! Section 7 + 8: TWO-STATE WAVEPACKETS
-                call write_two_state_sections(E_all, psi_even, psi_odd, &
-                                              psi_even_A, psi_odd_A, x_grid, x_grid_A)
             end if
+
+            ! Section 6: EIGENSTATES
+            call write_eigenstates(x_grid, x_grid_A, psi_even, psi_odd, &
+                                   psi_even_A, psi_odd_A)
+
+            ! Section 7 + 8: TWO-STATE WAVEPACKETS + SURVIVAL PROBABILITY
+            call write_two_state_sections(E_all, psi_even, psi_odd, &
+                                          psi_even_A, psi_odd_A, x_grid, x_grid_A)
 
             ! -----------------------------------------------------------------
             ! 4-state wavepacket calculations with varying alpha
-            ! (symmetric path only — uses legacy turning_points with xe/Vb)
+            ! (legacy path only — uses legacy turning_points with xe/Vb)
             ! -----------------------------------------------------------------
-            if (params%is_symmetric) then
+            if (.not. params%use_polynomial) then
                 n_alpha = input_params%n_alpha_values
                 allocate(alpha_4EE(n_alpha))
                 alpha_4EE = input_params%alpha_values
@@ -487,8 +470,8 @@ program qutu
                 deallocate(alpha_4EE, tp_x1, tp_x2, tp_x3, tp_x4, tp_E)
             end if
 
-            ! Section 10: COEFFICIENTS (symmetric path only)
-            if (params%is_symmetric) then
+            ! Section 10: COEFFICIENTS (legacy path only)
+            if (.not. params%use_polynomial) then
                 call write_coefficients_section(H_even, H_odd, params%N_even, params%N_odd)
                 if (print_level >= 2) then
                     call write_coefficients(trim(data_dir)//"out-coeficientes_par.dat", &
