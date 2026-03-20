@@ -33,9 +33,13 @@ program qutu
 
     ! Hamiltonian matrices and eigenvalues
     real(dp), allocatable :: H_even(:,:), H_odd(:,:)
+    real(dp), allocatable :: H_full(:,:)               ! full N×N (polynomial/asymmetric path)
     real(dp), allocatable :: E_even(:), E_odd(:), E_all(:), E_all_cm(:)
     real(dp), allocatable :: work(:)
     integer :: lwork, info
+
+    ! Reduced mass in atomic units (computed from whichever mass method is used)
+    real(dp) :: mass_au
 
     ! Coefficient matrices (eigenvectors from diagonalization)
     real(dp), allocatable :: c_full(:,:)
@@ -103,23 +107,84 @@ program qutu
     ! Section 1: INPUT PARAMETERS
     ! -------------------------------------------------------------------------
     call write_section_header('1', 'INPUT PARAMETERS')
-    write(ou,'(2X,A,T20,I0)')         'N_max       =', N_max
-    write(ou,'(2X,A,T20,F10.5,2X,A)') 'xe          =', xe_A,    'A'
-    write(ou,'(2X,A,T20,F10.4,2X,A)') 'Vb          =', Vb_cm,   'cm-1'
-    write(ou,'(2X,A,T20,F14.11,2X,A)') 'mass_H      =', mH_uma,  'amu'
-    write(ou,'(2X,A,T20,F14.11,2X,A)') 'mass_N      =', mN_uma,  'amu'
-    write(ou,'(2X,A,T20,F8.4,2X,A)')  'xmin        =', xmin,    'a0'
-    write(ou,'(2X,A,T20,F8.4,2X,A)')  'xmax        =', xmax,    'a0'
-    write(ou,'(2X,A,T20,F6.4,2X,A)')  'dx          =', dx,      'a0'
-    write(ou,'(2X,A,T20,I0)')         'print_level =', print_level
+    write(ou,'(2X,A,T20,I0)')        'N_max       =', N_max
+    write(ou,'(2X,A,T20,F8.4,2X,A)') 'xmin        =', xmin, 'a0'
+    write(ou,'(2X,A,T20,F8.4,2X,A)') 'xmax        =', xmax, 'a0'
+    write(ou,'(2X,A,T20,F6.4,2X,A)') 'dx          =', dx,   'a0'
+    write(ou,'(2X,A,T20,I0)')        'print_level =', print_level
+    if (input_params%use_polynomial) then
+        write(ou,'(2X,A)') 'Mode        = polynomial'
+        write(ou,'(2X,A,T20,I0)') 'poly_degree =', input_params%poly_degree
+        block
+            integer :: kk
+            do kk = 0, input_params%poly_degree
+                write(ou,'(2X,A,I0,A,T22,ES14.6,2X,A)') &
+                    'v_poly(', kk, ')  =', input_params%v_poly(kk+1), 'Ha/a0^k'
+            end do
+        end block
+        if (input_params%found_mass) then
+            write(ou,'(2X,A,T20,F14.8,2X,A)') 'mass        =', input_params%mass, 'amu'
+        else if (input_params%found_xyn_mass) then
+            write(ou,'(2X,A,T20,F14.8,2X,A)') 'mass_central=', input_params%mass_central, 'amu'
+            write(ou,'(2X,A,T20,F14.8,2X,A)') 'mass_ligand =', input_params%mass_ligand,  'amu'
+            write(ou,'(2X,A,T20,I0)')          'n_ligands   =', input_params%n_ligands
+        else
+            write(ou,'(2X,A,T20,F14.11,2X,A)') 'mass_H      =', mH_uma, 'amu'
+            write(ou,'(2X,A,T20,F14.11,2X,A)') 'mass_N      =', mN_uma, 'amu'
+        end if
+        if (input_params%alpha_override /= 0.0_dp) &
+            write(ou,'(2X,A,T20,F10.5,2X,A)') 'alpha       =', input_params%alpha_override, 'a0^-2'
+    else
+        write(ou,'(2X,A)') 'Mode        = legacy (xe/Vb)'
+        write(ou,'(2X,A,T20,F10.5,2X,A)')  'xe          =', xe_A,  'A'
+        write(ou,'(2X,A,T20,F10.4,2X,A)')  'Vb          =', Vb_cm, 'cm-1'
+        write(ou,'(2X,A,T20,F14.11,2X,A)') 'mass_H      =', mH_uma, 'amu'
+        write(ou,'(2X,A,T20,F14.11,2X,A)') 'mass_N      =', mN_uma, 'amu'
+    end if
     write(ou,'(A)') ''
 
-    ! Initialize system parameters
-    call init_system_params(params, N_max, xe_A, Vb_cm, mH_uma, mN_uma)
-
-    ! Compute optimal alpha
-    params%alpha = compute_optimal_alpha(params%mass, params%xe, params%Vb)
-    params%alpha_angstrom = params%alpha / RBOHR**2
+    ! -------------------------------------------------------------------------
+    ! Initialize system parameters (dispatch on mode)
+    ! -------------------------------------------------------------------------
+    if (input_params%use_polynomial) then
+        ! Compute reduced mass in a.u. using priority: mass > XYn > legacy NH3
+        if (input_params%found_mass) then
+            mass_au = input_params%mass * UMA_TO_AU
+        else if (input_params%found_xyn_mass) then
+            block
+                real(dp) :: mX, mY
+                integer  :: nL
+                mX = input_params%mass_central * UMA_TO_AU
+                mY = input_params%mass_ligand  * UMA_TO_AU
+                nL = input_params%n_ligands
+                mass_au = real(nL, dp) * mY * mX / (real(nL, dp) * mY + mX)
+            end block
+        else
+            block
+                real(dp) :: mH_au, mN_au
+                mH_au = mH_uma * UMA_TO_AU
+                mN_au = mN_uma * UMA_TO_AU
+                mass_au = (3.0_dp * mH_au * mN_au) / (3.0_dp * mH_au + mN_au)
+            end block
+        end if
+        ! Determine alpha: user override or auto-compute from V''(0)
+        if (input_params%alpha_override /= 0.0_dp) then
+            call init_system_params_poly(params, N_max, mass_au, &
+                                         input_params%v_poly, input_params%alpha_override)
+        else
+            block
+                real(dp) :: alpha_auto
+                alpha_auto = compute_optimal_alpha_poly(input_params%v_poly, mass_au, 0.0_dp)
+                call init_system_params_poly(params, N_max, mass_au, &
+                                             input_params%v_poly, alpha_auto)
+            end block
+        end if
+        params%alpha_angstrom = params%alpha / RBOHR**2
+    else
+        call init_system_params(params, N_max, xe_A, Vb_cm, mH_uma, mN_uma)
+        params%alpha = compute_optimal_alpha(params%mass, params%xe, params%Vb)
+        params%alpha_angstrom = params%alpha / RBOHR**2
+    end if
 
     ! Initialize grid
     call init_grid_params(grid, xmin, xmax, dx)
@@ -129,20 +194,23 @@ program qutu
     ! Section 2: SYSTEM PARAMETERS
     ! -------------------------------------------------------------------------
     call write_section_header('2', 'SYSTEM PARAMETERS')
+    if (params%use_polynomial) then
+        write(ou,'(2X,A,T22,A)') 'Potential      =', 'polynomial V(x) = Σ vk*x^k'
+        write(ou,'(2X,A,T22,L1)') 'is_symmetric   =', params%is_symmetric
+    else
+        write(ou,'(2X,A,T22,F10.5,2X,A,T42,F10.5,2X,A)') &
+            'xe             =', params%xe,           'a0', params%xe_angstrom, 'A'
+        write(ou,'(2X,A,T22,F10.8,2X,A,T42,F10.4,2X,A)') &
+            'Vb             =', params%Vb,           'Ha', params%Vb_cm,       'cm-1'
+        write(ou,'(2X,A,T22,E12.5,2X,A)') &
+            'a (V coeff.)   =', params%Vb/params%xe**4,          'Ha/a0^4'
+        write(ou,'(2X,A,T22,E12.5,2X,A)') &
+            'b (V coeff.)   =', 2.0_dp*params%Vb/params%xe**2,   'Ha/a0^2'
+    end if
+    write(ou,'(2X,A,T22,F10.5,2X,A)') 'Reduced mass   =', params%mass, 'a.u.'
     write(ou,'(2X,A,T22,F10.5,2X,A,T42,F10.5,2X,A)') &
-        'xe             =', params%xe,            'a0', params%xe_angstrom,  'A'
-    write(ou,'(2X,A,T22,F10.8,2X,A,T42,F10.4,2X,A)') &
-        'Vb             =', params%Vb,            'Ha', params%Vb_cm,        'cm-1'
-    write(ou,'(2X,A,T22,E12.5,2X,A)') &
-        'a (V coeff.)   =', params%Vb/params%xe**4,  'Ha/a0^4'
-    write(ou,'(2X,A,T22,E12.5,2X,A)') &
-        'b (V coeff.)   =', 2.0_dp*params%Vb/params%xe**2, 'Ha/a0^2'
-    write(ou,'(2X,A,T22,F10.5,2X,A)') &
-        'Reduced mass   =', params%mass,          'a.u.'
-    write(ou,'(2X,A,T22,F10.5,2X,A,T42,F10.5,2X,A)') &
-        'alpha (opt.)   =', params%alpha,         'a0^-2', params%alpha_angstrom, 'A^-2'
-    write(ou,'(2X,A,T22,I0)') &
-        'N_max          =', N_max
+        'alpha (opt.)   =', params%alpha, 'a0^-2', params%alpha_angstrom, 'A^-2'
+    write(ou,'(2X,A,T22,I0)') 'N_max          =', N_max
     write(ou,'(A)') ''
 
     write(*,'(A)') ' Initialising system...'
@@ -154,9 +222,13 @@ program qutu
     allocate(V_grid(n_steps_x), V_grid_cm(n_steps_x))
 
     do i = 1, n_steps_x
-        x_grid(i)    = xmin + dx * real(i - 1, dp)
-        x_grid_A(i)  = x_grid(i) * RBOHR
-        V_grid(i)    = potential(x_grid(i), params%xe, params%Vb)
+        x_grid(i)   = xmin + dx * real(i - 1, dp)
+        x_grid_A(i) = x_grid(i) * RBOHR
+        if (params%use_polynomial) then
+            V_grid(i) = potential_poly(x_grid(i), params%v_poly)
+        else
+            V_grid(i) = potential(x_grid(i), params%xe, params%Vb)
+        end if
         V_grid_cm(i) = V_grid(i) * EUACM
     end do
 
@@ -199,35 +271,69 @@ program qutu
         params%N_odd  = params%N / 2
         params%N_even = params%N - params%N_odd
 
-        ! Build and diagonalize Hamiltonian
-        call build_hamiltonian_matrices(params, H_even, H_odd)
-
-        lwork = 3 * params%N
-        if (allocated(work)) deallocate(work)
-        allocate(work(lwork))
-
-        allocate(E_even(params%N_even))
-        call dsyev('V', 'U', params%N_even, H_even, params%N_even, E_even, work, lwork, info)
-        if (info /= 0) then
-            write(*,*) 'Error: Even matrix diagonalization failed, info =', info
-            stop
-        end if
-
-        allocate(E_odd(params%N_odd))
-        call dsyev('V', 'U', params%N_odd, H_odd, params%N_odd, E_odd, work, lwork, info)
-        if (info /= 0) then
-            write(*,*) 'Error: Odd matrix diagonalization failed, info =', info
-            stop
-        end if
-
-        ! Combine energies (interleave even and odd)
         allocate(E_all(params%N))
-        do i = 1, params%N_even
-            E_all(2*i - 1) = E_even(i) + params%Vb
-        end do
-        do i = 1, params%N_odd
-            E_all(2*i) = E_odd(i) + params%Vb
-        end do
+
+        if (params%use_polynomial .and. .not. params%is_symmetric) then
+            ! ------------------------------------------------------------------
+            ! Full N×N path — polynomial asymmetric/general case
+            ! ------------------------------------------------------------------
+            call build_hamiltonian_full(params, H_full)
+
+            lwork = 3 * params%N
+            if (allocated(work)) deallocate(work)
+            allocate(work(lwork))
+
+            call dsyev('V', 'U', params%N, H_full, params%N, E_all, work, lwork, info)
+            if (info /= 0) then
+                write(*,*) 'Error: Full matrix diagonalization failed, info =', info
+                stop
+            end if
+            ! No Vb shift — constant term is already inside the polynomial matrix
+
+        else
+            ! ------------------------------------------------------------------
+            ! Block-diagonal path — legacy or symmetric polynomial case
+            ! ------------------------------------------------------------------
+            call build_hamiltonian_matrices(params, H_even, H_odd)
+
+            lwork = 3 * params%N
+            if (allocated(work)) deallocate(work)
+            allocate(work(lwork))
+
+            allocate(E_even(params%N_even))
+            call dsyev('V', 'U', params%N_even, H_even, params%N_even, E_even, work, lwork, info)
+            if (info /= 0) then
+                write(*,*) 'Error: Even matrix diagonalization failed, info =', info
+                stop
+            end if
+
+            allocate(E_odd(params%N_odd))
+            call dsyev('V', 'U', params%N_odd, H_odd, params%N_odd, E_odd, work, lwork, info)
+            if (info /= 0) then
+                write(*,*) 'Error: Odd matrix diagonalization failed, info =', info
+                stop
+            end if
+
+            ! Combine energies (interleave even and odd)
+            do i = 1, params%N_even
+                ! Add Vb shift only in legacy mode (polynomial constant term is in the matrix)
+                if (params%use_polynomial) then
+                    E_all(2*i - 1) = E_even(i)
+                else
+                    E_all(2*i - 1) = E_even(i) + params%Vb
+                end if
+            end do
+            do i = 1, params%N_odd
+                if (params%use_polynomial) then
+                    E_all(2*i) = E_odd(i)
+                else
+                    E_all(2*i) = E_odd(i) + params%Vb
+                end if
+            end do
+
+            if (allocated(E_even)) deallocate(E_even)
+            if (allocated(E_odd))  deallocate(E_odd)
+        end if
 
         ! Store for convergence analysis
         do i = 1, params%N
@@ -243,9 +349,6 @@ program qutu
             allocate(E_all_cm(N_max))
             E_all_cm = E_all * EUACM
 
-            ! Build full coefficient matrix
-            call build_coefficient_matrix(H_even, H_odd, params%N_even, params%N_odd, c_full)
-
             ! -----------------------------------------------------------------
             ! Section 4: ENERGIES
             ! -----------------------------------------------------------------
@@ -253,13 +356,21 @@ program qutu
             write(ou,'(2X,A,I0)') 'N_max = ', N_max
             write(ou,'(A)') ''
             write(ou,'(A)') '$BEGIN ENERGIES'
-            write(ou,'(A)') '# columns: n   parity   E(Ha)   E(cm-1)'
+            if (params%is_symmetric) then
+                write(ou,'(A)') '# columns: n   parity   E(Ha)   E(cm-1)'
+            else
+                write(ou,'(A)') '# columns: n   E(Ha)   E(cm-1)'
+            end if
             write(ou,'(A)') '#'
             do i = 1, N_max
-                if (mod(i-1, 2) == 0) then
-                    write(ou,'(I4,3X,A4,3X,F18.10,F16.4)') i-1, 'even', E_all(i), E_all_cm(i)
+                if (params%is_symmetric) then
+                    if (mod(i-1, 2) == 0) then
+                        write(ou,'(I4,3X,A4,3X,F18.10,F16.4)') i-1, 'even', E_all(i), E_all_cm(i)
+                    else
+                        write(ou,'(I4,3X,A4,3X,F18.10,F16.4)') i-1, 'odd ', E_all(i), E_all_cm(i)
+                    end if
                 else
-                    write(ou,'(I4,3X,A4,3X,F18.10,F16.4)') i-1, 'odd ', E_all(i), E_all_cm(i)
+                    write(ou,'(I4,3X,F18.10,F16.4)') i-1, E_all(i), E_all_cm(i)
                 end if
             end do
             write(ou,'(A)') '$END ENERGIES'
@@ -326,50 +437,73 @@ program qutu
             ! -----------------------------------------------------------------
             ! Wavefunctions & wavepackets
             ! -----------------------------------------------------------------
-            call compute_wavefunctions(params, H_even, H_odd, x_grid, x_grid_A, &
-                                       psi_even, psi_odd, psi_even_A, psi_odd_A)
+            if (params%is_symmetric) then
+                ! Symmetric path: use existing even/odd wavefunction routines
+                call build_coefficient_matrix(H_even, H_odd, params%N_even, params%N_odd, c_full)
+                call compute_wavefunctions(params, H_even, H_odd, x_grid, x_grid_A, &
+                                           psi_even, psi_odd, psi_even_A, psi_odd_A)
 
-            ! Section 6: EIGENSTATES
-            call write_eigenstates(x_grid, x_grid_A, psi_even, psi_odd, &
-                                   psi_even_A, psi_odd_A)
+                ! Section 6: EIGENSTATES
+                call write_eigenstates(x_grid, x_grid_A, psi_even, psi_odd, &
+                                       psi_even_A, psi_odd_A)
 
-            ! Section 7 + 8: TWO-STATE WAVEPACKETS + SURVIVAL PROBABILITY
-            call write_two_state_sections(E_all, psi_even, psi_odd, &
-                                          psi_even_A, psi_odd_A, x_grid, x_grid_A)
+                ! Section 7 + 8: TWO-STATE WAVEPACKETS + SURVIVAL PROBABILITY
+                call write_two_state_sections(E_all, psi_even, psi_odd, &
+                                              psi_even_A, psi_odd_A, x_grid, x_grid_A)
+            else
+                ! Asymmetric path: full eigenvectors in H_full
+                call compute_wavefunctions_full(params, H_full, x_grid, x_grid_A, &
+                                                psi_even, psi_odd, psi_even_A, psi_odd_A)
+
+                ! Section 6: EIGENSTATES (using unified psi arrays)
+                call write_eigenstates(x_grid, x_grid_A, psi_even, psi_odd, &
+                                       psi_even_A, psi_odd_A)
+
+                ! Section 7 + 8: TWO-STATE WAVEPACKETS
+                call write_two_state_sections(E_all, psi_even, psi_odd, &
+                                              psi_even_A, psi_odd_A, x_grid, x_grid_A)
+            end if
 
             ! -----------------------------------------------------------------
             ! 4-state wavepacket calculations with varying alpha
+            ! (symmetric path only — uses legacy turning_points with xe/Vb)
             ! -----------------------------------------------------------------
-            n_alpha = input_params%n_alpha_values
-            allocate(alpha_4EE(n_alpha))
-            alpha_4EE = input_params%alpha_values
+            if (params%is_symmetric) then
+                n_alpha = input_params%n_alpha_values
+                allocate(alpha_4EE(n_alpha))
+                alpha_4EE = input_params%alpha_values
 
-            allocate(tp_x1(n_alpha), tp_x2(n_alpha), tp_x3(n_alpha), tp_x4(n_alpha), tp_E(n_alpha))
+                allocate(tp_x1(n_alpha), tp_x2(n_alpha), tp_x3(n_alpha), tp_x4(n_alpha), tp_E(n_alpha))
 
-            ! Build position matrix for expectation values
-            call build_position_matrix(params%N, params%alpha_angstrom, x_matrix)
+                ! Build position matrix for expectation values
+                call build_position_matrix(params%N, params%alpha_angstrom, x_matrix)
 
-            ! Section 9: FOUR-STATE WAVEPACKETS
-            call write_four_state_sections(params, E_all, alpha_4EE, &
-                                           psi_even_A, psi_odd_A, x_grid_A, &
-                                           c_full, x_matrix, &
-                                           tp_E, tp_x1, tp_x2, tp_x3, tp_x4)
+                ! Section 9: FOUR-STATE WAVEPACKETS
+                call write_four_state_sections(params, E_all, alpha_4EE, &
+                                               psi_even_A, psi_odd_A, x_grid_A, &
+                                               c_full, x_matrix, &
+                                               tp_E, tp_x1, tp_x2, tp_x3, tp_x4)
 
-            deallocate(alpha_4EE, tp_x1, tp_x2, tp_x3, tp_x4, tp_E)
+                deallocate(alpha_4EE, tp_x1, tp_x2, tp_x3, tp_x4, tp_E)
+            end if
 
-            ! Section 10: COEFFICIENTS
-            call write_coefficients_section(H_even, H_odd, params%N_even, params%N_odd)
-
-            if (print_level >= 2) then
-                call write_coefficients(trim(data_dir)//"out-coeficientes_par.dat", &
-                                        H_even, "even", ierr)
-                call write_coefficients(trim(data_dir)//"out-coeficientes_impar.dat", &
-                                        H_odd, "odd", ierr)
+            ! Section 10: COEFFICIENTS (symmetric path only)
+            if (params%is_symmetric) then
+                call write_coefficients_section(H_even, H_odd, params%N_even, params%N_odd)
+                if (print_level >= 2) then
+                    call write_coefficients(trim(data_dir)//"out-coeficientes_par.dat", &
+                                            H_even, "even", ierr)
+                    call write_coefficients(trim(data_dir)//"out-coeficientes_impar.dat", &
+                                            H_odd, "odd", ierr)
+                end if
             end if
         end if
 
         ! Cleanup for next iteration
-        deallocate(H_even, H_odd, E_even, E_odd, E_all)
+        if (allocated(H_even)) deallocate(H_even)
+        if (allocated(H_odd))  deallocate(H_odd)
+        if (allocated(H_full)) deallocate(H_full)
+        deallocate(E_all)
     end do
 
     ! =========================================================================
@@ -523,6 +657,55 @@ contains
             end do
         end do
     end subroutine compute_wavefunctions
+
+    ! =========================================================================
+    ! Compute wavefunctions on grid — full N×N path (asymmetric/general case)
+    !
+    ! H_full(:,:) on input contains the eigenvectors from dsyev (column jj =
+    ! eigenvector for eigenstate jj-1, expressed in the HO basis n = 0..N-1).
+    ! Outputs psi_even/psi_odd holding the first 3 states each, matching the
+    ! interface expected by write_eigenstates and write_two_state_sections.
+    ! =========================================================================
+    subroutine compute_wavefunctions_full(params, H_full, x_grid, x_grid_A, &
+                                          psi_even, psi_odd, psi_even_A, psi_odd_A)
+        type(system_params_t), intent(in) :: params
+        real(dp), intent(in) :: H_full(:,:)
+        real(dp), intent(in) :: x_grid(:), x_grid_A(:)
+        real(dp), allocatable, intent(out) :: psi_even(:,:), psi_odd(:,:)
+        real(dp), allocatable, intent(out) :: psi_even_A(:,:), psi_odd_A(:,:)
+        integer :: ii, jj, k, n_x, n_states
+        real(dp) :: coeff, alpha_A
+
+        n_x      = size(x_grid)
+        n_states = 3
+        alpha_A  = params%alpha_angstrom
+
+        allocate(psi_even(n_x, n_states), psi_odd(n_x, n_states))
+        allocate(psi_even_A(n_x, n_states), psi_odd_A(n_x, n_states))
+        psi_even   = 0.0_dp;  psi_odd    = 0.0_dp
+        psi_even_A = 0.0_dp;  psi_odd_A  = 0.0_dp
+
+        ! Map: psi_even(:,jj) = state 2*(jj-1)   (n=0, 2, 4)
+        !      psi_odd (:,jj) = state 2*jj-1      (n=1, 3, 5)
+        do jj = 1, n_states
+            do ii = 1, n_x
+                do k = 1, params%N
+                    coeff = H_full(k, 2*(jj-1)+1)   ! even state index
+                    if (abs(coeff) > COEFF_THRESHOLD) then
+                        psi_even(ii, jj)   = psi_even(ii, jj)   + coeff * phi(k-1, params%alpha, x_grid(ii))
+                        psi_even_A(ii, jj) = psi_even_A(ii, jj) + coeff * phi(k-1, alpha_A,       x_grid_A(ii))
+                    end if
+                    if (2*jj <= params%N) then
+                        coeff = H_full(k, 2*jj)        ! odd state index
+                        if (abs(coeff) > COEFF_THRESHOLD) then
+                            psi_odd(ii, jj)   = psi_odd(ii, jj)   + coeff * phi(k-1, params%alpha, x_grid(ii))
+                            psi_odd_A(ii, jj) = psi_odd_A(ii, jj) + coeff * phi(k-1, alpha_A,       x_grid_A(ii))
+                        end if
+                    end if
+                end do
+            end do
+        end do
+    end subroutine compute_wavefunctions_full
 
     ! =========================================================================
     ! Section 6: EIGENSTATES
