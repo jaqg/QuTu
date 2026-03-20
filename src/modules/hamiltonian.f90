@@ -233,31 +233,35 @@ contains
 
         real(dp), allocatable :: Xprev(:,:), Xcurr(:,:)
         real(dp) :: ell
-        integer  :: step, m, n
+        integer  :: step, m, n, N_work
 
         ell = 1.0_dp / sqrt(2.0_dp * alpha)
 
-        allocate(Xprev(0:N_basis-1, 0:N_basis-1))
-        allocate(Xcurr(0:N_basis-1, 0:N_basis-1))
+        ! Use a working basis of size N_basis + k to avoid boundary truncation.
+        ! After k recursion steps the boundary effect from index N_work cannot
+        ! reach the [0:N_basis-1, 0:N_basis-1] subblock we want.
+        N_work = N_basis + k
+
+        allocate(Xprev(0:N_work-1, 0:N_work-1))
+        allocate(Xcurr(0:N_work-1, 0:N_work-1))
         allocate(Xk(0:N_basis-1, 0:N_basis-1))
 
-        ! Base case: X^(0) = identity
+        ! Base case: X^(0) = identity in extended space
         Xprev = 0.0_dp
-        do n = 0, N_basis - 1
+        do n = 0, N_work - 1
             Xprev(n, n) = 1.0_dp
         end do
 
         if (k == 0) then
-            Xk = Xprev
+            Xk = Xprev(0:N_basis-1, 0:N_basis-1)
             return
         end if
 
-        ! Iterate from 1 to k
+        ! Iterate from 1 to k in the extended space
         do step = 1, k
             Xcurr = 0.0_dp
-            do m = 0, N_basis - 1
-                ! Selection rule: only |m-n| <= step with same parity as step
-                do n = 0, N_basis - 1
+            do m = 0, N_work - 1
+                do n = 0, N_work - 1
                     if (mod(m - n + 1000*step, 2) /= mod(step, 2)) cycle
                     if (abs(m - n) > step) cycle
 
@@ -266,7 +270,7 @@ contains
                         Xcurr(m, n) = Xcurr(m, n) + ell * sqrt(real(n, dp)) * Xprev(m, n-1)
                     end if
                     ! Right term: sqrt(n+1) * X^(step-1)_{m, n+1}
-                    if (n < N_basis - 1) then
+                    if (n < N_work - 1) then
                         Xcurr(m, n) = Xcurr(m, n) + ell * sqrt(real(n+1, dp)) * Xprev(m, n+1)
                     end if
                 end do
@@ -274,7 +278,8 @@ contains
             Xprev = Xcurr
         end do
 
-        Xk = Xcurr
+        ! Extract the N_basis × N_basis submatrix (exact, boundary-free)
+        Xk = Xcurr(0:N_basis-1, 0:N_basis-1)
     end subroutine compute_xk_matrix
 
     ! -------------------------------------------------------------------------

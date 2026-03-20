@@ -1,9 +1,16 @@
 # Generalization Plan: Arbitrary 1D Quantum Potentials
 
+> **SUPERSEDED**: This document describes an earlier generalization plan (OOP factory
+> pattern) that was not implemented. The adopted approach — a general polynomial
+> potential V(x) = Σ vₖ xᵏ with master recursion for matrix elements — is
+> documented in `generalization-potential.md` at the project root and implemented
+> in branch `dev/generalization-potential`. This file is retained for historical
+> reference only.
+
 **Project**: QuTu - Quantum Tunneling Simulation
 **Version**: 2.0 (Planned)
 **Date**: 2026-01-20
-**Status**: Planning Phase - Awaiting User Approval
+**Status**: SUPERSEDED — see generalization-potential.md
 
 ---
 

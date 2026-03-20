@@ -174,22 +174,59 @@ distclean: clean
 # Testing targets
 # =============================================================================
 
-test: all
-	@echo "Running tests..."
-	@echo "⚠️  Test suite not yet implemented"
-	@echo "   See tests/ directory for structure"
+# Unit test executables
+TEST_UNIT_SRCS = tests/unit/test_xk_recursion.f90 \
+                 tests/unit/test_parity_detection.f90 \
+                 tests/unit/test_input_parser.f90
 
-test-unit:
-	@echo "Running unit tests..."
-	@echo "⚠️  Unit tests not yet implemented"
+TEST_UNIT_EXECS = $(patsubst tests/unit/%.f90,$(BUILD_DIR)/%,$(TEST_UNIT_SRCS))
 
-test-integration:
-	@echo "Running integration tests..."
-	@echo "⚠️  Integration tests not yet implemented"
+# Common module objects needed by unit tests
+TEST_MOD_OBJS = $(BUILD_DIR)/constants.o \
+                $(BUILD_DIR)/types.o \
+                $(BUILD_DIR)/harmonic_oscillator.o \
+                $(BUILD_DIR)/hamiltonian.o \
+                $(BUILD_DIR)/input_reader.o
 
-test-validation:
-	@echo "Running validation tests..."
-	@echo "⚠️  Validation tests not yet implemented"
+# Build a unit test executable
+$(BUILD_DIR)/test_%: tests/unit/test_%.f90 $(MOD_OBJS) | $(BUILD_DIR)
+	$(FC) $(FFLAGS) -I$(BUILD_DIR) -o $@ $< $(MOD_OBJS) $(LDFLAGS) $(LIBS)
+
+# Run all tests
+test: test-unit test-validation test-integration
+
+# Run unit tests
+test-unit: all $(TEST_UNIT_EXECS)
+	@echo ""; echo "=== Unit Tests ==="
+	@n_pass=0; n_fail=0; \
+	for t in $(TEST_UNIT_EXECS); do \
+	    echo "--- $$t ---"; \
+	    if $$t; then n_pass=$$((n_pass+1)); else n_fail=$$((n_fail+1)); fi; \
+	done; \
+	echo ""; echo "Unit tests: $$n_pass passed, $$n_fail failed"; \
+	[ $$n_fail -eq 0 ]
+
+# Run validation tests
+test-validation: all
+	@echo ""; echo "=== Validation Tests ==="
+	@n_pass=0; n_fail=0; \
+	for t in tests/validation/*.sh; do \
+	    echo "--- $$t ---"; \
+	    if bash $$t; then n_pass=$$((n_pass+1)); else n_fail=$$((n_fail+1)); fi; \
+	done; \
+	echo ""; echo "Validation tests: $$n_pass passed, $$n_fail failed"; \
+	[ $$n_fail -eq 0 ]
+
+# Run integration tests
+test-integration: all
+	@echo ""; echo "=== Integration Tests ==="
+	@n_pass=0; n_fail=0; \
+	for t in tests/integration/*.sh; do \
+	    echo "--- $$t ---"; \
+	    if bash $$t; then n_pass=$$((n_pass+1)); else n_fail=$$((n_fail+1)); fi; \
+	done; \
+	echo ""; echo "Integration tests: $$n_pass passed, $$n_fail failed"; \
+	[ $$n_fail -eq 0 ]
 
 # =============================================================================
 # Help
