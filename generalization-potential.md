@@ -854,49 +854,47 @@ EOF
 
 | Phase | Description | Status | Notes / blockers |
 |---|---|---|---|
-| 0 | Create git branch | PLANNED | — |
-| 1 | `types.f90` — add polynomial fields | PLANNED | — |
-| 2 | `hamiltonian.f90` — add 6 new routines | PLANNED | — |
-| 3 | `input_reader.f90` — parse polynomial keys | PLANNED | — |
-| 4 | `qutu.f90` — dispatch symmetric/asymmetric | PLANNED | — |
-| 5 | `constants.f90` — add SYMMETRY_THRESHOLD | PLANNED | — |
+| 0 | Create git branch | DONE | `dev/generalization-potential` on GitHub |
+| 1 | `types.f90` — add polynomial fields | DONE | `init_system_params_poly`, parity auto-detect |
+| 2 | `hamiltonian.f90` — add 6 new routines | DONE | N_work=N_basis+k buffer fix for boundary truncation |
+| 3 | `input_reader.f90` — parse polynomial keys | DONE | three-tier mass priority |
+| 4 | `qutu.f90` — dispatch symmetric/asymmetric | DONE | all polynomial cases use build_hamiltonian_full |
+| 5 | `constants.f90` — add SYMMETRY_THRESHOLD | DONE | 1e-12 |
 
 ### Testing phases
 
 | Phase | Description | Status | Notes / blockers |
 |---|---|---|---|
-| T1 | Unit tests (`tests/unit/`) | PLANNED | — |
-| T2 | Validation tests (`tests/validation/`) | PLANNED | — |
-| T3 | Integration tests (`tests/integration/`) | PLANNED | — |
+| T1 | Unit tests (`tests/unit/`) | DONE | 9/9 pass |
+| T2 | Validation tests (`tests/validation/`) | DONE | 4/4 pass |
+| T3 | Integration tests (`tests/integration/`) | DONE | 2/2 pass |
 
 ### Examples phases
 
 | Phase | Description | Status | Notes / blockers |
 |---|---|---|---|
-| E1 | `examples/02_ph3_inversion/` | PLANNED | Exact PH3 v_coeffs in a.u. to be computed from Spirko 1983 data |
-| E2 | `examples/03_asymmetric_double_well/` | PLANNED | Parameters verified; alpha concern documented above |
-| E3 | Update `examples/01_basic_NH3/README.md` | PLANNED | Two small edits only |
+| E1 | `examples/02_ph3_inversion/` | DONE | Symmetric polynomial PH3 example |
+| E2 | `examples/03_asymmetric_double_well/` | DONE | Proton transfer asymmetric DW |
+| E3 | Update `examples/01_basic_NH3/README.md` | DONE | Fixed broken CUSTOM_POTENTIALS.md link |
 
 ### Documentation phases
 
 | Phase | Description | Status | Notes / blockers |
 |---|---|---|---|
-| D1 | `docs/user_guide/INPUT_GUIDE.md` | PLANNED | — |
-| D2 | `docs/developer_guide/TODO.md` | PLANNED | — |
-| D3 | `docs/developer_guide/GENERALIZATION_PLAN.md` | PLANNED | Add SUPERSEDED header |
-| D4 | `docs/theory/latex/sections/14_general_case.tex` + PDF recompile | PLANNED | — |
-| D5 | `README.md` project root | PLANNED | — |
+| D1 | `docs/user_guide/INPUT_GUIDE.md` | DONE | Polynomial mode section added |
+| D2 | `docs/developer_guide/TODO.md` | DONE | Completed section + future enhancements |
+| D3 | `docs/developer_guide/GENERALIZATION_PLAN.md` | DONE | SUPERSEDED header added |
+| D4 | `docs/theory/latex/sections/14_general_case.tex` | DONE | dsyev note (PDF recompile: manual, needs pdflatex) |
+| D5 | `README.md` project root | DONE | Polynomial potential section + examples pointers |
 
-### Overall status (last updated: 2026-03-19)
+### Overall status (last updated: 2026-03-20)
 
-**Current phase:** Phase 0 — branch not yet created.
-**Resume here next session:** Start with Phase 0 (create branch), then Phase 5
-(constants, trivial), then Phase 1 (types), then Phase 2 (hamiltonian — the
-largest phase).
+**Status: ALL PHASES COMPLETE.** Branch `dev/generalization-potential` is fully
+implemented and pushed. Ready for review and merge to `main`.
 
-**Key open questions for next session:**
-1. Run `docs/theory/numerical_verification.py` with corrected α ≈ 4.7 a₀⁻² to
-   validate absolute energies for Example 3 before writing the tutorial.
+**Not implemented (deferred to future work):**
+- Banded LAPACK solver (DSBEV) — currently uses dense DSYEV; tracked in Future enhancements
+- PDF recompile of theory document — requires local pdflatex installation
 2. Compute exact PH3 v_coeffs in atomic units from Spirko (1983) Vb/xe values
    before writing `examples/02_ph3_inversion/INPUT`.
 3. Confirm DSBEV calling convention in the installed LAPACK version on this machine
