@@ -25,6 +25,26 @@ module input_reader
         ! Alpha values for 4-state wavepacket calculations
         real(dp), allocatable :: alpha_values(:)
         integer :: n_alpha_values
+
+        ! --- Polynomial potential mode ---
+        logical :: use_polynomial = .false.
+        integer :: poly_degree = -1
+        real(dp), allocatable :: v_poly(:)   ! v_poly(1:poly_degree+1) = [v0,v1,...,vN]
+
+        ! Optional HO basis width override (0 = auto-compute)
+        real(dp) :: alpha_override = 0.0_dp
+
+        ! Mass specification — three mutually exclusive methods (priority order):
+        !   1. mass key       : direct reduced mass in amu
+        !   2. mass_central + mass_ligand + n_ligands : XYn umbrella formula μ = n·mY·mX/(n·mY+mX)
+        !   3. mass_H + mass_N : legacy NH3 formula (backward compat)
+        real(dp) :: mass = 0.0_dp             ! direct reduced mass (amu)
+        logical  :: found_mass = .false.
+
+        real(dp) :: mass_central = 0.0_dp    ! mX in amu (XYn formula)
+        real(dp) :: mass_ligand  = 0.0_dp    ! mY in amu (XYn formula)
+        integer  :: n_ligands    = 0          ! n in XYn formula
+        logical  :: found_xyn_mass = .false.
     end type input_params_t
 
     ! Public procedures
@@ -87,11 +107,13 @@ contains
         type(input_params_t), intent(out) :: params
         integer, intent(out) :: ierr
 
-        integer :: unit_num, io_stat, parse_ierr
+        integer :: unit_num, io_stat, parse_ierr, n_vcoeffs
         character(len=256) :: line, key, value_str
         integer :: eq_pos, comment_pos
         logical :: found_N_max, found_xe, found_Vb, found_mass_H, found_mass_N
         logical :: found_xmin, found_xmax, found_dx, found_alpha_values
+        logical :: found_poly_degree, found_v_coeffs
+        logical :: found_mass_central, found_mass_ligand, found_n_ligands
 
         ! Initialize flags and defaults
         params%print_level = 1
@@ -104,6 +126,14 @@ contains
         found_xmax = .false.
         found_dx = .false.
         found_alpha_values = .false.
+        found_poly_degree = .false.
+        found_v_coeffs = .false.
+        found_mass_central = .false.
+        found_mass_ligand = .false.
+        found_n_ligands = .false.
+        params%found_mass = .false.
+        params%found_xyn_mass = .false.
+        params%use_polynomial = .false.
         ierr = 0
 
         ! Initialize alpha_values with defaults (single value: 0.0)
@@ -198,6 +228,36 @@ contains
                         write(*,'(A)') ' Warning: Failed to parse alpha_values, using defaults'
                     end if
 
+                ! --- Polynomial potential keys ---
+                case ('poly_degree')
+                    read(value_str, *, iostat=io_stat) params%poly_degree
+                    if (io_stat == 0) found_poly_degree = .true.
+
+                case ('v_coeffs')
+                    call parse_real_array(value_str, params%v_poly, n_vcoeffs, parse_ierr)
+                    if (parse_ierr == 0) found_v_coeffs = .true.
+
+                case ('alpha')
+                    read(value_str, *, iostat=io_stat) params%alpha_override
+                    ! (optional: no found flag needed; 0.0 means auto)
+
+                ! --- Mass specification keys ---
+                case ('mass')
+                    read(value_str, *, iostat=io_stat) params%mass
+                    if (io_stat == 0) params%found_mass = .true.
+
+                case ('mass_central')
+                    read(value_str, *, iostat=io_stat) params%mass_central
+                    if (io_stat == 0) found_mass_central = .true.
+
+                case ('mass_ligand')
+                    read(value_str, *, iostat=io_stat) params%mass_ligand
+                    if (io_stat == 0) found_mass_ligand = .true.
+
+                case ('n_ligands')
+                    read(value_str, *, iostat=io_stat) params%n_ligands
+                    if (io_stat == 0) found_n_ligands = .true.
+
                 case default
                     ! Unknown key, just skip with a warning
                     write(*,'(A,A)') ' Warning: Unknown parameter in INPUT file: ', trim(key)
@@ -206,25 +266,42 @@ contains
 
         close(unit_num)
 
-        ! Validate that all required parameters were found
+        ! --- Determine mode and validate ---
+
+        ! Polynomial mode detected if poly_degree or v_coeffs present
+        if (found_poly_degree .or. found_v_coeffs) then
+            params%use_polynomial = .true.
+        end if
+
+        ! Warn if both modes supplied; polynomial takes priority
+        if (params%use_polynomial .and. (found_xe .or. found_Vb)) then
+            write(*,'(A)') ' Warning: Both polynomial (v_coeffs) and legacy (xe/Vb) parameters'
+            write(*,'(A)') '          found. Polynomial mode takes priority.'
+        end if
+
+        ! XYn mass: require all three fields together
+        if (found_mass_central .or. found_mass_ligand .or. found_n_ligands) then
+            if (.not. (found_mass_central .and. found_mass_ligand .and. found_n_ligands)) then
+                write(*,'(A)') 'ERROR: XYn mass requires mass_central, mass_ligand, and n_ligands'
+                ierr = 1
+            else
+                params%found_xyn_mass = .true.
+            end if
+        end if
+
+        ! Warn if more than one mass method is given
+        if (params%found_mass .and. params%found_xyn_mass) then
+            write(*,'(A)') ' Warning: Both mass and XYn mass fields found.'
+            write(*,'(A)') '          Using direct mass (highest priority).'
+        end if
+        if (params%found_mass .and. found_mass_H .and. found_mass_N) then
+            write(*,'(A)') ' Warning: Both mass and mass_H/mass_N found.'
+            write(*,'(A)') '          Using direct mass (highest priority).'
+        end if
+
+        ! Common required parameters (both modes)
         if (.not. found_N_max) then
             write(*,'(A)') 'ERROR: Missing required parameter: N_max'
-            ierr = 1
-        end if
-        if (.not. found_xe) then
-            write(*,'(A)') 'ERROR: Missing required parameter: xe'
-            ierr = 1
-        end if
-        if (.not. found_Vb) then
-            write(*,'(A)') 'ERROR: Missing required parameter: Vb'
-            ierr = 1
-        end if
-        if (.not. found_mass_H) then
-            write(*,'(A)') 'ERROR: Missing required parameter: mass_H'
-            ierr = 1
-        end if
-        if (.not. found_mass_N) then
-            write(*,'(A)') 'ERROR: Missing required parameter: mass_N'
             ierr = 1
         end if
         if (.not. found_xmin) then
@@ -238,6 +315,51 @@ contains
         if (.not. found_dx) then
             write(*,'(A)') 'ERROR: Missing required parameter: dx'
             ierr = 1
+        end if
+
+        if (params%use_polynomial) then
+            ! Polynomial mode validation
+            if (.not. found_poly_degree) then
+                write(*,'(A)') 'ERROR: v_coeffs specified but poly_degree missing'
+                ierr = 1
+            end if
+            if (.not. found_v_coeffs) then
+                write(*,'(A)') 'ERROR: poly_degree specified but v_coeffs missing'
+                ierr = 1
+            end if
+            if (found_poly_degree .and. found_v_coeffs) then
+                if (size(params%v_poly) /= params%poly_degree + 1) then
+                    write(*,'(A,I0,A,I0)') &
+                        'ERROR: v_coeffs has ', size(params%v_poly), &
+                        ' entries but poly_degree+1 = ', params%poly_degree + 1
+                    ierr = 1
+                end if
+            end if
+            if (.not. (params%found_mass .or. params%found_xyn_mass .or. &
+                       (found_mass_H .and. found_mass_N))) then
+                write(*,'(A)') 'ERROR: Missing required parameter: mass'
+                write(*,'(A)') '       (provide mass, or mass_central/mass_ligand/n_ligands,'
+                write(*,'(A)') '        or mass_H/mass_N)'
+                ierr = 1
+            end if
+        else
+            ! Legacy mode validation (original requirements)
+            if (.not. found_xe) then
+                write(*,'(A)') 'ERROR: Missing required parameter: xe'
+                ierr = 1
+            end if
+            if (.not. found_Vb) then
+                write(*,'(A)') 'ERROR: Missing required parameter: Vb'
+                ierr = 1
+            end if
+            if (.not. found_mass_H) then
+                write(*,'(A)') 'ERROR: Missing required parameter: mass_H'
+                ierr = 1
+            end if
+            if (.not. found_mass_N) then
+                write(*,'(A)') 'ERROR: Missing required parameter: mass_N'
+                ierr = 1
+            end if
         end if
 
         if (ierr /= 0) then
