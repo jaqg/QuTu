@@ -1,0 +1,490 @@
+\section{Wavepacket Construction and Dynamics}\label{sec:wavepackets}
+% ============================================================
+% ============================================================
+
+Given the eigenstates $\{\Phi_k, E_k\}_{k=0}^{N-1}$ obtained by diagonalization,
+we construct localized wavepackets and study their time evolution.
+
+% ------------------------------------------------------------
+\subsection{Two-state wavepackets}\label{sec:2state}
+% ------------------------------------------------------------
+
+The simplest wavepackets use only the ground pair $(\Phi_0, \Phi_1)$:
+\begin{equation}\label{eq:Psi_pm}
+  \Psi_\pm(x) = \frac{1}{\sqrt{2}}\bigl(\Phi_0(x) \pm \Phi_1(x)\bigr)\,.
+\end{equation}
+
+\subsubsection{Localization in the symmetric case}
+
+For the symmetric double well, $\Phi_0$ has even parity and $\Phi_1$ has odd parity.
+Both are symmetric about each well (i.e., $|\Phi_0(x)|$ and $|\Phi_1(x)|$ have peaks
+near $\pm\xe$), but $\Phi_1$ changes sign at $x = 0$.
+
+$\Psi_+$: Near $x = +\xe$, both $\Phi_0$ and $\Phi_1$ are positive, so they add
+constructively. Near $x = -\xe$, $\Phi_0 > 0$ but $\Phi_1 < 0$ (odd parity), so
+they cancel. Therefore, $\Psi_+$ is localized in the \emph{right well}.
+
+$\Psi_-$: By the same argument, $\Psi_-$ is localized in the \emph{left well}.
+
+\textbf{Verification:}
+\begin{align}
+  \langle\Psi_\pm|\hat{x}|\Psi_\pm\rangle
+  &= \frac{1}{2}\bigl(\mel{\Phi_0}{\hat{x}}{\Phi_0} + \mel{\Phi_1}{\hat{x}}{\Phi_1}
+     \pm 2\mel{\Phi_0}{\hat{x}}{\Phi_1}\bigr)\notag\\
+  &= \pm\mel{\Phi_0}{\hat{x}}{\Phi_1}\,,
+\end{align}
+where we used $\mel{\Phi_k}{\hat{x}}{\Phi_k} = 0$ for even potentials (parity).
+Since $\mel{\Phi_0}{\hat{x}}{\Phi_1} > 0$ (by convention), $\langle x\rangle_+ > 0$
+(right well) and $\langle x\rangle_- < 0$ (left well). $\checkmark$
+
+\subsubsection{Time evolution}
+
+\begin{align}
+  \Psi_+(x, t) &= \frac{1}{\sqrt{2}}\bigl(e^{-iE_0 t/\hb}\Phi_0(x) + e^{-iE_1 t/\hb}\Phi_1(x)\bigr)\notag\\
+  &= \frac{e^{-i\bar{E}t/\hb}}{\sqrt{2}}\bigl(e^{i\Delta t/(2\hb)}\Phi_0(x) + e^{-i\Delta t/(2\hb)}\Phi_1(x)\bigr)\,,
+\end{align}
+where $\bar{E} = (E_0+E_1)/2$ and $\Delta = E_1 - E_0$ is the tunnel splitting.
+
+The probability density evolves as:
+\begin{align}
+  |\Psi_+(x,t)|^2 &= \frac{1}{2}\bigl[\Phi_0^2(x) + \Phi_1^2(x) + 2\Phi_0(x)\Phi_1(x)\cos(\Delta t/\hb)\bigr]\,.
+\end{align}
+At $t = 0$: $|\Psi_+|^2 = \frac{1}{2}(\Phi_0+\Phi_1)^2$ (localized right).
+At $t = \pi\hb/\Delta$: $\cos(\Delta t/\hb) = \cos(\pi) = -1$, so $|\Psi_+|^2 = \frac{1}{2}(\Phi_0-\Phi_1)^2$ (localized left).
+
+The \emph{tunneling period} (time for complete transfer from one well to the other) is:
+\begin{equation}\label{eq:T_tunnel}
+  \boxed{\ttun = \frac{\pi\hb}{\Delta} = \frac{\pi\hb}{E_1 - E_0} = \frac{h}{2(E_1-E_0)}\,.}
+\end{equation}
+
+The \emph{recurrence time} (time for the wavepacket to return to its initial state) is:
+\begin{equation}\label{eq:t_rec}
+  \boxed{\trec = \frac{2\pi\hb}{\Delta} = \frac{h}{E_1 - E_0} = 2\,\ttun\,.}
+\end{equation}
+
+% ------------------------------------------------------------
+\subsection{Four-state wavepackets with mixing angle $\vartheta$}\label{sec:4state}
+% ------------------------------------------------------------
+
+A richer family of wavepackets incorporates the first excited pair $(\Phi_2, \Phi_3)$:
+\begin{equation}\label{eq:Psi_theta}
+  \Psi(\vartheta, x) = \frac{\cos\vartheta}{\sqrt{2}}\bigl(\Phi_0(x) + \Phi_1(x)\bigr)
+  + \frac{\sin\vartheta}{\sqrt{2}}\bigl(\Phi_2(x) + \Phi_3(x)\bigr)\,,
+\end{equation}
+with $\vartheta \in [0, \pi/2]$.
+
+\subsubsection{Expansion coefficients}
+
+The coefficients in the eigenstate expansion $\Psi(\vartheta) = \sum_k c_k\Phi_k$ are:
+\begin{equation}\label{eq:4state_ck}
+  c_0 = c_1 = \frac{\cos\vartheta}{\sqrt{2}}\,,\qquad
+  c_2 = c_3 = \frac{\sin\vartheta}{\sqrt{2}}\,.
+\end{equation}
+Normalization: $\sum_k |c_k|^2 = \cos^2\vartheta + \sin^2\vartheta = 1$. $\checkmark$
+
+\subsubsection{Mean energy}
+
+\begin{align}
+  \langle E\rangle(\vartheta)
+  &= \sum_k |c_k|^2 E_k
+  = \frac{\cos^2\vartheta}{2}(E_0+E_1) + \frac{\sin^2\vartheta}{2}(E_2+E_3)\notag\\
+  &= \cos^2\vartheta\,\bar{E}_{01} + \sin^2\vartheta\,\bar{E}_{23}\,,
+\end{align}
+where $\bar{E}_{01} = (E_0+E_1)/2$ and $\bar{E}_{23} = (E_2+E_3)/2$ are the mean
+energies of the ground and excited doublets, respectively.
+
+\subsubsection{Time evolution}
+
+\begin{equation}
+  \Psi(\vartheta, x, t) = \sum_{k=0}^{3}c_k\,e^{-iE_k t/\hb}\,\Phi_k(x)\,.
+\end{equation}
+
+\subsubsection{Survival probability}
+
+Using \cref{eq:4state_ck} and the general formula $P(t) = |\sum_k |c_k|^2 e^{-iE_k t/\hb}|^2$:
+\begin{align}
+  A(t) &= \sum_k |c_k|^2 e^{-iE_k t/\hb}
+  = \frac{\cos^2\vartheta}{2}\bigl(e^{-iE_0 t/\hb}+e^{-iE_1 t/\hb}\bigr)
+  + \frac{\sin^2\vartheta}{2}\bigl(e^{-iE_2 t/\hb}+e^{-iE_3 t/\hb}\bigr)\notag\\
+  &= \cos^2\vartheta\,e^{-i\bar{E}_{01}t/\hb}\cos\frac{\Delta_{01}t}{2\hb}
+  + \sin^2\vartheta\,e^{-i\bar{E}_{23}t/\hb}\cos\frac{\Delta_{23}t}{2\hb}\,,
+\end{align}
+where $\Delta_{01} = E_1 - E_0$ and $\Delta_{23} = E_3 - E_2$.
+
+The survival probability $P(t) = |A(t)|^2$ expands to:
+\begin{align}\label{eq:P_4state}
+  P(t) &= \cos^4\vartheta\cos^2\frac{\Delta_{01}t}{2\hb}
+  + \sin^4\vartheta\cos^2\frac{\Delta_{23}t}{2\hb}\notag\\
+  &\quad + 2\cos^2\vartheta\sin^2\vartheta\cos\frac{\Delta_{01}t}{2\hb}\cos\frac{\Delta_{23}t}{2\hb}
+  \cos\frac{(\bar{E}_{23}-\bar{E}_{01})t}{\hb}\,.
+\end{align}
+
+\textbf{Derivation of \cref{eq:P_4state}:}
+
+Write $A(t) = A_1 + A_2$ with $A_1 = \cos^2\vartheta\,e^{-i\bar{E}_{01}t/\hb}\cos(\Delta_{01}t/(2\hb))$
+and $A_2 = \sin^2\vartheta\,e^{-i\bar{E}_{23}t/\hb}\cos(\Delta_{23}t/(2\hb))$.
+\begin{align}
+  P(t) &= |A_1|^2 + |A_2|^2 + 2\text{Re}(A_1^*A_2)\notag\\
+  &= \cos^4\vartheta\cos^2\frac{\Delta_{01}t}{2\hb}
+  + \sin^4\vartheta\cos^2\frac{\Delta_{23}t}{2\hb}\notag\\
+  &\quad + 2\cos^2\vartheta\sin^2\vartheta\cos\frac{\Delta_{01}t}{2\hb}\cos\frac{\Delta_{23}t}{2\hb}
+  \text{Re}\bigl(e^{i(\bar{E}_{01}-\bar{E}_{23})t/\hb}\bigr)\,.
+\end{align}
+Since $\text{Re}(e^{i\phi}) = \cos\phi$, this gives \cref{eq:P_4state}. $\square$
+
+Alternatively, using the component form with all six frequency pairs:
+\begin{align}
+  P(t) &= \sum_k |c_k|^4 + 2\sum_{k<l}|c_k|^2|c_l|^2\cos\frac{(E_l-E_k)t}{\hb}\notag\\
+  &= \frac{\cos^4\vartheta + \sin^4\vartheta}{2}
+  + \frac{\cos^4\vartheta}{2}\cos\frac{\Delta_{01}t}{\hb}
+  + \frac{\sin^4\vartheta}{2}\cos\frac{\Delta_{23}t}{\hb}\notag\\
+  &\quad + \frac{\cos^2\vartheta\sin^2\vartheta}{2}\left[
+    \cos\frac{(E_2-E_0)t}{\hb} + \cos\frac{(E_2-E_1)t}{\hb}\right.\notag\\
+  &\qquad\qquad\qquad\qquad\qquad\left.
+    + \cos\frac{(E_3-E_0)t}{\hb} + \cos\frac{(E_3-E_1)t}{\hb}
+  \right]\,.
+\end{align}
+These two forms are equivalent via product-to-sum identities.
+
+\textbf{Limiting cases:}
+\begin{itemize}
+  \item $\vartheta = 0$: $P(t) = \cos^2(\Delta_{01}t/(2\hb))$, the two-state result.
+  \item $\vartheta = \pi/2$: $P(t) = \cos^2(\Delta_{23}t/(2\hb))$, tunneling in the excited doublet.
+  \item $\vartheta = \pi/4$: Equal weight on both doublets, $P(t)$ shows beating between
+        $\Delta_{01}$ and $\Delta_{23}$ modulated by $\bar{E}_{23}-\bar{E}_{01}$.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{Localized states in the asymmetric case}\label{sec:localized_asym}
+% ------------------------------------------------------------
+
+When $\varepsilon \neq 0$ (see \cref{sec:V_asym}), the two lowest eigenstates
+$\Phi_0, \Phi_1$ of $\hat{H}^{\text{asym}}$ are no longer related by parity.
+Localized wavepackets are still constructed as superpositions of these two states,
+\begin{equation}\label{eq:psi_LR_asym}
+  \Psi_L = \cos\theta\,\Phi_0 + \sin\theta\,\Phi_1\,,
+  \qquad
+  \Psi_R = -\sin\theta\,\Phi_0 + \cos\theta\,\Phi_1\,,
+\end{equation}
+but the mixing angle $\theta$ is now determined by the effective two-level Hamiltonian.
+
+\subsubsection{Two-level effective Hamiltonian}
+
+In the localized-state basis $\{\Psi_L^{(0)}, \Psi_R^{(0)}\}$ built from the
+\emph{unperturbed} ($\varepsilon=0$) symmetric eigenstates via \cref{eq:Psi_pm},
+the projection of $\hat{H}^{\text{asym}}$ onto the two lowest levels takes the form:
+\begin{equation}
+  H_{\text{eff}} = \bar{E}\,\mathbf{I}
+  + \begin{pmatrix}
+    +\varepsilon_{\text{eff}} & -\Delt/2 \\
+    -\Delt/2 & -\varepsilon_{\text{eff}}
+  \end{pmatrix},
+\end{equation}
+where $\bar{E} = (E_0^{(0)}+E_1^{(0)})/2$ is the mean unperturbed energy,
+$\Delt = E_1^{(0)}-E_0^{(0)}$ is the symmetric tunnel splitting, and the
+effective bias is
+\begin{equation}
+  \varepsilon_{\text{eff}} = \varepsilon\,\mel{\Phi_0}{\hat{x}}{\Phi_1}\,.
+\end{equation}
+The diagonal elements of $\hat{x}$ vanish by parity for the unperturbed eigenstates:
+$\mel{\Phi_i}{\hat{x}}{\Phi_i} = 0$.
+
+\subsubsection{Diagonalization and mixing angle}
+
+The eigenvalues of $H_{\text{eff}}$ (relative to $\bar{E}$) are
+\begin{equation}
+  E_\pm = \pm\Omg\,,\qquad
+  \Omg = \sqrt{\varepsilon_{\text{eff}}^2 + (\Delt/2)^2}\,.
+\end{equation}
+The total asymmetric energy gap is
+\begin{equation}\label{eq:gap_asym}
+  \Delta E = 2\Omg = \sqrt{\Delt^2 + 4\varepsilon_{\text{eff}}^2}\,.
+\end{equation}
+The mixing angle $\theta$ satisfies
+\begin{equation}\label{eq:mixing_angle}
+  \boxed{\tan(2\theta) = \frac{\Delt}{2\varepsilon_{\text{eff}}}\,,}
+  \qquad
+  \cos(2\theta) = \frac{\varepsilon_{\text{eff}}}{\Omg}\,,
+  \qquad
+  \sin(2\theta) = \frac{\Delt}{2\Omg}\,.
+\end{equation}
+
+\subsubsection{Left-well survival probability}
+
+Starting from $\Psi_L$ (left-well localized state), the probability of finding
+the particle in the left well at time $t$ is
+\begin{equation}\label{eq:P_L_asym}
+  \boxed{P_L(t) = 1 - \frac{\Delt^2}{\Delta E^2}\sin^2\!\left(\frac{\Omg\,t}{\hb}\right)\,.}
+\end{equation}
+The maximum transfer probability is $(\Delt/\Delta E)^2 \leq 1$, which is
+strictly less than 1 when $\varepsilon_{\text{eff}} \neq 0$. The tunneling
+efficiency is thus $\eta = (\Delt/\Delta E)^2$.
+
+\subsubsection{Limiting cases}
+
+\begin{description}
+  \item[Symmetric limit $\varepsilon \to 0$:] $\varepsilon_{\text{eff}} \to 0$,
+    $\tan(2\theta)\to\infty$, $\theta\to\pi/4$.  The localized states reduce to
+    $(\Phi_0\pm\Phi_1)/\sqrt{2}$ and complete transfer ($P_L$ oscillates 0 to 1) is restored.
+  \item[Strong-asymmetry limit $|\varepsilon|\to\infty$:] $\varepsilon_{\text{eff}}\gg\Delt/2$,
+    $\theta\to 0$. The localized states tend to the energy eigenstates
+    ($\Psi_L\to\Phi_0$, $\Psi_R\to\Phi_1$) and tunneling is suppressed:
+    $P_L(t)\approx 1-(\Delt/(2\varepsilon_{\text{eff}}))^2\sin^2(\Omg t/\hb)\approx 1$.
+  \item[Resonance $\varepsilon_{\text{eff}} = \Delt/2$:] $\theta=\pi/8$,
+    $\Delta E=\Delt\sqrt{2}$. Maximum transfer probability is $1/2$.
+\end{description}
+
+\subsubsection{Well selection: sign convention and basis independence}
+
+The sign structure of \cref{eq:psi_LR_asym} is not arbitrary---it directly selects
+the well. To see why, note that the mixing angle $\theta$ and the labelling
+$\Psi_L / \Psi_R$ arise from \emph{inverting} the diagonalization of $H_{\text{eff}}$.
+The rotation that maps localized (diabatic) states $\{|L\rangle, |R\rangle\}$ to
+energy eigenstates $\{\Phi_0, \Phi_1\}$ is
+
+\begin{equation}
+  \begin{pmatrix}\Phi_0 \\ \Phi_1\end{pmatrix}
+  =
+  \begin{pmatrix}\cos\theta & -\sin\theta \\ \sin\theta & \cos\theta\end{pmatrix}
+  \begin{pmatrix}\Psi_L \\ \Psi_R\end{pmatrix}.
+\end{equation}
+
+Inverting this rotation recovers \cref{eq:psi_LR_asym}: the $(+\cos\theta, +\sin\theta)$
+combination concentrates the probability density near the left minimum $x_-$, while the
+$(-\sin\theta, +\cos\theta)$ combination concentrates it near $x_+$. Swapping the two
+combinations selects the right well. The computational basis (HO, shifted-HO, DVR, etc.)
+used to obtain $\Phi_0$ and $\Phi_1$ is irrelevant: once the eigenstates are known, the
+rotation is uniquely determined by $\theta$.
+
+\begin{remark}
+  In practice one identifies which combination corresponds to which well by evaluating
+  $\langle\hat{x}\rangle_{\Psi_L} = \cos^2\theta\,x_{00} + \sin^2\theta\,x_{11}
+   + \sin(2\theta)\,x_{01}$ (using \cref{eq:xt_general}) or simply by inspecting
+  whether the probability density is peaked at $x_-$ or $x_+$.
+\end{remark}
+
+\subsubsection{Mechanism of localization: symmetric vs.\ asymmetric case}
+
+The two cases differ fundamentally in how localization is achieved.
+
+\textbf{Symmetric case ($\varepsilon = 0$, $\theta = \pi/4$).}
+The eigenstates $\Phi_0$ and $\Phi_1$ carry definite parity ($+$ and $-$ respectively).
+Both have equal weight in both wells, but they are out of phase across the barrier.
+Localization is produced by \emph{parity-based destructive interference}: near $x = +\xe$,
+$\Phi_0$ and $\Phi_1$ add constructively in $\Psi_+$; near $x = -\xe$, the opposite
+sign of $\Phi_1$ causes cancellation.  The result is an equal superposition
+$\Psi_\pm = (\Phi_0 \pm \Phi_1)/\sqrt{2}$ that is perfectly localized (within the
+two-state approximation).
+
+\textbf{Asymmetric case ($\varepsilon \neq 0$, $\theta \neq \pi/4$).}
+Neither eigenstate carries definite parity. Instead, $\Phi_0$ is already biased toward
+the deeper well and $\Phi_1$ toward the shallower one.  Localization is now achieved by a
+\emph{rotation in the two-dimensional eigenstate subspace}: the angle $\theta$ adjusts
+the superposition coefficients so that one combination $\Psi_L$ has its density concentrated
+near $x_-$ and the other $\Psi_R$ near $x_+$. The parity-cancellation mechanism plays no
+role; all that matters is the correct rotation angle.
+
+This distinction has a practical consequence: parity cannot be exploited to simplify the
+eigenvalue problem when $\varepsilon \neq 0$, and the identification of the ``left'' vs.\
+``right'' localized state requires computing $\theta$ rather than relying on symmetry arguments.
+
+\subsubsection{Tunneling efficiency and the localization--tunneling complementarity}
+
+The tunneling efficiency
+\begin{equation}\label{eq:eta_tun}
+  \boxed{\eta \equiv \left(\frac{\Delt}{\Delta E}\right)^2 = \sin^2(2\theta) \leq 1}
+\end{equation}
+measures the maximum fraction of the population that can transfer between wells.
+There is a fundamental complementarity between the quality of initial localization and
+the extent of tunneling: a strongly localized initial state (large $|\varepsilon_{\text{eff}}|$)
+is nearly an eigenstate and therefore barely tunnels.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{lcccl}
+  \toprule
+  Regime & $\varepsilon_{\text{eff}}/\Delt$ & $\theta$ & $\eta$ & Physical picture \\
+  \midrule
+  Symmetric & $0$ & $\pi/4$ & $1$ & Complete transfer \\
+  Weak asymmetry & $\ll 1$ & $\approx\pi/4$ & $\approx 1$ & Near-complete transfer \\
+  Resonance & $1/2$ & $\pi/8$ & $1/2$ & Half transfer \\
+  Strong asymmetry & $\gg 1$ & $\approx 0$ & $\approx 0$ & Tunneling suppressed \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+In the strong-asymmetry limit, $P_L(t) \approx 1 - \eta\sin^2(\Omg t/\hb)$ with
+$\eta \approx (\Delt/2\varepsilon_{\text{eff}})^2 \ll 1$: the oscillation frequency
+$\Omg \approx |\varepsilon_{\text{eff}}|$ is large but the amplitude of probability
+transfer is negligibly small. Physically, the bias energy mismatch between the two
+wells detunes the tunneling resonance, just as in the spin-$\tfrac{1}{2}$ analogy
+(Rabi problem with detuning $2\varepsilon_{\text{eff}}$ and coupling $\Delt$).
+
+% ------------------------------------------------------------
+\subsection{Expectation value $\langle\hat{x}\rangle(t)$}\label{sec:x_expect}
+% ------------------------------------------------------------
+
+\subsubsection{General formula}
+
+For a wavepacket $\Psi(t) = \sum_k c_k e^{-iE_k t/\hb}\Phi_k$:
+\begin{align}\label{eq:xt_general}
+  \langle\hat{x}\rangle(t)
+  &= \sum_{j,k}c_j^*c_k\,e^{i(E_j-E_k)t/\hb}\mel{\Phi_j}{\hat{x}}{\Phi_k}\notag\\
+  &= \sum_k |c_k|^2\mel{\Phi_k}{\hat{x}}{\Phi_k}
+  + 2\sum_{j<k}\text{Re}\bigl[c_j^*c_k\,e^{-i(E_k-E_j)t/\hb}\bigr]\mel{\Phi_j}{\hat{x}}{\Phi_k}\,.
+\end{align}
+For real coefficients $c_j$:
+\begin{equation}\label{eq:xt_real}
+  \langle\hat{x}\rangle(t) = \sum_k c_k^2\,x_{kk}
+  + 2\sum_{j<k}c_j c_k\,x_{jk}\cos\frac{(E_k-E_j)t}{\hb}\,,
+\end{equation}
+where $x_{jk} \equiv \mel{\Phi_j}{\hat{x}}{\Phi_k}$.
+
+\subsubsection{Eigenstate matrix elements of $\hat{x}$}
+
+Each eigenstate is expanded in the basis: $\Phi_k(x) = \sum_n C_{n}^{(k)}\varphi_n(x)$.
+The matrix element is:
+\begin{align}
+  x_{jk} &= \mel{\Phi_j}{\hat{x}}{\Phi_k}
+  = \sum_{m,n}C_m^{(j)}C_n^{(k)}\mel{\varphi_m}{\hat{x}}{\varphi_n}\,.
+\end{align}
+For the HO basis:
+\begin{equation}
+  \mel{\varphi_m}{\hat{x}}{\varphi_n} = \frac{1}{\sqrt{2\alpha}}\bigl(\sqrt{n}\,\delta_{m,n-1}+\sqrt{n+1}\,\delta_{m,n+1}\bigr)\,,
+\end{equation}
+so:
+\begin{equation}\label{eq:xjk_HO}
+  \boxed{x_{jk} = \frac{1}{\sqrt{2\alpha}}\sum_n \sqrt{n+1}\Bigl[C_n^{(j)}C_{n+1}^{(k)} + C_{n+1}^{(j)}C_n^{(k)}\Bigr]\,.}
+\end{equation}
+
+\subsubsection{Selection rules for the symmetric case}
+
+For the symmetric potential, $\Phi_k$ has definite parity $(-1)^k$.
+Since $\hat{x}$ is an odd operator:
+\begin{itemize}
+  \item $x_{kk} = \mel{\Phi_k}{\hat{x}}{\Phi_k} = 0$ for all $k$ (diagonal elements vanish).
+  \item $x_{jk} \neq 0$ only when $\Phi_j$ and $\Phi_k$ have opposite parity, i.e., $j+k$ is odd.
+\end{itemize}
+
+For the two-state wavepacket $\Psi_+ = (\Phi_0 + \Phi_1)/\sqrt{2}$:
+\begin{equation}
+  \langle\hat{x}\rangle(t) = x_{01}\cos\frac{\Delta_{01}t}{\hb}\,,
+\end{equation}
+which oscillates between $+|x_{01}|$ (right well) and $-|x_{01}|$ (left well) with
+period $\trec = 2\pi\hb/\Delta_{01}$.
+
+For the four-state wavepacket:
+\begin{align}
+  \langle\hat{x}\rangle(t)
+  &= \cos^2\vartheta\,x_{01}\cos\frac{\Delta_{01}t}{\hb}
+  + \sin^2\vartheta\,x_{23}\cos\frac{\Delta_{23}t}{\hb}\notag\\
+  &\quad + \frac{\cos\vartheta\sin\vartheta}{\sqrt{2}}\,x_{03}\cos\frac{(E_3-E_0)t}{\hb}\notag\\
+  &\quad + \frac{\cos\vartheta\sin\vartheta}{\sqrt{2}}\,x_{12}\cos\frac{(E_2-E_1)t}{\hb}\notag\\
+  &\quad + \frac{\cos\vartheta\sin\vartheta}{\sqrt{2}}\,x_{01}^{(23)}\cos\frac{(E_2-E_0)t}{\hb}\notag\\
+  &\quad + \frac{\cos\vartheta\sin\vartheta}{\sqrt{2}}\,x_{01}^{(31)}\cos\frac{(E_3-E_1)t}{\hb}\,,
+\end{align}
+where $x_{01}^{(23)}$ and $x_{01}^{(31)}$ represent cross-doublet matrix elements
+$\mel{\Phi_0}{\hat{x}}{\Phi_2}$ and $\mel{\Phi_1}{\hat{x}}{\Phi_3}$.
+Note: $\mel{\Phi_0}{\hat{x}}{\Phi_2} = 0$ and $\mel{\Phi_1}{\hat{x}}{\Phi_3} = 0$
+by parity (both pairs have the same parity). Therefore, only opposite-parity pairs
+$(0,1)$, $(0,3)$, $(1,2)$, $(2,3)$ contribute.
+
+% ------------------------------------------------------------
+\subsection{Turning points}\label{sec:turning_points}
+% ------------------------------------------------------------
+
+For a wavepacket with total energy $E_{\text{total}} = \langle E\rangle(\vartheta)$,
+the classical turning points are the solutions of $V(x_{\text{tp}}) = E_{\text{total}}$:
+\begin{equation}
+  a\,x_{\text{tp}}^4 - b\,x_{\text{tp}}^2 = E_{\text{total}}\,.
+\end{equation}
+This is a quadratic equation in $u = x_{\text{tp}}^2$:
+\begin{equation}
+  a\,u^2 - b\,u - E_{\text{total}} = 0\,.
+\end{equation}
+By the quadratic formula:
+\begin{equation}
+  u = \frac{b \pm \sqrt{b^2 + 4a\,E_{\text{total}}}}{2a}\,.
+\end{equation}
+
+\textbf{Case 1: $E_{\text{total}} > 0$ (above the barrier).}
+The discriminant $b^2 + 4aE > 0$. The ``$+$'' root gives $u_+ > 0$ (since $b > 0$
+and $\sqrt{b^2+4aE} > 0$). The ``$-$'' root gives $u_- = (b - \sqrt{b^2+4aE})/(2a) < 0$
+(since $\sqrt{b^2+4aE} > b$ when $E > 0$). A negative $u$ has no real $x$ solutions.
+Therefore, there are only \emph{two} turning points:
+\begin{equation}
+  x_{\text{tp}} = \pm\sqrt{u_+} = \pm\sqrt{\frac{b+\sqrt{b^2+4aE_{\text{total}}}}{2a}}\,.
+\end{equation}
+
+\textbf{Case 2: $-\Vb < E_{\text{total}} < 0$ (below the barrier, within the wells).}
+Now $|4aE| < b^2$ (since $\Vb = b^2/(4a)$), so $b^2 + 4aE > 0$ and both roots are positive:
+$u_+ > u_- > 0$. There are \emph{four} turning points:
+\begin{equation}\label{eq:4tp}
+  \boxed{x_{\text{tp}} = \pm\sqrt{u_+}\,,\quad \pm\sqrt{u_-}\,,}
+\end{equation}
+where $u_\pm = \frac{b \pm \sqrt{b^2+4aE_{\text{total}}}}{2a}$.
+The particle oscillates between $-\sqrt{u_+}$ and $-\sqrt{u_-}$ in the left well,
+or between $+\sqrt{u_-}$ and $+\sqrt{u_+}$ in the right well. The classically forbidden
+region is $|x| < \sqrt{u_-}$ (under the barrier).
+
+\textbf{Case 3: $E_{\text{total}} = -\Vb$ (at the bottom of the wells).}
+$u_+ = u_- = b/(2a) = \xe^2$, so $x_{\text{tp}} = \pm\xe$ (the particle sits at the minima).
+
+% ------------------------------------------------------------
+\subsection{Gaussian wavepacket as initial state}\label{sec:Gaussian_WP}
+% ------------------------------------------------------------
+
+A minimum-uncertainty Gaussian wavepacket centered at $x_0$ with initial momentum $p_0$ is
+\begin{equation}\label{eq:Psi_Gauss}
+  \Psi_G(x, 0) = \left(\frac{2\alpha_0}{\pi}\right)^{1/4}
+  \exp\bigl[-\alpha_0(x-x_0)^2\bigr]\exp(ip_0 x/\hb)\,,
+\end{equation}
+with $\alpha_0 > 0$ determining the spatial width ($\Delta x = 1/\sqrt{4\alpha_0}$).
+
+\subsubsection{Expansion in eigenstates}
+
+The coefficients in the eigenstate expansion are
+\begin{equation}
+  c_k = \braket{\Phi_k}{\Psi_G} = \int_{-\infty}^{\infty}\Phi_k^*(x)\,\Psi_G(x,0)\,dx\,.
+\end{equation}
+
+\textbf{For the HO basis:} $\Phi_k(x) = \sum_n C_n^{(k)}\varphi_n(x;\alpha)$, so
+\begin{equation}
+  c_k = \sum_n C_n^{(k)}\braket{\varphi_n}{\Psi_G}\,.
+\end{equation}
+The overlap of a HO eigenstate with a Gaussian is:
+\begin{align}
+  \braket{\varphi_n}{\Psi_G}
+  &= \mathcal{N}_n\left(\frac{2\alpha_0}{\pi}\right)^{1/4}
+  \int_{-\infty}^{\infty}H_n(\sqrt{\alpha}\,x)\,e^{-\alpha x^2/2}\,e^{-\alpha_0(x-x_0)^2}\,e^{ip_0 x/\hb}\,dx\,.
+\end{align}
+For zero initial momentum ($p_0 = 0$), the Gaussians can be combined using the
+product formula (\cref{sec:Gauss_product}):
+\begin{equation}
+  e^{-\alpha x^2/2}\,e^{-\alpha_0(x-x_0)^2}
+  = e^{-Q}\,e^{-A(x-X)^2}\,,
+\end{equation}
+with $A = \alpha/2 + \alpha_0$, $X = \alpha_0 x_0/A$, $Q = \alpha_0(\alpha/2)(x_0^2)/A$.
+The integral becomes:
+\begin{equation}
+  \braket{\varphi_n}{\Psi_G} = \mathcal{N}_n\left(\frac{2\alpha_0}{\pi}\right)^{1/4}e^{-Q}
+  \int_{-\infty}^{\infty}H_n(\sqrt{\alpha}\,x)\,e^{-A(x-X)^2}\,dx\,.
+\end{equation}
+Substituting $x = u + X$:
+\begin{equation}
+  = \mathcal{N}_n\left(\frac{2\alpha_0}{\pi}\right)^{1/4}e^{-Q}
+  \int_{-\infty}^{\infty}H_n(\sqrt{\alpha}(u+X))\,e^{-Au^2}\,du\,.
+\end{equation}
+Using the Hermite polynomial addition formula
+$H_n(\sqrt{\alpha}(u+X)) = \sum_{k=0}^{n}\binom{n}{k}(2\sqrt{\alpha}\,X)^{n-k}H_k(\sqrt{\alpha}\,u)$
+and the orthogonality $\int H_k(\sqrt{\alpha}\,u)e^{-Au^2}du$, this integral can be
+evaluated analytically. The result involves nested sums, and for practical purposes
+is best computed numerically.
+
+\textbf{For the Gaussian basis:} If $\alpha_0$ and $x_0$ match one of the basis
+functions $G_i$, then $c_k$ reduces to the $i$-th component of the $k$-th eigenvector
+(up to normalization). Otherwise, $c_k = \sum_i C_i^{(k)}\braket{G_i}{\Psi_G}/\sqrt{S_{ii}}$
+involves the overlap of two Gaussians, which is analytically trivial.
+
+% ============================================================
+% ============================================================

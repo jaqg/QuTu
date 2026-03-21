@@ -1,0 +1,1138 @@
+\section{Additional Observables}\label{sec:additional_obs}
+% ============================================================
+% ============================================================
+
+This section develops a comprehensive suite of observables beyond the survival probability $P(t)$, the expectation value $\expval{\hat{x}}(t)$, and the recurrence time $\trec$ derived in the preceding sections.
+Each observable is presented with its physical motivation, a complete analytical derivation, and the final formula ready for numerical implementation.
+
+Throughout, we use the eigenstates $\ket{\Phi_k}$ with energies $E_k$ and basis expansion coefficients $C_n^{(k)}$, the transition frequencies $\omega_{kl} = (E_l - E_k)/\hb$, and the wavepacket $\ket{\Psi(t)} = \sum_k c_k\,e^{-iE_k t/\hb}\ket{\Phi_k}$ with real coefficients $c_k$.
+
+% ============================================================
+\subsection{Position and Momentum Phase Space}\label{sec:phase_space}
+% ============================================================
+
+% ------------------------------------------------------------
+\subsubsection{Expectation value of momentum $\expval{\hat{p}}(t)$}\label{sec:pexp}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The momentum expectation value $\expval{\hat{p}}(t)$ completes the phase-space portrait of the tunneling dynamics.
+Together with $\expval{\hat{x}}(t)$, it defines a classical-like trajectory $(x(t),p(t))$ in phase space.
+Moreover, through Ehrenfest's theorem, $\expval{\hat{p}}(t)$ provides an independent consistency check: $d\expval{\hat{x}}/dt = \expval{\hat{p}}/\mu$.
+A nonzero $\expval{\hat{p}}(t)$ at the barrier region signals active probability flux through the classically forbidden zone.
+\end{remark}
+
+\paragraph{Matrix elements of $\hat{p}$ in the HO basis.}
+
+From \cref{eq:x_and_ddx}, the momentum operator is
+\begin{equation}
+  \hat{p} = i\hb\sqrt{\frac{\alp}{2}}\left(\adag - \hat{a}\right).
+\end{equation}
+Acting on a basis state:
+\begin{equation}
+  \hat{p}\ket{m} = i\hb\sqrt{\frac{\alp}{2}}\left(\sqrt{m+1}\ket{m+1} - \sqrt{m}\ket{m-1}\right).
+\end{equation}
+Therefore the matrix elements are
+\begin{equation}\label{eq:p_mel}
+  \mel{n}{\hat{p}}{m}
+  = i\hb\sqrt{\frac{\alp}{2}}\left[\sqrt{m+1}\,\delta_{n,m+1} - \sqrt{m}\,\delta_{n,m-1}\right].
+\end{equation}
+In compact form, using $m_* = \minn$:
+\begin{equation}\label{eq:p_mel_compact}
+  \mel{n}{\hat{p}}{m} =
+  \begin{cases}
+    +\,i\hb\sqrt{\dfrac{\alp}{2}}\sqrt{m_*+1} & \text{if } n = m+1,\\[8pt]
+    -\,i\hb\sqrt{\dfrac{\alp}{2}}\sqrt{m_*+1} & \text{if } n = m-1,\\[8pt]
+    0 & \text{otherwise.}
+  \end{cases}
+\end{equation}
+The matrix is \emph{tridiagonal} and \emph{purely imaginary antisymmetric}: $\mel{n}{\hat{p}}{m} = -\mel{m}{\hat{p}}{n}$.
+
+\paragraph{Eigenstate matrix elements.}
+
+The matrix elements between eigenstates are
+\begin{align}
+  \mel{\Phi_i}{\hat{p}}{\Phi_j}
+  &= \sum_{n,l} C_n^{(i)} C_l^{(j)} \mel{n}{\hat{p}}{l}\notag\\
+  &= i\hb\sqrt{\frac{\alp}{2}} \sum_n \sqrt{n+1}\left[C_{n+1}^{(i)} C_n^{(j)} - C_n^{(i)} C_{n+1}^{(j)}\right].
+  \label{eq:p_eigenstate}
+\end{align}
+Since the eigenstates can be chosen real, the quantity $P_{ij} \coloneqq \mel{\Phi_i}{\hat{p}}{\Phi_j}$ is \emph{purely imaginary} and antisymmetric: $P_{ij} = -P_{ji}$, with $P_{ii} = 0$ for all $i$.
+We write $P_{ij} = i\,\tilde{P}_{ij}$ where $\tilde{P}_{ij} \in \mathbb{R}$ and $\tilde{P}_{ij} = -\tilde{P}_{ji}$:
+\begin{equation}\label{eq:Ptilde}
+  \tilde{P}_{ij} = \hb\sqrt{\frac{\alp}{2}} \sum_n \sqrt{n+1}\left[C_{n+1}^{(i)} C_n^{(j)} - C_n^{(i)} C_{n+1}^{(j)}\right].
+\end{equation}
+
+\paragraph{Derivation of $\expval{\hat{p}}(t)$.}
+
+Starting from the wavepacket expansion:
+\begin{align}
+  \expval{\hat{p}}(t)
+  &= \mel{\Psi(t)}{\hat{p}}{\Psi(t)}
+   = \sum_{i,j} c_i c_j\,e^{i(E_i - E_j)t/\hb}\,\mel{\Phi_i}{\hat{p}}{\Phi_j}\notag\\
+  &= \sum_{i,j} c_i c_j\,e^{i(E_i - E_j)t/\hb}\,i\,\tilde{P}_{ij}.
+\end{align}
+Since $P_{ii} = 0$, the diagonal terms vanish identically.
+For the off-diagonal terms, we pair $(i,j)$ with $(j,i)$:
+\begin{align}
+  \expval{\hat{p}}(t)
+  &= i\sum_{i<j} c_i c_j\,\tilde{P}_{ij}\left[e^{i\omega_{ji}t} - e^{-i\omega_{ji}t}\right]
+     \qquad\text{(using $\tilde{P}_{ji} = -\tilde{P}_{ij}$)}\notag\\
+  &= i\sum_{i<j} c_i c_j\,\tilde{P}_{ij}\cdot 2i\sin(\omega_{ji}t)\notag\\
+  &= -2\sum_{i<j} c_i c_j\,\tilde{P}_{ij}\,\sin\!\left(\frac{(E_j - E_i)t}{\hb}\right).
+\end{align}
+
+\begin{result}[Momentum expectation value]\label{res:pexp}
+\begin{equation}\label{eq:pexp}
+  \boxed{
+  \expval{\hat{p}}(t)
+  = -2\sum_{i<j} c_i c_j\,\tilde{P}_{ij}\,\sin\!\left(\frac{(E_j - E_i)t}{\hb}\right),
+  }
+\end{equation}
+where $\tilde{P}_{ij}$ is defined by \cref{eq:Ptilde}.
+Note the \emph{sine} dependence (contrast with the \emph{cosine} in $\expval{\hat{x}}(t)$), reflecting the canonical conjugacy of $\hat{x}$ and $\hat{p}$.
+\end{result}
+
+\paragraph{Ehrenfest consistency check.}
+
+From \cref{eq:xt_real}, taking the time derivative:
+\begin{equation}
+  \frac{d\expval{\hat{x}}}{dt}
+  = 2\sum_{i<j} c_i c_j\,\mel{\Phi_i}{\hat{x}}{\Phi_j}\,\frac{(E_j - E_i)}{\hb}\,\sin\!\left(\frac{(E_j - E_i)t}{\hb}\right).
+\end{equation}
+Ehrenfest's theorem requires $\mu\,d\expval{\hat{x}}/dt = \expval{\hat{p}}$, which yields the identity
+\begin{equation}\label{eq:ehrenfest_check}
+  \tilde{P}_{ij} = -\mu\,\omega_{ji}\,\mel{\Phi_i}{\hat{x}}{\Phi_j},
+\end{equation}
+providing a nontrivial numerical validation of the eigenvector coefficients.
+
+\paragraph{Selection rules (symmetric case).}
+Since $\hat{p}$ is an \emph{odd} operator under parity ($\hat{P}\hat{p}\hat{P}^{-1} = -\hat{p}$), one has:
+\begin{itemize}
+  \item $\mel{\Phi_i}{\hat{p}}{\Phi_i} = 0$ for all $i$ (diagonal elements vanish);
+  \item $\tilde{P}_{ij} \neq 0$ only when $\Phi_i$ and $\Phi_j$ have \emph{opposite} parity.
+\end{itemize}
+Both properties hold identically to $\hat{x}$.
+For the asymmetric case, neither selection rule applies.
+
+\paragraph{Two-state symmetric wavepacket.}
+For $\Psi_L = (\Phi_0 + \Phi_1)/\sqrt{2}$:
+\begin{equation}
+  \expval{\hat{p}}(t) = -\tilde{P}_{01}\,\sin\!\left(\frac{\Delt\,t}{\hb}\right),
+\end{equation}
+oscillating with amplitude $|\tilde{P}_{01}|$ and period $\trec$, with a $\pi/2$ phase lag relative to $\expval{\hat{x}}(t)$.
+
+\paragraph{Computational cost.}
+Precomputing $\tilde{P}_{ij}$ for $K$ eigenstates: $\mathcal{O}(K^2 N)$.
+Time evolution at each time step: $\mathcal{O}(K^2)$.
+Applies to both symmetric and asymmetric cases.
+
+% ------------------------------------------------------------
+\subsubsection{Position and momentum variances}\label{sec:variances}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The variances $\sigma_x^2(t)$ and $\sigma_p^2(t)$ quantify the spatial and momentum \emph{spread} of the wavepacket.
+During tunneling, $\sigma_x^2(t)$ undergoes dramatic changes: it is small when the particle is localized in one well, reaches a maximum during barrier traversal, and the Heisenberg uncertainty product $\sigma_x\sigma_p$ reveals the ``cost'' of tunneling in terms of quantum uncertainty.
+A squeezed state with $\sigma_x\sigma_p > \hb/2$ indicates non-Gaussian deformation of the wavepacket during the tunneling process.
+\end{remark}
+
+\paragraph{Position variance $\sigma_x^2(t)$.}
+
+The variance is
+\begin{equation}
+  \sigma_x^2(t) = \expval{\hat{x}^2}(t) - \expval{\hat{x}}^2(t).
+\end{equation}
+The expectation value $\expval{\hat{x}}(t)$ is already given by \cref{eq:xt_real}.
+For $\expval{\hat{x}^2}(t)$, the derivation follows the same pattern with $\hat{x}^2$ replacing $\hat{x}$:
+\begin{equation}\label{eq:x2exp}
+  \expval{\hat{x}^2}(t)
+  = \sum_i |c_i|^2 \mel{\Phi_i}{\hat{x}^2}{\Phi_i}
+  + 2\sum_{i<j} c_i c_j\,\mel{\Phi_i}{\hat{x}^2}{\Phi_j}\cos\!\left(\frac{(E_j - E_i)t}{\hb}\right),
+\end{equation}
+where the eigenstate matrix elements are computed using the basis expansion and the known matrix elements of $\hat{x}^2$ from \cref{eq:x2_HO}:
+\begin{align}
+  \mel{\Phi_i}{\hat{x}^2}{\Phi_j}
+  &= \sum_{n,l} C_n^{(i)} C_l^{(j)} \mel{n}{\hat{x}^2}{l}\notag\\
+  &= \frac{1}{\alp}\sum_n C_n^{(i)}C_n^{(j)}\left(n + \half\right)\notag\\
+  &\quad + \frac{1}{2\alp}\sum_n \sqrt{(n+1)(n+2)}\left[C_n^{(i)}C_{n+2}^{(j)} + C_{n+2}^{(i)}C_n^{(j)}\right].
+  \label{eq:x2_eigenstate}
+\end{align}
+Note that $\hat{x}^2$ is an \emph{even} operator, so in the symmetric case $\mel{\Phi_i}{\hat{x}^2}{\Phi_j} \neq 0$ only when $\Phi_i$ and $\Phi_j$ have the \emph{same} parity. In particular, the diagonal elements $\mel{\Phi_i}{\hat{x}^2}{\Phi_i}$ are always nonzero.
+
+\paragraph{Matrix elements of $\hat{p}^2$ in the HO basis.}
+
+We derive $\mel{n}{\hat{p}^2}{m}$ from the ladder operator representation.
+Starting from $\hat{p} = i\hb\sqrt{\alp/2}(\adag - \hat{a})$:
+\begin{align}
+  \hat{p}^2
+  &= \left[i\hb\sqrt{\frac{\alp}{2}}\right]^2 (\adag - \hat{a})^2
+   = -\frac{\hb^2\alp}{2}\,(\adag - \hat{a})^2.
+\end{align}
+Expanding $(\adag - \hat{a})^2$:
+\begin{align}
+  (\adag - \hat{a})^2
+  &= (\adag)^2 - \adag\hat{a} - \hat{a}\adag + \hat{a}^2\notag\\
+  &= (\adag)^2 + \hat{a}^2 - \hat{N} - (\hat{N}+1)\notag\\
+  &= (\adag)^2 + \hat{a}^2 - 2\hat{N} - 1,
+\end{align}
+where $\hat{N} = \adag\hat{a}$ is the number operator.
+Therefore:
+\begin{equation}\label{eq:p2_op}
+  \hat{p}^2 = -\frac{\hb^2\alp}{2}\left[(\adag)^2 + \hat{a}^2 - 2\hat{N} - 1\right]
+  = \frac{\hb^2\alp}{2}\left[2\hat{N} + 1 - \hat{a}^2 - (\adag)^2\right].
+\end{equation}
+Acting on $\ket{m}$:
+\begin{align}
+  \hat{p}^2\ket{m}
+  &= \frac{\hb^2\alp}{2}\Bigl[(2m+1)\ket{m}
+    - \sqrt{m(m-1)}\ket{m-2}\notag\\
+  &\qquad\qquad\quad - \sqrt{(m+1)(m+2)}\ket{m+2}\Bigr].
+\end{align}
+The matrix elements are:
+\begin{equation}\label{eq:p2_mel}
+  \mel{n}{\hat{p}^2}{m} =
+  \begin{cases}
+    \dfrac{\hb^2\alp}{2}(2n+1) & n = m,\\[8pt]
+    -\dfrac{\hb^2\alp}{2}\sqrt{(m_*+1)(m_*+2)} & |n-m| = 2,\\[8pt]
+    0 & \text{otherwise.}
+  \end{cases}
+\end{equation}
+
+\begin{remark}
+The kinetic energy matrix \cref{eq:T_HO} is immediately recovered: $T_{nm} = \mel{n}{\hat{p}^2}{m}/(2\mu)$.
+The matrix $\mel{n}{\hat{p}^2}{m}$ is real, symmetric, positive definite, and pentadiagonal---exactly the same structure as $\mel{n}{\hat{x}^2}{m}$ but with opposite sign on the off-diagonal elements.
+\end{remark}
+
+\paragraph{Momentum variance $\sigma_p^2(t)$.}
+
+The computation of $\expval{\hat{p}^2}(t)$ follows the same structure as $\expval{\hat{x}^2}(t)$.
+The eigenstate matrix elements are:
+\begin{align}
+  \mel{\Phi_i}{\hat{p}^2}{\Phi_j}
+  &= \sum_{n,l} C_n^{(i)} C_l^{(j)} \mel{n}{\hat{p}^2}{l}\notag\\
+  &= \frac{\hb^2\alp}{2}\sum_n C_n^{(i)}C_n^{(j)}(2n+1)\notag\\
+  &\quad - \frac{\hb^2\alp}{2}\sum_n \sqrt{(n+1)(n+2)}\left[C_n^{(i)}C_{n+2}^{(j)} + C_{n+2}^{(i)}C_n^{(j)}\right].
+  \label{eq:p2_eigenstate}
+\end{align}
+The expectation value is:
+\begin{equation}\label{eq:p2exp}
+  \expval{\hat{p}^2}(t)
+  = \sum_i |c_i|^2 \mel{\Phi_i}{\hat{p}^2}{\Phi_i}
+  + 2\sum_{i<j} c_i c_j\,\mel{\Phi_i}{\hat{p}^2}{\Phi_j}\cos\!\left(\frac{(E_j - E_i)t}{\hb}\right),
+\end{equation}
+and the momentum variance is
+\begin{equation}\label{eq:sigmap}
+  \sigma_p^2(t) = \expval{\hat{p}^2}(t) - \expval{\hat{p}}^2(t).
+\end{equation}
+
+\begin{result}[Heisenberg uncertainty product]\label{res:uncertainty}
+At every time $t$, the uncertainty relation
+\begin{equation}\label{eq:heisenberg}
+  \boxed{\sigma_x(t)\,\sigma_p(t) \geq \frac{\hb}{2}}
+\end{equation}
+must be satisfied.
+For the harmonic oscillator ground state, equality holds ($\sigma_x\sigma_p = \hb/2$).
+During tunneling, the product exceeds $\hb/2$ due to the non-Gaussian distortion of the wavepacket, providing a quantitative measure of quantum delocalization.
+\end{result}
+
+\paragraph{Computational cost.}
+Precomputing $\mel{\Phi_i}{\hat{x}^2}{\Phi_j}$ and $\mel{\Phi_i}{\hat{p}^2}{\Phi_j}$: $\mathcal{O}(K^2 N)$ each.
+Time evolution: $\mathcal{O}(K^2)$ per time step (same cost as $\expval{\hat{x}}(t)$).
+The squaring in $\expval{\hat{x}}^2(t)$ and $\expval{\hat{p}}^2(t)$ is performed after computing the expectation values, adding negligible cost.
+Applies to both symmetric and asymmetric cases.
+
+% ============================================================
+\subsection{Well Occupation and Barrier Penetration}\label{sec:well_occupation}
+% ============================================================
+
+% ------------------------------------------------------------
+\subsubsection{Well occupation probabilities $P_L(t)$ and $P_R(t)$}\label{sec:PLR}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The well occupation probabilities $P_L(t)$ and $P_R(t)$ provide the most direct characterization of tunneling: they measure the fraction of probability in each well as a function of time.
+Unlike $\expval{\hat{x}}(t)$, which gives only the average position, $P_L$ and $P_R$ capture the full probability transfer.
+The barrier occupation $P_{\text{barrier}}(t)$ directly quantifies the classically forbidden probability, which is the hallmark of quantum tunneling.
+These are the quantities most frequently quoted in the experimental literature.
+\end{remark}
+
+\paragraph{Definitions.}
+
+We partition the configuration space into three regions separated by the barrier.
+For the symmetric potential, the barrier maximum is at $x = 0$, and we define:
+\begin{align}
+  P_L(t) &= \int_{-\infty}^{0} |\Psi(x,t)|^2\,dx, \label{eq:PL_def}\\
+  P_R(t) &= \int_{0}^{\infty} |\Psi(x,t)|^2\,dx,\label{eq:PR_def}\\
+  P_{\text{barrier}}(t) &= \int_{x_2(E)}^{x_3(E)} |\Psi(x,t)|^2\,dx,\label{eq:Pbar_def}
+\end{align}
+where $x_2(E)$ and $x_3(E)$ are the inner classical turning points at energy $E$ (the classically forbidden region).
+Normalization gives $P_L(t) + P_R(t) = 1$ (or $P_L + P_{\text{barrier}} + P_R = 1$ if the barrier region is defined separately as a subset of one of the half-spaces).
+
+\paragraph{Partial overlap matrices.}
+
+We define the partial overlap matrices:
+\begin{align}
+  L_{kl} &= \int_{-\infty}^{0} \Phi_k(x)\,\Phi_l(x)\,dx,\label{eq:Lkl}\\
+  R_{kl} &= \int_{0}^{\infty} \Phi_k(x)\,\Phi_l(x)\,dx,\label{eq:Rkl}\\
+  B_{kl} &= \int_{x_2}^{x_3} \Phi_k(x)\,\Phi_l(x)\,dx.\label{eq:Bkl}
+\end{align}
+These are real symmetric matrices.
+By orthonormality of the eigenstates over the full real line:
+\begin{equation}\label{eq:LR_completeness}
+  L_{kl} + R_{kl} = \int_{-\infty}^{\infty} \Phi_k(x)\,\Phi_l(x)\,dx = \delta_{kl}.
+\end{equation}
+
+\paragraph{Derivation of $P_L(t)$.}
+
+Inserting the wavepacket expansion into \cref{eq:PL_def}:
+\begin{align}
+  P_L(t)
+  &= \int_{-\infty}^{0} \left|\sum_k c_k\,e^{-iE_k t/\hb}\,\Phi_k(x)\right|^2 dx\notag\\
+  &= \sum_{k,l} c_k c_l\,e^{i(E_k - E_l)t/\hb}\int_{-\infty}^{0} \Phi_k(x)\,\Phi_l(x)\,dx\notag\\
+  &= \sum_{k,l} c_k c_l\,e^{i(E_k - E_l)t/\hb}\,L_{kl}.
+\end{align}
+Separating diagonal and off-diagonal terms:
+\begin{align}
+  P_L(t)
+  &= \sum_k |c_k|^2\,L_{kk}
+  + \sum_{k \neq l} c_k c_l\,e^{i\omega_{kl}t}\,L_{kl}\notag\\
+  &= \sum_k |c_k|^2\,L_{kk}
+  + 2\sum_{k<l} c_k c_l\,L_{kl}\,\cos\!\left(\frac{(E_l - E_k)t}{\hb}\right).
+\end{align}
+
+\begin{result}[Well occupation probabilities]\label{res:well_occ}
+\begin{align}
+  P_L(t) &= \sum_k |c_k|^2\,L_{kk}
+  + 2\sum_{k<l} c_k c_l\,L_{kl}\,\cos\!\left(\frac{(E_l - E_k)t}{\hb}\right),\label{eq:PL}\\
+  P_R(t) &= \sum_k |c_k|^2\,R_{kk}
+  + 2\sum_{k<l} c_k c_l\,R_{kl}\,\cos\!\left(\frac{(E_l - E_k)t}{\hb}\right),\label{eq:PR_occ}\\
+  P_{\text{barrier}}(t) &= \sum_k |c_k|^2\,B_{kk}
+  + 2\sum_{k<l} c_k c_l\,B_{kl}\,\cos\!\left(\frac{(E_l - E_k)t}{\hb}\right).\label{eq:Pbarrier}
+\end{align}
+One verifies $P_L(t) + P_R(t) = 1$ using \cref{eq:LR_completeness} and normalization $\sum_k |c_k|^2 = 1$.
+\end{result}
+
+\paragraph{Symmetric case: simplifications.}
+
+When the potential is symmetric, eigenstates have definite parity: $\Phi_k(-x) = (-1)^k\Phi_k(x)$.
+This implies:
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Diagonal elements}: $L_{kk} = R_{kk} = \frac{1}{2}$ for all $k$ (by the even symmetry of $|\Phi_k(x)|^2$).
+  \item \textbf{Off-diagonal elements}: $L_{kl} = -R_{kl}$ when $k$ and $l$ have opposite parity, and $L_{kl} = R_{kl}$ when they have the same parity.
+\end{enumerate}
+The time-independent part becomes $\sum_k|c_k|^2/2 = 1/2$, as expected for a wavepacket initially localized in one well.
+
+\paragraph{Two-state symmetric wavepacket.}
+
+For $c_0 = c_1 = 1/\sqrt{2}$ (left-localized initial state):
+\begin{equation}
+  P_L(t) = \frac{1}{2} + L_{01}\cos\!\left(\frac{\Delt\,t}{\hb}\right)
+  = \frac{1}{2}\left[1 + \cos\!\left(\frac{\Delt\,t}{\hb}\right)\right]
+  = \cos^2\!\left(\frac{\Delt\,t}{2\hb}\right),
+\end{equation}
+where we used $L_{01} = 1/2$ (provable from parity: $\int_{-\infty}^{0}\Phi_0\Phi_1\,dx = 1/2$, since $\Phi_0\Phi_1$ is odd and $\int_{-\infty}^{\infty}\Phi_0\Phi_1\,dx = 0$, so $\int_{-\infty}^{0} = -\int_{0}^{\infty}$ and each equals $\pm 1/2$ of the norm).
+
+\paragraph{Numerical computation of $L_{kl}$, $R_{kl}$, $B_{kl}$.}
+
+These integrals are computed numerically using the spatial grid already available for wavefunction visualization.
+If the eigenstates $\Phi_k(x_i)$ are tabulated on an $N_x$-point grid with spacing $\Delta x$:
+\begin{equation}
+  L_{kl} \approx \Delta x\sum_{x_i < 0} \Phi_k(x_i)\,\Phi_l(x_i),
+  \qquad
+  R_{kl} \approx \Delta x\sum_{x_i > 0} \Phi_k(x_i)\,\Phi_l(x_i).
+\end{equation}
+Alternatively, Simpson's rule or the trapezoidal rule may be used for higher accuracy.
+
+\paragraph{Computational cost.}
+Precomputing $L_{kl}$, $R_{kl}$, $B_{kl}$ for $K$ eigenstates: $\mathcal{O}(K^2 N_x)$ (one-time cost).
+Time evolution: $\mathcal{O}(K^2)$ per time step.
+Applies to both symmetric and asymmetric cases.
+
+% ------------------------------------------------------------
+\subsubsection{Localization measure $\mathcal{L}(t)$ and tunneling efficiency $\eta$}\label{sec:localization}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The localization measure $\mathcal{L}(t)$ provides a single-number characterization of the particle's position: $\mathcal{L} = -1$ means completely left, $\mathcal{L} = +1$ means completely right.
+The tunneling efficiency $\eta$ quantifies what fraction of the probability can actually transfer between wells, which is the central question in asymmetric tunneling.
+In the symmetric case $\eta = 1$ (complete transfer), while in the asymmetric case $\eta < 1$ measures the ``damage'' done by asymmetry.
+\end{remark}
+
+\paragraph{Definition.}
+
+The localization measure is defined as
+\begin{equation}\label{eq:localization}
+  \mathcal{L}(t) = P_R(t) - P_L(t) = 1 - 2P_L(t).
+\end{equation}
+Using \cref{eq:PL}:
+\begin{align}
+  \mathcal{L}(t)
+  &= \sum_k |c_k|^2(R_{kk} - L_{kk})
+  + 2\sum_{k<l} c_k c_l\,(R_{kl} - L_{kl})\cos\!\left(\frac{(E_l - E_k)t}{\hb}\right).
+  \label{eq:L_full}
+\end{align}
+
+\paragraph{Time average.}
+
+The time average of the cosine terms vanishes (assuming nondegenerate spectrum):
+\begin{equation}\label{eq:L_time_avg}
+  \overline{\mathcal{L}} \coloneqq \lim_{T\to\infty}\frac{1}{T}\int_0^T \mathcal{L}(t)\,dt
+  = \sum_k |c_k|^2(R_{kk} - L_{kk}).
+\end{equation}
+This is \emph{zero} in the symmetric case (since $R_{kk} = L_{kk} = 1/2$) but generically \emph{nonzero} in the asymmetric case, reflecting the static bias favoring one well.
+
+\paragraph{Tunneling efficiency.}
+
+The tunneling efficiency is defined as
+\begin{equation}\label{eq:eta_def}
+  \eta = \frac{\mathcal{L}_{\max} - \mathcal{L}_{\min}}{2} \in [0,1],
+\end{equation}
+where $\mathcal{L}_{\max}$ and $\mathcal{L}_{\min}$ are the maximum and minimum values of $\mathcal{L}(t)$ over all $t \geq 0$.
+
+\paragraph{Two-level analysis: derivation of $\eta$.}
+
+For a two-state wavepacket in the asymmetric case, from \cref{eq:P_L_asym}:
+\begin{equation}
+  P_L(t) = 1 - \frac{\Delt^2}{\Delt E^2}\sin^2\!\left(\frac{\Omg\,t}{\hb}\right),
+\end{equation}
+where $\Delt E = 2\Omg = \sqrt{\Delt^2 + 4\eps_{\text{eff}}^2}$.
+Therefore:
+\begin{align}
+  \mathcal{L}(t) &= 1 - 2P_L(t)
+  = -1 + \frac{2\Delt^2}{\Delt E^2}\sin^2\!\left(\frac{\Omg\,t}{\hb}\right)\notag\\
+  &= -1 + \frac{\Delt^2}{\Delt E^2}\left[1 - \cos\!\left(\frac{2\Omg\,t}{\hb}\right)\right]\notag\\
+  &= \left(\frac{\Delt^2}{\Delt E^2} - 1\right) - \frac{\Delt^2}{\Delt E^2}\cos\!\left(\frac{\Delt E\,t}{\hb}\right).
+\end{align}
+Using $\Delt E^2 = \Delt^2 + 4\eps_{\text{eff}}^2$, the constant term is $-4\eps_{\text{eff}}^2/\Delt E^2$.
+Thus:
+\begin{equation}\label{eq:L_twolevel}
+  \mathcal{L}(t) = -\frac{4\eps_{\text{eff}}^2}{\Delt E^2}
+  - \frac{\Delt^2}{\Delt E^2}\cos\!\left(\frac{\Delt E\,t}{\hb}\right).
+\end{equation}
+The extrema are:
+\begin{align}
+  \mathcal{L}_{\max} &= -\frac{4\eps_{\text{eff}}^2}{\Delt E^2} + \frac{\Delt^2}{\Delt E^2}
+  = \frac{\Delt^2 - 4\eps_{\text{eff}}^2}{\Delt E^2},\\
+  \mathcal{L}_{\min} &= -\frac{4\eps_{\text{eff}}^2}{\Delt E^2} - \frac{\Delt^2}{\Delt E^2}
+  = -1.
+\end{align}
+Therefore:
+\begin{equation}\label{eq:eta_twolevel}
+  \boxed{\eta = \frac{\mathcal{L}_{\max} - \mathcal{L}_{\min}}{2}
+  = \frac{1}{2}\left(\frac{\Delt^2 - 4\eps_{\text{eff}}^2}{\Delt E^2} + 1\right)
+  = \frac{\Delt^2}{\Delt E^2}
+  = \left(\frac{\Delt}{\Delt E}\right)^2.}
+\end{equation}
+\begin{description}
+  \item[Symmetric limit ($\eps_{\text{eff}} = 0$):] $\Delt E = \Delt$, $\eta = 1$. Complete transfer.
+  \item[Strong asymmetry ($\eps_{\text{eff}} \gg \Delt/2$):] $\Delt E \approx 2\eps_{\text{eff}}$, $\eta \approx (\Delt/2\eps_{\text{eff}})^2 \ll 1$. Tunneling is suppressed.
+  \item[Resonance ($\eps_{\text{eff}} = \Delt/2$):] $\Delt E = \Delt\sqrt{2}$, $\eta = 1/2$.
+\end{description}
+
+\paragraph{Computational cost.}
+No additional precomputation beyond $P_L(t)$ and $P_R(t)$; $\eta$ is extracted from the time series.
+Applies primarily to the asymmetric case (in the symmetric case $\eta = 1$ trivially).
+
+% ============================================================
+\subsection{Spectral and Information Quantities}\label{sec:spectral}
+% ============================================================
+
+% ------------------------------------------------------------
+\subsubsection{Tunnel splittings $\Delt_k$ and spectral structure}\label{sec:splittings}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The tunnel splittings $\Delt_k$ are the fundamental energetic fingerprint of quantum tunneling.
+Each doublet $(E_{2k}, E_{2k+1})$ corresponds to a different transverse excitation of the double well, and $\Delt_k$ determines the tunneling rate at that energy.
+The systematic behavior of $\Delt_k$ with $k$ encodes the energy dependence of the barrier transmission and can be compared with WKB predictions to validate the quality of the variational basis.
+\end{remark}
+
+\paragraph{Definitions.}
+
+For a deep symmetric double well, the low-lying eigenvalues come in nearly degenerate pairs.
+The \emph{tunnel splitting} of the $k$-th doublet is
+\begin{equation}\label{eq:Delta_k}
+  \Delt_k = E_{2k+1} - E_{2k}, \qquad k = 0, 1, 2, \ldots
+\end{equation}
+and the \emph{mean pair energy} is
+\begin{equation}\label{eq:Ebar_k}
+  \bar{E}_k = \frac{E_{2k} + E_{2k+1}}{2}.
+\end{equation}
+The \emph{tunneling period} associated with the $k$-th doublet is
+\begin{equation}\label{eq:t_r_k}
+  \trec^{(k)} = \frac{h}{\Delt_k} = \frac{2\pi\hb}{\Delt_k}.
+\end{equation}
+
+\paragraph{WKB prediction.}
+
+The semiclassical (WKB) estimate of the tunnel splitting is
+\begin{equation}\label{eq:Delta_WKB}
+  \Delt_k^{\text{WKB}} = \frac{\hb\omega_k}{\pi}\exp\!\left(-\frac{S_k}{\hb}\right),
+\end{equation}
+where $\omega_k = \sqrt{V''(\xe)/\mu}$ is the local harmonic frequency at the minimum (to leading order, the same for all doublets), and $S_k$ is the WKB action integral evaluated at energy $\bar{E}_k$:
+\begin{equation}\label{eq:Sk}
+  S_k = \int_{x_2(\bar{E}_k)}^{x_3(\bar{E}_k)} \sqrt{2\mu\bigl(V(x) - \bar{E}_k\bigr)}\,dx.
+\end{equation}
+Here $x_2$ and $x_3$ are the inner classical turning points (see \cref{sec:WKB_action}).
+
+\paragraph{Ratio test.}
+
+The ratio of consecutive splittings
+\begin{equation}\label{eq:ratio_test}
+  r_k = \frac{\Delt_{k+1}}{\Delt_k}
+\end{equation}
+measures how rapidly tunneling rates increase with energy.
+The WKB prediction is $r_k^{\text{WKB}} = \exp[(S_k - S_{k+1})/\hb]$, which is greater than 1 since $S_{k+1} < S_k$ (the action decreases as energy approaches the barrier top).
+
+\paragraph{Computational cost.}
+Extracting $\Delt_k$ is $\mathcal{O}(1)$ once the eigenvalues are known.
+Computing $S_k$ requires numerical quadrature: $\mathcal{O}(N_x)$ per doublet.
+Applies to both symmetric and asymmetric cases (in the latter, $\Delt_k$ is replaced by the avoided-crossing gap; see \cref{sec:avoided_crossing}).
+
+% ------------------------------------------------------------
+\subsubsection{Participation ratio and inverse participation ratio}\label{sec:IPR}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The participation ratio (PR) answers a fundamental question: \emph{how many eigenstates effectively participate in the wavepacket dynamics?}
+For a two-state wavepacket, PR~$=2$; for a highly delocalized wavepacket in the energy basis, PR~$\gg 1$.
+The inverse participation ratio (IPR) additionally equals the long-time average of the survival probability $P(t)$, connecting a static property of the initial state to the asymptotic dynamics.
+\end{remark}
+
+\paragraph{Definitions.}
+
+The \emph{inverse participation ratio} is
+\begin{equation}\label{eq:IPR}
+  \text{IPR} = \sum_k |c_k|^4,
+\end{equation}
+and the \emph{participation ratio} is its reciprocal:
+\begin{equation}\label{eq:PR}
+  \text{PR} = \frac{1}{\text{IPR}} = \frac{1}{\sum_k |c_k|^4}.
+\end{equation}
+
+\paragraph{Connection to the time-averaged survival probability.}
+
+We show that $\text{IPR} = \overline{P(t)}$.
+Starting from \cref{eq:Ps_general}:
+\begin{equation}
+  P(t) = \sum_k |c_k|^4 + 2\sum_{k<l}|c_k|^2|c_l|^2\cos\!\left(\frac{(E_l - E_k)t}{\hb}\right).
+\end{equation}
+Taking the time average over an infinite interval:
+\begin{align}
+  \overline{P(t)}
+  &= \lim_{T\to\infty}\frac{1}{T}\int_0^T P(t)\,dt\notag\\
+  &= \sum_k |c_k|^4
+  + 2\sum_{k<l}|c_k|^2|c_l|^2\,\underbrace{\lim_{T\to\infty}\frac{1}{T}\int_0^T\cos(\omega_{kl}t)\,dt}_{=\,0\;\text{for}\;\omega_{kl}\neq 0}\notag\\
+  &= \sum_k |c_k|^4 = \text{IPR}.
+  \label{eq:IPR_time_avg}
+\end{align}
+The second equality follows because $\omega_{kl} = (E_l - E_k)/\hb \neq 0$ for $k \neq l$ (assuming a nondegenerate spectrum), and the time average of a cosine with nonzero frequency vanishes:
+\begin{equation}
+  \lim_{T\to\infty}\frac{1}{T}\int_0^T \cos(\omega t)\,dt
+  = \lim_{T\to\infty}\frac{\sin(\omega T)}{\omega T} = 0.
+\end{equation}
+
+\begin{result}[IPR--survival probability relation]\label{res:IPR}
+\begin{equation}\label{eq:IPR_Pbar}
+  \boxed{\text{IPR} = \sum_k |c_k|^4 = \overline{P(t)} = \lim_{T\to\infty}\frac{1}{T}\int_0^T P(t)\,dt.}
+\end{equation}
+The participation ratio $\text{PR} = 1/\text{IPR}$ gives the effective number of eigenstates contributing to the dynamics.
+\end{result}
+
+\paragraph{Special cases.}
+
+\begin{description}
+  \item[Two-state wavepacket ($c_0 = c_1 = 1/\sqrt{2}$):] $\text{IPR} = 2\cdot(1/2)^2 = 1/2$, $\text{PR} = 2$.
+  \item[Four-state wavepacket ($\vartheta = 45^\circ$):] $c_k = 1/2$ for $k = 0,\ldots,3$, $\text{IPR} = 4\cdot(1/4)^2 = 1/4$, $\text{PR} = 4$.
+  \item[Single eigenstate ($c_k = \delta_{k,0}$):] $\text{IPR} = 1$, $\text{PR} = 1$. No dynamics.
+  \item[Uniform distribution ($c_k = 1/\sqrt{K}$ for $K$ states):] $\text{IPR} = 1/K$, $\text{PR} = K$.
+\end{description}
+
+\paragraph{Energy entropy.}
+
+A complementary measure of the wavepacket's complexity in the energy basis is the \emph{energy entropy}:
+\begin{equation}\label{eq:S_E}
+  S_E = -\sum_k |c_k|^2 \ln|c_k|^2.
+\end{equation}
+This is a static quantity (independent of time) that measures the Shannon information content of the initial state preparation.
+For a uniform distribution over $K$ states: $S_E = \ln K$.
+For a two-state wavepacket: $S_E = \ln 2$.
+Unlike PR, $S_E$ is sensitive to the detailed shape of the distribution $|c_k|^2$, not just its second moment.
+
+\paragraph{Computational cost.}
+IPR, PR, and $S_E$ are $\mathcal{O}(K)$ operations on the expansion coefficients; no precomputation needed.
+Applies to both symmetric and asymmetric cases.
+
+% ------------------------------------------------------------
+\subsubsection{Zeno time $t_Z$}\label{sec:zeno}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The Zeno time $t_Z$ characterizes the \emph{short-time} quadratic decay of the survival probability: for $t \ll t_Z$, the system has barely evolved and $P(t) \approx 1$.
+It sets the timescale for the \emph{quantum Zeno effect}: if the system is measured at intervals shorter than $t_Z$, the evolution is effectively frozen.
+More practically, $t_Z$ determines the numerical time step required to resolve the initial decay and validates the physical consistency of the computed dynamics.
+\end{remark}
+
+\paragraph{Derivation.}
+
+The survival amplitude is
+\begin{equation}
+  A(t) = \sum_k |c_k|^2\,e^{-iE_k t/\hb}.
+\end{equation}
+Taylor expanding the exponential around $t = 0$:
+\begin{align}
+  A(t) &= \sum_k |c_k|^2\left[1 - \frac{iE_k t}{\hb} - \frac{E_k^2 t^2}{2\hb^2} + \mathcal{O}(t^3)\right]\notag\\
+  &= 1 - \frac{i\expval{E}t}{\hb} - \frac{\expval{E^2}t^2}{2\hb^2} + \mathcal{O}(t^3),
+\end{align}
+where we define the energy moments
+\begin{equation}
+  \expval{E} = \sum_k |c_k|^2 E_k, \qquad \expval{E^2} = \sum_k |c_k|^2 E_k^2.
+\end{equation}
+The survival probability is $P(t) = |A(t)|^2 = A(t)A^*(t)$.
+Computing:
+\begin{align}
+  A^*(t) &= 1 + \frac{i\expval{E}t}{\hb} - \frac{\expval{E^2}t^2}{2\hb^2} + \mathcal{O}(t^3),\\
+  P(t) &= |A(t)|^2 = 1 - \frac{(\expval{E^2} - \expval{E}^2)t^2}{\hb^2} + \mathcal{O}(t^4)\notag\\
+  &= 1 - \frac{(\Delt E)^2 t^2}{\hb^2} + \mathcal{O}(t^4),
+\end{align}
+where $(\Delt E)^2 = \expval{E^2} - \expval{E}^2$ is the \emph{energy variance} of the wavepacket.
+
+\begin{result}[Zeno time]\label{res:zeno}
+The short-time behavior of the survival probability is
+\begin{equation}\label{eq:P_short}
+  P(t) \approx 1 - \left(\frac{t}{t_Z}\right)^2, \qquad t \to 0,
+\end{equation}
+with the \emph{Zeno time}
+\begin{equation}\label{eq:tZ}
+  \boxed{t_Z = \frac{\hb}{\Delt E}, \qquad (\Delt E)^2 = \sum_k |c_k|^2 E_k^2 - \left(\sum_k |c_k|^2 E_k\right)^2.}
+\end{equation}
+\end{result}
+
+\paragraph{Physical interpretation.}
+The quadratic decay $P(t) \approx 1 - (t/t_Z)^2$ is a universal feature of quantum mechanics, arising from the uncertainty relation $\Delt E\cdot\Delt t \geq \hb/2$.
+If the system is repeatedly measured at intervals $\tau \ll t_Z$, the survival probability after each measurement is $P(\tau) \approx 1 - (\tau/t_Z)^2$, and after $n = t/\tau$ measurements:
+\begin{equation}
+  P_{\text{Zeno}}(t) \approx \left[1 - \left(\frac{\tau}{t_Z}\right)^2\right]^{t/\tau}
+  \xrightarrow{\tau\to 0} 1.
+\end{equation}
+This is the \emph{quantum Zeno effect}: frequent measurements freeze the evolution.
+
+\paragraph{Two-state wavepacket.}
+For $c_0 = c_1 = 1/\sqrt{2}$:
+\begin{equation}
+  (\Delt E)^2 = \frac{E_0^2 + E_1^2}{2} - \left(\frac{E_0 + E_1}{2}\right)^2 = \frac{(E_1 - E_0)^2}{4} = \frac{\Delt^2}{4},
+\end{equation}
+so $t_Z = 2\hb/\Delt = \trec/\pi$.
+
+\paragraph{Computational cost.}
+Computing $t_Z$: $\mathcal{O}(K)$ using the eigenvalues and expansion coefficients.
+This is a single scalar, computed once.
+Applies to both symmetric and asymmetric cases.
+
+% ------------------------------------------------------------
+\subsubsection{Revival time $t_{\text{rev}}$ and collapse time $t_{\text{coll}}$}\label{sec:revival}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The revival time $t_{\text{rev}}$ is the timescale at which a complex multi-state wavepacket reconstructs itself after dephasing.
+Unlike the recurrence time $\trec$ (which applies to a two-state system), $t_{\text{rev}}$ governs the long-time behavior of multi-state wavepackets and determines the temporal structure of ``quantum carpets.''
+The collapse time $t_{\text{coll}}$ quantifies how quickly the initial oscillations are washed out by destructive interference among different frequency components.
+Together, $t_{\text{coll}}$ and $t_{\text{rev}}$ define the three-act dynamics: coherent oscillation, collapse, and revival.
+\end{remark}
+
+\paragraph{Energy expansion around the mean quantum number.}
+
+Consider a wavepacket populated around a mean quantum number $\bar{k}$.
+Taylor-expanding the energies to second order:
+\begin{equation}\label{eq:E_taylor}
+  E_k \approx \bar{E} + E'(k - \bar{k}) + \frac{1}{2}E''(k - \bar{k})^2,
+\end{equation}
+where $E' = dE_k/dk|_{\bar{k}}$ and $E'' = d^2E_k/dk^2|_{\bar{k}}$ are evaluated at $k = \bar{k}$.
+The phase accumulated by the $k$-th component after time $t$ is
+\begin{equation}\label{eq:phase_k}
+  \phi_k(t) = \frac{E_k t}{\hb} \approx \frac{\bar{E}t}{\hb} + \frac{E'(k-\bar{k})t}{\hb} + \frac{E''(k-\bar{k})^2 t}{2\hb}.
+\end{equation}
+
+\paragraph{Classical period.}
+
+The first-order term $E'(k-\bar{k})t/\hb$ generates a linear phase progression.
+All components rephase when this term is a multiple of $2\pi$ for adjacent $k$ values, giving the \emph{classical period}:
+\begin{equation}\label{eq:t_cl}
+  t_{\text{cl}} = \frac{2\pi\hb}{|E'|}.
+\end{equation}
+For a double well, this corresponds to the classical oscillation period within a single well.
+
+\paragraph{Revival time.}
+
+The second-order term introduces a quadratic phase.
+A \emph{full revival} occurs when the quadratic phase $E''(k-\bar{k})^2 t/(2\hb)$ is a multiple of $2\pi$ for all participating $k$ values.
+The most stringent condition is for $|k - \bar{k}| = 1$:
+\begin{equation}
+  \frac{E''\,t_{\text{rev}}}{2\hb} = 2\pi
+  \quad\Longrightarrow\quad
+  \boxed{t_{\text{rev}} = \frac{4\pi\hb}{|E''|}.}
+  \label{eq:t_rev}
+\end{equation}
+At $t = t_{\text{rev}}$, the wavepacket approximately reforms its initial shape.
+
+\paragraph{Collapse time.}
+
+The initial coherent oscillations are destroyed when the accumulated quadratic phase spread across the participating states reaches $\sim\pi$.
+For a wavepacket with PR participating states, the spread in $k$ is $\delta k \sim \sqrt{\text{PR}}$, and collapse occurs when:
+\begin{equation}
+  \frac{|E''|(\delta k)^2\,t_{\text{coll}}}{2\hb} \sim \pi
+  \quad\Longrightarrow\quad
+  \boxed{t_{\text{coll}} \approx \frac{t_{\text{rev}}}{2\pi\sqrt{\text{PR}}} = \frac{2\hb}{|E''|\sqrt{\text{PR}}}.}
+  \label{eq:t_coll}
+\end{equation}
+The relation $t_{\text{coll}} \ll t_{\text{rev}}$ (provided $\text{PR} \gg 1$) guarantees the three-stage dynamics.
+
+\paragraph{Application to the double well.}
+
+For the double-well system, the relevant ``spectrum'' for multi-doublet dynamics is the set of tunnel splittings $\{\Delt_k\}$.
+The second derivative of the energy with respect to the doublet index $k$ is approximately
+\begin{equation}
+  E'' \approx \Delt_{k+1} - \Delt_k,
+\end{equation}
+since $E_{2k+1} - E_{2k} = \Delt_k$ and the inter-doublet spacing is approximately constant.
+Therefore:
+\begin{align}
+  t_{\text{rev}} &\approx \frac{4\pi\hb}{|\Delt_1 - \Delt_0|},\label{eq:t_rev_DW}\\
+  t_{\text{coll}} &\approx \frac{2\hb}{|\Delt_1 - \Delt_0|\sqrt{\text{PR}}}.\label{eq:t_coll_DW}
+\end{align}
+
+\paragraph{Computational cost.}
+Computing $t_{\text{rev}}$ and $t_{\text{coll}}$: $\mathcal{O}(1)$ from the eigenvalues and PR.
+Applies to both symmetric and asymmetric cases (multi-state wavepackets only; for two-state wavepackets, $t_{\text{rev}}$ is undefined since there is no quadratic dispersion).
+
+% ------------------------------------------------------------
+\subsubsection{Spectral autocorrelation $C(\omega)$}\label{sec:spectral_autocorr}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The spectral autocorrelation $C(\omega)$ is the Fourier transform of the survival probability and provides the complete frequency fingerprint of the tunneling dynamics.
+Each peak in $C(\omega)$ corresponds to a transition frequency $\omega_{kl}$, with height proportional to the product of occupation weights $|c_k|^2|c_l|^2$.
+This is the theoretical analog of a spectroscopic measurement and allows direct identification of which eigenstates participate in the dynamics.
+It is also the most robust diagnostic for identifying near-degeneracies and resonances.
+\end{remark}
+
+\paragraph{Definition and derivation.}
+
+The spectral autocorrelation is defined as the Fourier transform of $P(t)$:
+\begin{equation}\label{eq:C_omega_def}
+  C(\omega) = \int_0^{\infty} P(t)\,e^{i\omega t}\,dt.
+\end{equation}
+Substituting \cref{eq:Ps_general} and using the distributional identity $\int_0^\infty \cos(\omega_0 t)\,e^{i\omega t}\,dt = \pi[\delta(\omega + \omega_0) + \delta(\omega - \omega_0)]$ (for $\omega_0 > 0$), we obtain:
+\begin{align}
+  C(\omega) &= \pi\sum_k |c_k|^4\,\delta(\omega)\notag\\
+  &\quad + \pi\sum_{k<l}|c_k|^2|c_l|^2\left[\delta(\omega - \omega_{kl}) + \delta(\omega + \omega_{kl})\right],
+  \label{eq:C_omega}
+\end{align}
+where $\omega_{kl} = (E_l - E_k)/\hb > 0$ for $l > k$.
+
+\begin{result}[Spectral autocorrelation]\label{res:spectral}
+The spectral autocorrelation is a sum of delta functions:
+\begin{equation}\label{eq:C_omega_final}
+  \boxed{C(\omega) = \pi\,\text{IPR}\cdot\delta(\omega) + \pi\sum_{k<l}|c_k|^2|c_l|^2\left[\delta(\omega - \omega_{kl}) + \delta(\omega + \omega_{kl})\right].}
+\end{equation}
+The peak at $\omega = 0$ has weight $\text{IPR} = \sum_k|c_k|^4 = \overline{P(t)}$.
+Each pair of peaks at $\omega = \pm\omega_{kl}$ has weight $|c_k|^2|c_l|^2$.
+\end{result}
+
+\paragraph{Practical computation.}
+
+In practice, $P(t)$ is sampled at $N_t$ discrete time points $t_j = j\,\delta t$, and $C(\omega)$ is obtained via a discrete Fourier transform (FFT).
+The delta functions are broadened into peaks of width $\sim 2\pi/T_{\max}$, where $T_{\max} = N_t\,\delta t$ is the total simulation time.
+Resolving the tunnel splitting $\Delt_0$ requires $T_{\max} \gg \trec = 2\pi\hb/\Delt_0$, i.e., the simulation must cover several recurrence periods.
+
+The peak positions in $C(\omega)$ give the transition frequencies $\omega_{kl}$ (from which eigenvalue differences $E_l - E_k = \hb\omega_{kl}$ are extracted), and the peak heights give the products $|c_k|^2|c_l|^2$ (from which individual $|c_k|^2$ can sometimes be reconstructed).
+
+\paragraph{Computational cost.}
+FFT of the $P(t)$ time series: $\mathcal{O}(N_t \log N_t)$.
+No precomputation of matrix elements is needed beyond what is already required for $P(t)$.
+Applies to both symmetric and asymmetric cases.
+
+% ============================================================
+\subsection{Asymmetric Case: Avoided Crossings and WKB}\label{sec:asym_advanced}
+% ============================================================
+
+% ------------------------------------------------------------
+\subsubsection{WKB tunneling action integral $S(E)$}\label{sec:WKB_action}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The WKB action integral $S(E)$ is the single most important semiclassical quantity in tunneling theory: it controls the exponential suppression of barrier penetration through the Gamow factor $e^{-S/\hb}$.
+Computing $S(E)$ from the exact potential and comparing with the numerically determined tunnel splittings $\Delt_k$ provides a stringent test of both the variational calculation (exact) and the WKB approximation (semiclassical).
+It also enables extrapolation to parameter regimes where the full diagonalization becomes impractical.
+\end{remark}
+
+\paragraph{Definition.}
+
+The WKB tunneling action integral at energy $E < \Vb$ is
+\begin{equation}\label{eq:S_WKB}
+  S(E) = \int_{x_2(E)}^{x_3(E)} \sqrt{2\mu\bigl(V(x) - E\bigr)}\,dx,
+\end{equation}
+where $x_2(E)$ and $x_3(E)$ are the inner classical turning points, defined by $V(x_2) = V(x_3) = E$ with $x_2 < 0 < x_3$.
+
+\paragraph{Turning points for the symmetric quartic potential.}
+
+For $V(x) = (\Vb/\xe^4)(x^2 - \xe^2)^2$ (with $V(\pm\xe) = 0$ and $V(0) = \Vb$), the equation $V(x) = E$ becomes:
+\begin{equation}
+  \frac{\Vb}{\xe^4}(x^2 - \xe^2)^2 = E
+  \quad\Longrightarrow\quad
+  (x^2 - \xe^2)^2 = \frac{\xe^4\,E}{\Vb}.
+\end{equation}
+Taking the square root (both signs):
+\begin{equation}
+  x^2 - \xe^2 = \pm\xe^2\sqrt{\frac{E}{\Vb}}
+  \quad\Longrightarrow\quad
+  x^2 = \xe^2\left(1 \pm \sqrt{\frac{E}{\Vb}}\right).
+\end{equation}
+This gives four turning points (for $E < \Vb$):
+\begin{align}
+  \text{Outer turning points:}\quad & x = \pm\xe\sqrt{1 + \sqrt{E/\Vb}},\label{eq:tp_outer}\\
+  \text{Inner turning points:}\quad & x = \pm\xe\sqrt{1 - \sqrt{E/\Vb}}.\label{eq:tp_inner}
+\end{align}
+The classically forbidden (barrier) region is between the two inner turning points:
+\begin{equation}\label{eq:barrier_region}
+  \boxed{x_2(E) = -\xe\sqrt{1 - \sqrt{E/\Vb}}, \qquad x_3(E) = +\xe\sqrt{1 - \sqrt{E/\Vb}}.}
+\end{equation}
+Note the symmetry: $x_3 = -x_2$.
+As $E \to 0$: $x_{2,3} \to \mp\xe$ (full barrier width).
+As $E \to \Vb$: $x_{2,3} \to 0$ (barrier width shrinks to zero).
+
+\paragraph{WKB tunnel splitting formula.}
+
+The semiclassical (instanton) formula for the tunnel splitting is
+\begin{equation}\label{eq:WKB_splitting}
+  \boxed{\Delt^{\text{WKB}}(E) = \frac{\hb\omega_{\text{local}}}{\pi}\exp\!\left(-\frac{S(E)}{\hb}\right),}
+\end{equation}
+where $\omega_{\text{local}} = \sqrt{V''(\xe)/\mu} = \sqrt{4b/\mu}$ is the harmonic frequency at the potential minimum (see \cref{eq:alpha_local}).
+
+This formula is derived from the connection formulas at both turning points.
+In the forbidden region, the WKB wavefunction decays as $\psi \sim \exp(-\int\kappa\,dx)$ where $\kappa(x) = \sqrt{2\mu(V-E)}/\hb$.
+The transmission amplitude through the barrier is $\sim e^{-S/\hb}$, and the splitting arises from the symmetric/antisymmetric boundary conditions at both turning points, contributing the prefactor $\hb\omega/\pi$ from the classical frequency of oscillation in each well.
+
+\paragraph{Asymmetric case.}
+
+When $V(x) = V_{\text{sym}}(x) + \eps x$, the turning points are no longer symmetric about the origin.
+One must solve $V(x) = E$ numerically for each energy $E$.
+The action integral \cref{eq:S_WKB} is then computed by numerical quadrature over the barrier region $[x_2(E), x_3(E)]$.
+
+In the asymmetric case, the tunneling probability depends on direction:
+\begin{align}
+  S_{L\to R}(E) &= \int_{x_2}^{x_3} \sqrt{2\mu(V(x) - E)}\,dx,\label{eq:S_WKB_LR}\\
+  S_{R\to L}(E) &= S_{L\to R}(E) \qquad\text{(same action, different tunneling rates)}.
+\end{align}
+Although the action integral itself is the same (it depends on the same classically forbidden region), the effective tunneling rate differs between directions because the asymmetry changes which energy levels are in resonance.
+
+\paragraph{Numerical computation.}
+
+$S(E)$ is computed by standard numerical quadrature (e.g., Simpson's rule) on the existing spatial grid:
+\begin{equation}
+  S(E) \approx \sum_{x_i \in [x_2,x_3]} \sqrt{2\mu(V(x_i) - E)}\,\Delta x,
+\end{equation}
+where the sum runs over grid points in the classically forbidden region.
+Care must be taken near the turning points where the integrand vanishes (square-root singularity in the derivative); a change of variable $x = x_2 + (x_3 - x_2)\sin^2\theta$ regularizes the integral.
+
+\paragraph{Computational cost.}
+Computing $S(E)$ for one energy: $\mathcal{O}(N_x)$.
+Computing for all doublets: $\mathcal{O}(K\cdot N_x)$.
+Applies to both symmetric and asymmetric cases.
+
+% ------------------------------------------------------------
+\subsubsection{Avoided crossing map $\Delt(\eps)$}\label{sec:avoided_crossing}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The avoided crossing map---the energy levels $E_k(\eps)$ as a function of the asymmetry parameter $\eps$---provides the complete characterization of asymmetric tunneling.
+It reveals the \emph{resonance conditions}: specific values of $\eps$ where a left-well level nearly coincides with a right-well level, leading to enhanced tunneling.
+Away from these resonances, tunneling is exponentially suppressed.
+The minimum gap at each avoided crossing equals twice the tunneling matrix element $2|V_{LR}|$, which is the coupling strength between the two wells.
+This map is the ``phase diagram'' of the tunneling problem.
+\end{remark}
+
+\paragraph{Construction.}
+
+For a set of asymmetry values $\{\eps_j\}_{j=1}^{N_\eps}$, one constructs and diagonalizes the full Hamiltonian $H^{\text{asym}}(\eps_j)$ from \cref{eq:H_asym} to obtain the eigenvalues $E_k(\eps_j)$ for $k = 0, 1, \ldots, K-1$.
+
+The resulting curves $E_k(\eps)$ exhibit the following structure:
+\begin{itemize}
+  \item At $\eps = 0$: the eigenvalues come in nearly degenerate pairs $(E_{2k}, E_{2k+1})$ split by $\Delt_k$.
+  \item As $|\eps|$ increases: the degeneracy of each pair is progressively lifted. Each eigenstate becomes preferentially localized in one well.
+  \item At specific values $\eps = \eps^*$: two levels from \emph{different} pairs approach each other, forming an \emph{avoided crossing} (by the Wigner--von~Neumann non-crossing theorem for a one-parameter family of Hermitian matrices).
+\end{itemize}
+
+\paragraph{Avoided crossing gap.}
+
+Near an avoided crossing between levels $k$ and $l$ at $\eps = \eps^*$, the two levels behave as
+\begin{equation}
+  E_\pm(\eps) = \frac{E_k^{(0)}(\eps) + E_l^{(0)}(\eps)}{2}
+  \pm \sqrt{\left(\frac{E_k^{(0)}(\eps) - E_l^{(0)}(\eps)}{2}\right)^2 + |V_{kl}|^2},
+\end{equation}
+where $E_k^{(0)}(\eps)$ and $E_l^{(0)}(\eps)$ are the diabatic (unperturbed) energies and $V_{kl}$ is the tunneling matrix element.
+The minimum gap occurs at $\eps = \eps^*$ where $E_k^{(0)}(\eps^*) = E_l^{(0)}(\eps^*)$:
+\begin{equation}\label{eq:avoided_gap}
+  \boxed{\Delt_{\text{res}} = E_+(\eps^*) - E_-(\eps^*) = 2|V_{kl}|.}
+\end{equation}
+
+\paragraph{Resonance condition.}
+
+For the lowest doublet, the resonance condition within the two-level model (\cref{eq:gap_asym}) is
+\begin{equation}
+  \eps_{\text{eff}}(\eps^*) = 0
+  \quad\Longleftrightarrow\quad
+  \eps^*\mel{\Phi_0}{\hat{x}}{\Phi_1} = 0,
+\end{equation}
+which is satisfied at $\eps^* = 0$ (the symmetric case).
+For higher doublets, the resonance conditions involve level crossings between different pairs:
+\begin{equation}
+  E_{2k}^{(0)}(\eps^*) = E_{2l+1}^{(0)}(\eps^*),
+\end{equation}
+where $E_k^{(0)}$ denotes the energy in the diabatic (single-well) approximation.
+
+\paragraph{Quantities to extract from the map.}
+
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{Resonance positions} $\eps_j^*$: values of $\eps$ at each avoided crossing.
+  \item \textbf{Avoided-crossing gaps} $\Delt_{\text{res}}(\eps_j^*)$: minimum energy separation at each resonance.
+  \item \textbf{Tunneling suppression}: for $|\eps - \eps^*| \gg \Delt_{\text{res}}/\xe$, tunneling is exponentially suppressed and the eigenstates are localized.
+\end{enumerate}
+
+\paragraph{Computational cost.}
+$N_\eps$ full diagonalizations: $\mathcal{O}(N_\eps \cdot N^3)$.
+Typically $N_\eps \sim 50$--$200$ is sufficient for a smooth map.
+Applies only to the asymmetric case.
+
+% ============================================================
+\subsection{Phase Space Representations}\label{sec:phase_space_rep}
+% ============================================================
+
+% ------------------------------------------------------------
+\subsubsection{Wigner quasi-probability distribution $W(x,p,t)$}\label{sec:wigner}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The Wigner function $W(x,p,t)$ is the closest quantum analog of a classical phase-space distribution.
+It simultaneously encodes position and momentum information and is uniquely qualified to reveal the non-classical features of tunneling: \emph{negative regions} in $W$ signal quantum interference effects that have no classical counterpart.
+During tunneling, the Wigner function develops characteristic interference fringes between the two wells, providing a vivid visualization of the ``quantum bridge'' that connects the classically disconnected wells.
+It is also the natural starting point for semiclassical approximations.
+\end{remark}
+
+\paragraph{Definition.}
+
+The Wigner quasi-probability distribution is defined as
+\begin{equation}\label{eq:wigner_def}
+  W(x,p,t) = \frac{1}{\pi\hb}\int_{-\infty}^{\infty} \Psi^*(x+y,t)\,\Psi(x-y,t)\,e^{2ipy/\hb}\,dy.
+\end{equation}
+Its marginals reproduce the correct probability distributions:
+\begin{equation}
+  \int_{-\infty}^{\infty} W(x,p,t)\,dp = |\Psi(x,t)|^2, \qquad
+  \int_{-\infty}^{\infty} W(x,p,t)\,dx = |\tilde{\Psi}(p,t)|^2,
+\end{equation}
+and it is normalized: $\int\!\!\int W\,dx\,dp = 1$.
+However, $W$ can take \emph{negative} values---the hallmark of non-classicality.
+
+\paragraph{Decomposition in the eigenstate basis.}
+
+Inserting the wavepacket expansion:
+\begin{equation}\label{eq:wigner_expansion}
+  W(x,p,t) = \sum_{k,l} c_k\,c_l\,e^{-i(E_k - E_l)t/\hb}\,W_{kl}(x,p),
+\end{equation}
+where the \emph{cross-Wigner functions} are
+\begin{equation}\label{eq:cross_wigner}
+  W_{kl}(x,p) = \frac{1}{\pi\hb}\int_{-\infty}^{\infty} \Phi_k(x+y)\,\Phi_l(x-y)\,e^{2ipy/\hb}\,dy.
+\end{equation}
+Note that $W_{kl}^* = W_{lk}$, and $W_{kk}$ is the Wigner function of the $k$-th eigenstate.
+
+The time evolution in \cref{eq:wigner_expansion} has the same structure as all other observables: the spatial dependence is precomputed in $W_{kl}(x,p)$, and the time evolution is carried entirely by the phase factors $e^{-i\omega_{kl}t}$.
+Separating into real and imaginary parts for real $c_k$:
+\begin{equation}\label{eq:wigner_time}
+  W(x,p,t) = \sum_k |c_k|^2\,W_{kk}(x,p)
+  + 2\sum_{k<l} c_k c_l\,\text{Re}\!\left[W_{kl}(x,p)\,e^{-i\omega_{kl}t}\right].
+\end{equation}
+
+\paragraph{Wigner function of HO eigenstates.}
+
+For the harmonic oscillator basis states $\ket{n}$ with parameter $\alp$, the Wigner function has the well-known closed form:
+\begin{equation}\label{eq:wigner_HO}
+  W_n(x,p) = \frac{(-1)^n}{\pi\hb}\,e^{-2\xi}\,L_n(4\xi),
+\end{equation}
+where $L_n$ is the $n$-th Laguerre polynomial, and
+\begin{equation}\label{eq:xi_def}
+  \xi = \frac{1}{\hb}\left(\frac{p^2}{2\mu\omega_\alp} + \frac{\mu\omega_\alp\,x^2}{2}\right)
+  = \frac{\alp x^2}{2} + \frac{p^2}{2\hb^2\alp},
+\end{equation}
+with $\omega_\alp = \hb\alp/\mu$ being the angular frequency associated with the basis parameter $\alp$.
+
+\paragraph{Derivation.}
+
+We verify \cref{eq:wigner_HO} for the ground state $n = 0$.
+With $\varphi_0(x) = (\alp/\pi)^{1/4}e^{-\alp x^2/2}$:
+\begin{align}
+  W_0(x,p) &= \frac{1}{\pi\hb}\int_{-\infty}^{\infty} \varphi_0(x+y)\,\varphi_0(x-y)\,e^{2ipy/\hb}\,dy\notag\\
+  &= \frac{1}{\pi\hb}\sqrt{\frac{\alp}{\pi}}\int_{-\infty}^{\infty} e^{-\alp(x+y)^2/2}\,e^{-\alp(x-y)^2/2}\,e^{2ipy/\hb}\,dy\notag\\
+  &= \frac{1}{\pi\hb}\sqrt{\frac{\alp}{\pi}}\,e^{-\alp x^2}\int_{-\infty}^{\infty} e^{-\alp y^2}\,e^{2ipy/\hb}\,dy.
+\end{align}
+The remaining Gaussian integral evaluates to $\sqrt{\pi/\alp}\,\exp(-p^2/(\hb^2\alp))$:
+\begin{equation}
+  W_0(x,p) = \frac{1}{\pi\hb}\,\exp\!\left(-\alp x^2 - \frac{p^2}{\hb^2\alp}\right)
+  = \frac{1}{\pi\hb}\,e^{-2\xi}\,L_0(4\xi),
+\end{equation}
+since $L_0(\cdot) = 1$, confirming \cref{eq:wigner_HO} for $n = 0$.
+Higher orders follow from the generating function of Laguerre polynomials.
+
+\paragraph{Cross-Wigner functions for HO states.}
+
+For $n \neq m$ (say $n > m$), the cross-Wigner function of two HO eigenstates is
+\begin{equation}\label{eq:cross_wigner_HO}
+  W_{nm}(x,p) = \frac{(-1)^m}{\pi\hb}\,e^{-2\xi}\,\left(\frac{2}{\hb}\right)^{(n-m)/2}
+  \sqrt{\frac{m!}{n!}}\,(q_x + iq_p)^{n-m}\,L_m^{(n-m)}(4\xi),
+\end{equation}
+where $L_m^{(\beta)}$ is the associated Laguerre polynomial, and
+\begin{equation}
+  q_x = \sqrt{\alp}\,x, \qquad q_p = \frac{p}{\hb\sqrt{\alp}}.
+\end{equation}
+
+\paragraph{Wigner function of an eigenstate.}
+
+Since the eigenstates are expanded in the HO basis, $\Phi_k(x) = \sum_n C_n^{(k)}\varphi_n(x)$, the eigenstate Wigner function is
+\begin{equation}\label{eq:wigner_eigenstate}
+  W_{kk}(x,p) = \sum_{n,m} C_n^{(k)} C_m^{(k)}\,W_{nm}^{\text{HO}}(x,p),
+\end{equation}
+where $W_{nm}^{\text{HO}}$ are the HO cross-Wigner functions from \cref{eq:cross_wigner_HO}.
+This double sum can be computed efficiently by truncating at the number of basis functions $N$.
+
+\paragraph{Implementation strategy.}
+
+\begin{enumerate}[label=(\roman*)]
+  \item Precompute the HO cross-Wigner functions $W_{nm}^{\text{HO}}(x_i,p_j)$ on a 2D grid $(x_i,p_j)$ for $n,m = 0,\ldots,N-1$: cost $\mathcal{O}(N^2 N_x N_p)$.
+  \item Contract with eigenvector coefficients to form $W_{kl}(x_i,p_j)$: cost $\mathcal{O}(K^2 N^2 N_x N_p)$.
+  \item Time evolution via \cref{eq:wigner_time}: $\mathcal{O}(K^2 N_x N_p)$ per time step.
+\end{enumerate}
+The dominant cost is step (ii), which can be reduced by exploiting the sparsity of the eigenvectors.
+
+\paragraph{Computational cost.}
+Precomputation: $\mathcal{O}(K^2 N^2 N_x N_p)$ (potentially expensive for large grids).
+Time evolution: $\mathcal{O}(K^2 N_x N_p)$ per time step.
+Applies to both symmetric and asymmetric cases.
+
+% ------------------------------------------------------------
+\subsubsection{Husimi $Q$-distribution $Q(x,p,t)$}\label{sec:husimi}
+% ------------------------------------------------------------
+
+\begin{remark}[Why implement?]
+The Husimi $Q$-function is a ``smoothed'' version of the Wigner function that is guaranteed to be non-negative, making it easier to interpret as a probability distribution in phase space.
+It is obtained by Gaussian convolution of $W(x,p)$ (or equivalently by projecting onto coherent states), and its non-negativity makes it ideal for contour-plot visualizations.
+While it sacrifices the sub-Planck resolution of the Wigner function, it clearly reveals the classical-like trajectories and the tunneling pathways without the complication of interference oscillations.
+\end{remark}
+
+\paragraph{Definition.}
+
+The Husimi $Q$-distribution is defined as
+\begin{equation}\label{eq:husimi_def}
+  Q(x,p,t) = \frac{1}{2\pi\hb}\left|\braket{z}{\Psi(t)}\right|^2 \geq 0,
+\end{equation}
+where $\ket{z}$ is a coherent state centered at the phase-space point $(x,p)$, with complex amplitude
+\begin{equation}\label{eq:z_def}
+  z = \sqrt{\frac{\mu\omega_\alp}{2\hb}}\,x + \frac{ip}{\sqrt{2\mu\hb\omega_\alp}}
+  = \sqrt{\frac{\alp}{2}}\,x + \frac{ip}{\hb\sqrt{2\alp}}.
+\end{equation}
+Here we use the same $\alp$ as the basis parameter to simplify the overlap integrals.
+
+\paragraph{Coherent state overlap with HO eigenstates.}
+
+The overlap of a coherent state $\ket{z}$ with the $n$-th HO eigenstate is
+\begin{equation}\label{eq:coh_overlap}
+  \braket{z}{n} = e^{-|z|^2/2}\,\frac{z^{*n}}{\sqrt{n!}}.
+\end{equation}
+This formula is exact for any $n$ and follows from the definition $\ket{z} = e^{-|z|^2/2}\sum_{n=0}^{\infty}(z^n/\sqrt{n!})\ket{n}$.
+
+\paragraph{Computation of $Q(x,p,t)$.}
+
+Inserting the wavepacket expansion:
+\begin{align}
+  \braket{z}{\Psi(t)}
+  &= \sum_k c_k\,e^{-iE_k t/\hb}\braket{z}{\Phi_k}\notag\\
+  &= \sum_k c_k\,e^{-iE_k t/\hb}\sum_n C_n^{(k)}\braket{z}{n}\notag\\
+  &= e^{-|z|^2/2}\sum_k c_k\,e^{-iE_k t/\hb}\sum_n C_n^{(k)}\frac{z^{*n}}{\sqrt{n!}}.
+  \label{eq:husimi_expansion}
+\end{align}
+Define the \emph{Bargmann representation} of each eigenstate:
+\begin{equation}\label{eq:bargmann}
+  \mathcal{B}_k(z^*) = \sum_n C_n^{(k)}\frac{z^{*n}}{\sqrt{n!}}.
+\end{equation}
+Then:
+\begin{equation}\label{eq:Q_final}
+  \boxed{Q(x,p,t) = \frac{e^{-|z|^2}}{2\pi\hb}\left|\sum_k c_k\,e^{-iE_k t/\hb}\,\mathcal{B}_k(z^*)\right|^2.}
+\end{equation}
+
+\paragraph{Relation to the Wigner function.}
+
+The Husimi function is the Gaussian convolution (coarse-graining) of the Wigner function:
+\begin{equation}\label{eq:Q_W_relation}
+  Q(x,p,t) = \int\!\!\int W(x',p',t)\,G(x-x',p-p')\,dx'\,dp',
+\end{equation}
+where the Gaussian kernel is
+\begin{equation}
+  G(x,p) = \frac{1}{\pi\hb}\exp\!\left(-\alp x^2 - \frac{p^2}{\hb^2\alp}\right)
+  = \frac{2}{\pi\hb}\,e^{-2\xi}.
+\end{equation}
+This smoothing eliminates the negative regions of $W$ and limits the phase-space resolution to $\sim\hb$.
+
+\paragraph{Implementation strategy.}
+
+\begin{enumerate}[label=(\roman*)]
+  \item Precompute $\mathcal{B}_k(z^*)$ on a 2D grid of $(x_i,p_j)$ points using \cref{eq:bargmann}: cost $\mathcal{O}(K\cdot N\cdot N_x N_p)$.
+  \item At each time step, evaluate the sum $\sum_k c_k e^{-iE_k t/\hb}\mathcal{B}_k(z^*)$ and take the modulus squared: cost $\mathcal{O}(K\cdot N_x N_p)$.
+\end{enumerate}
+The Husimi function is computationally cheaper than the Wigner function since it does not require the double sum over eigenstates.
+
+\paragraph{Computational cost.}
+Precomputation: $\mathcal{O}(K\cdot N\cdot N_x N_p)$.
+Time evolution: $\mathcal{O}(K\cdot N_x N_p)$ per time step.
+Applies to both symmetric and asymmetric cases.
+
+% ============================================================
+\subsection{Implementation Priority}\label{sec:priority}
+% ============================================================
+
+The following table ranks all new observables by the ratio of physical insight to implementation effort, providing a suggested implementation order.
+The ``Effort'' column estimates the coding complexity (L = low, M = medium, H = high), and the ``Insight'' column rates the physical value of the observable (1--5 scale, with 5 being most insightful).
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{clcccl}
+  \toprule
+  \textbf{Rank} & \textbf{Observable} & \textbf{Effort} & \textbf{Insight} & \textbf{Ratio} & \textbf{Case}\\
+  \midrule
+  1 & $\Delt_k$, $\bar{E}_k$ (tunnel splittings) & L & 5 & 5.0 & Both\\
+  2 & IPR, PR, $S_E$ (participation ratio) & L & 4 & 4.0 & Both\\
+  3 & Zeno time $t_Z$ & L & 4 & 4.0 & Both\\
+  4 & $\expval{\hat{p}}(t)$ (momentum) & L & 4 & 4.0 & Both\\
+  5 & $P_L(t)$, $P_R(t)$ (well occupation) & M & 5 & 3.3 & Both\\
+  6 & $\mathcal{L}(t)$, $\eta$ (localization/efficiency) & L & 4 & 4.0 & Asym.\\
+  7 & $C(\omega)$ (spectral autocorrelation) & M & 4 & 2.7 & Both\\
+  8 & $\sigma_x^2(t)$, $\sigma_p^2(t)$ (variances) & M & 3 & 2.0 & Both\\
+  9 & $t_{\text{rev}}$, $t_{\text{coll}}$ (revival/collapse) & L & 3 & 3.0 & Both\\
+  10 & $S(E)$ (WKB action) & M & 4 & 2.7 & Both\\
+  11 & $\Delt(\eps)$ (avoided crossing map) & H & 5 & 2.5 & Asym.\\
+  12 & $Q(x,p,t)$ (Husimi function) & H & 4 & 2.0 & Both\\
+  13 & $W(x,p,t)$ (Wigner function) & H & 5 & 2.5 & Both\\
+  \bottomrule
+\end{tabular}
+\caption{Implementation priority for additional observables, ranked by insight-to-effort ratio.
+\textbf{Effort}: L = few lines of code, no new infrastructure; M = moderate, requires new matrix elements or numerical integration; H = significant, requires 2D grids and/or repeated diagonalization.
+\textbf{Case}: Both = symmetric and asymmetric; Asym.\ = primarily useful for the asymmetric case.}
+\label{tab:priority}
+\end{table}
+
+\begin{remark}
+The first nine observables (ranks 1--9) can be implemented with minimal effort using quantities already available from the diagonalization step (eigenvalues $E_k$, expansion coefficients $c_k$, and eigenvector coefficients $C_n^{(k)}$).
+Together, they provide a comprehensive characterization of the tunneling dynamics.
+The phase-space representations (ranks 12--13) offer the richest visualization but require substantial computational investment in 2D grid calculations.
+A practical strategy is to implement all low-effort observables first, then add the phase-space representations as visualization tools.
+\end{remark}
+

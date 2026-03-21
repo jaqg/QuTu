@@ -10,9 +10,22 @@
 - **Variational Method**: Uses harmonic oscillator basis functions for accurate eigenstate calculations
 - **LAPACK Integration**: Efficient Hamiltonian diagonalization using industry-standard linear algebra
 - **Wave Packet Dynamics**: Time-dependent simulation with survival probability analysis
-- **NH3 Support**: Pre-configured for ammonia (NH3) umbrella inversion mode
+- **General Polynomial Potential**: Solve V(x) = Σ vₖ xᵏ for any polynomial degree — symmetric or asymmetric
+- **NH3 Support**: Pre-configured for ammonia (NH3) umbrella inversion mode (backward compatible)
 - **Unit Flexibility**: Atomic units internally with conversion to Angstroms and cm⁻¹
 - **Modular Architecture**: Clean, modern Fortran 2008 codebase
+
+### Polynomial Potential Mode
+
+Any polynomial potential can be specified directly in the INPUT file:
+
+```
+poly_degree = 4
+v_coeffs    = 0.0, 0.002, -0.027, 0.0, 0.010   # Ha/a0^k
+mass        = 1.007276                           # amu
+```
+
+Parity symmetry is auto-detected: if all odd-power coefficients are zero, the fast block-diagonal solver is used automatically. See `docs/user_guide/INPUT_GUIDE.md` for full documentation and `examples/02_ph3_inversion/` (symmetric) and `examples/03_asymmetric_double_well/` (asymmetric) for worked examples.
 
 ## Quick Start
 

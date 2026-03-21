@@ -1,0 +1,428 @@
+\section{General Polynomial Potentials}\label{sec:general}
+% ============================================================
+% ============================================================
+
+The previous sections treated the quartic double-well $V(x)=ax^4-bx^2$ as the
+canonical example. This section develops the complete analytical machinery for
+an \emph{arbitrary} polynomial potential of degree $N$, an arbitrary number of
+basis functions $M$, and user-defined initial wavepackets. The derivations here
+underpins the \texttt{QuTu} general-case solver.
+
+% ============================================================
+\subsection{General polynomial potential}\label{sec:gen_pot}
+% ============================================================
+
+A general real-valued polynomial potential of even degree $N$ (with $N \geq 2$)
+is written
+\begin{equation}\label{eq:gen_V}
+  V(x) = \sum_{k=0}^{N} c_k\,x^k, \qquad c_N > 0,
+\end{equation}
+with real coefficients $\{c_k\}$.  The requirement $c_N > 0$ ensures
+confinement ($V(x)\to+\infty$ as $|x|\to\infty$).  The quartic double-well
+of Section~\ref{sec:potential} corresponds to $N=4$, $c_4=a$, $c_2=-b$, and
+all other coefficients zero.
+
+\begin{remark}
+Odd-degree leading terms are excluded because $V(x)\to-\infty$ along one
+direction, yielding an unbounded-below Hamiltonian with no ground state.
+Odd \emph{interior} coefficients ($c_1,c_3,\ldots$) are perfectly allowed;
+they break the left--right symmetry of the potential.
+\end{remark}
+
+% ============================================================
+\subsection{Hamiltonian matrix in the harmonic-oscillator basis}\label{sec:gen_H}
+% ============================================================
+
+Using the harmonic oscillator (HO) basis $\{\phi_n\}_{n=0}^{M-1}$ introduced
+in Section~\ref{sec:HO}, the Hamiltonian matrix elements decompose as
+\begin{equation}\label{eq:gen_H_elem}
+  H_{mn} = T_{mn} + V_{mn},
+\end{equation}
+where $T_{mn}=\bra{m}\hat T\ket{n}$ is the kinetic energy matrix element
+(derived in Section~\ref{sec:HO}) and
+\begin{equation}\label{eq:gen_V_elem}
+  V_{mn} = \bra{m}V(\hat x)\ket{n}
+         = \sum_{k=0}^{N} c_k\, X^{(k)}_{mn},
+  \qquad
+  X^{(k)}_{mn} \equiv \bra{m}\hat x^k\ket{n}.
+\end{equation}
+The problem therefore reduces to computing all power-matrix elements
+$X^{(k)}_{mn}$ for $k=0,1,\ldots,N$.
+
+% ============================================================
+\subsection{Power-matrix elements via the master recursion}\label{sec:master_rec}
+% ============================================================
+
+\subsubsection{Ladder-operator form of \texorpdfstring{$\hat x$}{x}}
+
+Introduce the characteristic length
+\begin{equation}\label{eq:ell}
+  \ell = \frac{1}{\sqrt{2\mu\alpha}},
+\end{equation}
+where $\mu$ is the mass and $\alpha$ the HO width parameter.  Then
+\begin{equation}\label{eq:x_ladder}
+  \hat x = \ell\,(\hat a + \hat a^\dagger),
+\end{equation}
+with the standard actions $\hat a\ket{n}=\sqrt{n}\,\ket{n-1}$ and
+$\hat a^\dagger\ket{n}=\sqrt{n+1}\,\ket{n+1}$.
+
+\subsubsection{Master recursion theorem}
+
+\begin{result}[Master recursion for $X^{(k)}_{mn}$]\label{res:master_rec}
+  For $k \geq 1$ and arbitrary non-negative integers $m,n$,
+  \begin{equation}\label{eq:master_rec}
+    X^{(k)}_{mn}
+    = \ell\Bigl[\sqrt{n}\,X^{(k-1)}_{m,n-1}
+               + \sqrt{n+1}\,X^{(k-1)}_{m,n+1}\Bigr],
+  \end{equation}
+  with the initial condition $X^{(0)}_{mn} = \delta_{mn}$.
+\end{result}
+
+\begin{proof}
+Insert $\hat x = \ell(\hat a+\hat a^\dagger)$ and use linearity:
+\[
+  X^{(k)}_{mn}
+  = \bra{m}\hat x^k\ket{n}
+  = \bra{m}\hat x^{k-1}\hat x\ket{n}
+  = \ell\,\bra{m}\hat x^{k-1}\bigl(\hat a+\hat a^\dagger\bigr)\ket{n}.
+\]
+Acting with the ladder operators on $\ket{n}$ gives
+\[
+  X^{(k)}_{mn}
+  = \ell\Bigl[\sqrt{n}\,\bra{m}\hat x^{k-1}\ket{n-1}
+             + \sqrt{n+1}\,\bra{m}\hat x^{k-1}\ket{n+1}\Bigr]
+  = \ell\Bigl[\sqrt{n}\,X^{(k-1)}_{m,n-1}
+             + \sqrt{n+1}\,X^{(k-1)}_{m,n+1}\Bigr]. \qed
+\]
+\end{proof}
+
+Equation~\eqref{eq:master_rec} allows one to compute the entire matrix
+$X^{(k)}$ for any $k$ by simple matrix--vector operations; no additional
+integrals are required.
+
+% ============================================================
+\subsection{Selection rules and bandwidth}\label{sec:selection}
+% ============================================================
+
+\begin{result}[Selection rule]\label{res:selection}
+  $X^{(k)}_{mn} = 0$ unless the following two conditions both hold:
+  \begin{enumerate}
+    \item \textbf{Parity:} $(m-n) \equiv k \pmod{2}$.
+    \item \textbf{Reach:} $|m-n| \leq k$.
+  \end{enumerate}
+\end{result}
+
+\begin{proof}
+By induction on $k$.  The base case $k=0$ gives $\delta_{mn}$, satisfying
+both rules ($(m-n) \equiv 0 \pmod 2$ and $|m-n|=0\leq 0$).
+
+Assume the rules hold for $k-1$.  A non-zero contribution from
+$X^{(k-1)}_{m,n\pm 1}$ requires $(m-(n\pm1))\equiv k-1\pmod 2$ and
+$|m-(n\pm 1)|\leq k-1$.  The shift $n\to n\pm 1$ changes the parity of
+$m-n$ by one unit, so $m-n\equiv k\pmod 2$; and $|m-n|\leq|m-(n\pm1)|+1\leq
+k$.  Hence the rules propagate. \qed
+\end{proof}
+
+\begin{result}[Bandwidth]\label{res:bandwidth}
+  The Hamiltonian matrix $\mathbf{H}$ for the potential~\eqref{eq:gen_V} is
+  \emph{banded} with half-bandwidth $N$:
+  \begin{equation}
+    H_{mn} = 0 \quad \text{if } |m-n| > N.
+  \end{equation}
+\end{result}
+
+The bandwidth is determined solely by the polynomial degree; the kinetic
+energy matrix $\mathbf{T}$ has half-bandwidth 2, which is dominated by $N$
+for $N>2$.  For a degree-4 potential, $\mathbf{H}$ has half-bandwidth 4,
+consistent with the explicit formulas in Section~\ref{sec:HO}.
+
+% ============================================================
+\subsection{Explicit matrix elements for low powers}\label{sec:explicit_Xk}
+% ============================================================
+
+Applying the master recursion~\eqref{eq:master_rec} iteratively yields closed
+forms for each $k$.  Below, $\ell=(2\mu\alpha)^{-1/2}$ and
+$\delta_{mn}\equiv\delta_{m,n}$.
+
+\subsubsection{\texorpdfstring{$k=1$}{k=1}: position matrix}
+
+\begin{equation}\label{eq:X1}
+  X^{(1)}_{mn}
+  = \ell\bigl(\sqrt{n}\,\delta_{m,n-1} + \sqrt{n+1}\,\delta_{m,n+1}\bigr).
+\end{equation}
+
+\subsubsection{\texorpdfstring{$k=2$}{k=2}: quadratic}
+
+\begin{equation}\label{eq:X2}
+  X^{(2)}_{mn}
+  = \ell^2\Bigl[(2n+1)\,\delta_{mn}
+    + \sqrt{n(n-1)}\,\delta_{m,n-2}
+    + \sqrt{(n+1)(n+2)}\,\delta_{m,n+2}\Bigr].
+\end{equation}
+
+\subsubsection{\texorpdfstring{$k=3$}{k=3}: cubic}
+
+\begin{align}\label{eq:X3}
+  X^{(3)}_{mn}
+  &= \ell^3\Bigl[3n^{3/2}\,\delta_{m,n-1}
+               + 3(n+1)^{3/2}\,\delta_{m,n+1} \nonumber\\
+  &\quad +\sqrt{n(n-1)(n-2)}\,\delta_{m,n-3}
+    +\sqrt{(n+1)(n+2)(n+3)}\,\delta_{m,n+3}\Bigr].
+\end{align}
+
+\subsubsection{\texorpdfstring{$k=4$}{k=4}: quartic}
+
+\begin{align}\label{eq:X4}
+  X^{(4)}_{mn}
+  &= \ell^4\Bigl[(6n^2+6n+3)\,\delta_{mn}
+    + (4n-2)\sqrt{n(n-1)}\,\delta_{m,n-2}
+    + (4n+6)\sqrt{(n+1)(n+2)}\,\delta_{m,n+2} \nonumber\\
+  &\quad +\sqrt{n(n-1)(n-2)(n-3)}\,\delta_{m,n-4}
+    +\sqrt{(n+1)(n+2)(n+3)(n+4)}\,\delta_{m,n+4}\Bigr].
+\end{align}
+
+\subsubsection{\texorpdfstring{$k=5$}{k=5}: quintic}
+
+\begin{align}\label{eq:X5}
+  X^{(5)}_{mn}
+  &= \ell^5\Bigl[(10n^2+10n+5)n^{1/2}\,\delta_{m,n-1}
+              + (10n^2+10n+5)(n+1)^{1/2}\,\delta_{m,n+1} \nonumber\\
+  &\quad + 5(2n-1)\sqrt{n(n-1)(n-2)}\,\delta_{m,n-3}
+    + 5(2n+3)\sqrt{(n+1)(n+2)(n+3)}\,\delta_{m,n+3} \nonumber\\
+  &\quad + \sqrt{n(n-1)(n-2)(n-3)(n-4)}\,\delta_{m,n-5} \nonumber\\
+  &\quad + \sqrt{(n+1)(n+2)(n+3)(n+4)(n+5)}\,\delta_{m,n+5}\Bigr].
+\end{align}
+
+\subsubsection{\texorpdfstring{$k=6$}{k=6}: sextic}
+
+\begin{align}\label{eq:X6}
+  X^{(6)}_{mn}
+  &= \ell^6\Bigl[(20n^3+30n^2+40n+15)\,\delta_{mn} \nonumber\\
+  &\quad + 3(10n^2-10n+4)\sqrt{n(n-1)}\,\delta_{m,n-2}
+    + 3(10n^2+10n+4)\sqrt{(n+1)(n+2)}\,\delta_{m,n+2} \nonumber\\
+  &\quad + (15n-15)\sqrt{n(n-1)(n-2)(n-3)}\,\delta_{m,n-4} \nonumber\\
+  &\quad + (15n+15)\sqrt{(n+1)(n+2)(n+3)(n+4)}\,\delta_{m,n+4} \nonumber\\
+  &\quad + \sqrt{n(n-1)(n-2)(n-3)(n-4)(n-5)}\,\delta_{m,n-6} \nonumber\\
+  &\quad + \sqrt{(n+1)(n+2)(n+3)(n+4)(n+5)(n+6)}\,\delta_{m,n+6}\Bigr].
+\end{align}
+
+\subsubsection{Summary table}
+
+Table~\ref{tab:Xk_bandwidth} summarises the non-zero diagonal offsets and
+leading coefficient for each $k$.
+
+\begin{table}[htbp]
+  \centering
+  \caption{%
+    Non-zero off-diagonal levels and leading prefactors for
+    $X^{(k)}_{mn}$ ($k=1,\ldots,6$).
+    $\ell=(2\mu\alpha)^{-1/2}$.
+    ``Offsets'' lists the values of $m-n$ for which $X^{(k)}_{mn}\neq 0$.%
+  }
+  \label{tab:Xk_bandwidth}
+  \ra{1.3}
+  \begin{tabular}{ccc}
+    \toprule
+    $k$ & Non-zero offsets $m-n$ & Prefactor \\
+    \midrule
+    1 & $\pm 1$ & $\ell$ \\
+    2 & $0, \pm 2$ & $\ell^2$ \\
+    3 & $\pm 1, \pm 3$ & $\ell^3$ \\
+    4 & $0, \pm 2, \pm 4$ & $\ell^4$ \\
+    5 & $\pm 1, \pm 3, \pm 5$ & $\ell^5$ \\
+    6 & $0, \pm 2, \pm 4, \pm 6$ & $\ell^6$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================
+\subsection{Optimal width parameter \texorpdfstring{$\alpha$}{alpha}}\label{sec:opt_alpha}
+% ============================================================
+
+The convergence of the variational expansion depends critically on the choice
+of the HO width parameter $\alpha$.  The stationarity condition
+$\partial E_0/\partial\alpha = 0$ via the Hellmann--Feynman theorem gives the
+implicit equation
+\begin{equation}\label{eq:opt_alpha_general}
+  \langle\hat T\rangle_\alpha = \frac{1}{2}\sum_{k=0}^{N} k\,c_k\,
+  \langle\hat x^k\rangle_\alpha,
+\end{equation}
+where all expectation values are taken in the ground eigenstate at width
+$\alpha$.  This must be solved self-consistently.
+
+\subsubsection{Analytical estimate for a pure monomial}
+
+For the pure monomial $V(x)=c_N x^N$ ($N$ even), the virial theorem gives
+a closed-form estimate.  Setting the kinetic and potential energy scales
+equal yields
+\begin{equation}\label{eq:opt_alpha_mono}
+  \alpha_{\mathrm{opt}}^{(\mathrm{mono})}
+  = \left[\frac{N c_N\,(N-1)!!}{2\left(2\mu\right)^{N/2}}\right]^{2/(N+2)},
+\end{equation}
+where $(N-1)!! = 1\cdot 3\cdot 5\cdots(N-1)$ is the double factorial.
+For $N=4$ (quartic double-well at the barrier) this recovers the standard
+result $\alpha_{\mathrm{opt}}=(3c_4/\mu)^{1/3}$ up to numerical factors.
+
+\subsubsection{Practical recommendation}
+
+For production runs, fix $\alpha$ by the local harmonic frequency at the
+minimum of $V(x)$.  If the potential has minima at $x_{\pm}$, set
+\begin{equation}\label{eq:alpha_harm}
+  \alpha = \mu\,\omega_{\min},
+  \qquad
+  \omega_{\min} = \sqrt{\frac{V''(x_+)}{\mu}}.
+\end{equation}
+For the symmetric double-well this reduces to $\alpha=\mu\omega_0$ with
+$\omega_0 = \sqrt{4b}$ (see Section~\ref{sec:potential}).
+
+% ============================================================
+\subsection{Parity decomposition for symmetric potentials}\label{sec:parity_gen}
+% ============================================================
+
+When all odd-index coefficients vanish ($c_1=c_3=\cdots=0$) the potential is
+even: $V(-x)=V(x)$.  The Hamiltonian then commutes with the parity operator
+$\hat\Pi$, and the eigenstates are either even ($\phi_n$ with $n$ even) or
+odd ($\phi_n$ with $n$ odd).  The Hamiltonian matrix block-diagonalises into
+two independent $(M/2)\times(M/2)$ sub-matrices:
+\begin{equation}
+  \mathbf{H}
+  = \mathbf{H}^{(+)} \oplus \mathbf{H}^{(-)},
+\end{equation}
+where $\mathbf{H}^{(+)}$ acts on even-index basis functions and
+$\mathbf{H}^{(-)}$ on odd-index ones.  Exploiting this structure reduces the
+diagonalisation cost by a factor of $\sim 4$.
+
+% ============================================================
+\subsection{Number of basis functions and convergence}\label{sec:conv_gen}
+% ============================================================
+
+The number of basis functions $M$ required for a given accuracy depends on
+two competing factors:
+\begin{enumerate}
+  \item \textbf{Energy range:} All HO basis functions with energies
+        $E_n^{(\mathrm{HO})}\lesssim E_{\mathrm{max}}$ should be included,
+        where $E_{\mathrm{max}}$ is the highest eigenvalue of interest.
+  \item \textbf{Coupling range:} The bandwidth $N$ means each function couples
+        to its $N$-th nearest neighbours; including too few functions truncates
+        off-diagonal couplings.
+\end{enumerate}
+
+A practical criterion: choose $M$ such that
+\begin{equation}\label{eq:M_criterion}
+  E_{M-1}^{(\mathrm{HO})} = \alpha\hb(M-\tfrac{1}{2}) \gg V_{\mathrm{max}},
+\end{equation}
+where $V_{\mathrm{max}}$ is the energy of the highest eigenstate to be
+resolved.  Convergence should always be verified by increasing $M$ until the
+eigenvalues of interest change by less than the desired tolerance.
+
+% ============================================================
+\subsection{General wavepacket construction}\label{sec:gen_wp}
+% ============================================================
+
+The general initial state $\ket{\Psi(0)}$ is specified as a superposition of
+the first $M$ eigenstates $\{\ket{\psi_j}\}_{j=0}^{M-1}$:
+\begin{equation}\label{eq:gen_wp}
+  \ket{\Psi(0)} = \sum_{j=0}^{M-1} c_j\,\ket{\psi_j},
+  \qquad
+  \sum_{j=0}^{M-1}|c_j|^2 = 1.
+\end{equation}
+Three natural construction modes are supported by \texttt{QuTu}.
+
+\subsubsection{Mode~1: localized Gaussian}\label{sec:wp_gaussian}
+
+Centered at position $x_0$ with momentum $p_0$ and width $\sigma$:
+\begin{equation}\label{eq:wp_gauss}
+  \Psi(x,0) = \mathcal{N}\exp\!\left(-\frac{(x-x_0)^2}{4\sigma^2}
+              + i p_0 x\right), \qquad
+  \mathcal{N} = (2\pi\sigma^2)^{-1/4}.
+\end{equation}
+The expansion coefficients are
+\begin{equation}\label{eq:cj_gauss}
+  c_j = \braket{\psi_j}{\Psi(0)}
+      = \int_{-\infty}^{\infty} \psi_j^*(x)\,\Psi(x,0)\,dx,
+\end{equation}
+evaluated numerically on a grid fine enough to resolve both $\psi_j$ and
+$\Psi(x,0)$.
+
+\subsubsection{Mode~2: energy-filtered state}\label{sec:wp_energy}
+
+Populate all eigenstates in an energy window
+$[E_{\mathrm{low}},E_{\mathrm{high}}]$ with equal weight:
+\begin{equation}\label{eq:wp_energy}
+  c_j =
+  \begin{cases}
+    \mathcal{N}^{-1} & \text{if } E_{\mathrm{low}} \leq E_j \leq E_{\mathrm{high}},\\
+    0 & \text{otherwise,}
+  \end{cases}
+  \quad
+  \mathcal{N}^{2} = \#\{j : E_{\mathrm{low}}\leq E_j\leq E_{\mathrm{high}}\}.
+\end{equation}
+This creates a \emph{quasi-classical} packet that samples a controlled energy
+range without presupposing spatial localisation.
+
+\subsubsection{Mode~3: user-defined amplitudes}\label{sec:wp_user}
+
+The user specifies the complex amplitudes $\{c_j\}$ directly.  The code
+renormalises: $c_j \leftarrow c_j/\|\mathbf{c}\|$.  This mode is useful for
+initialising the two-state packet $c_0=c_1=1/\sqrt{2}$ (symmetric
+tunneling) or the four-state packet of Section~\ref{sec:wavepackets}.
+
+% ============================================================
+\subsection{Time evolution and observables}\label{sec:gen_time_evo}
+% ============================================================
+
+Given the general expansion~\eqref{eq:gen_wp}, the time-evolved state is
+\begin{equation}\label{eq:gen_psi_t}
+  \ket{\Psi(t)} = \sum_{j=0}^{M-1} c_j\,e^{-iE_j t/\hb}\,\ket{\psi_j}.
+\end{equation}
+All observables of Section~\ref{sec:observables} carry over without
+modification: survival probability, position expectation value, tunneling
+splitting, and turning points are each determined by the same formulas with
+$\{E_j,\psi_j,c_j\}$ now drawn from the general diagonalisation.
+
+\begin{remark}
+  The tunneling splitting $\Delta E=E_1-E_0$ and half-period
+  $T_{\mathrm{tun}}=h/\Delta E$ remain meaningful for any symmetric double-well
+  regardless of the polynomial degree $N$, as long as $E_0$ and $E_1$ are
+  below the barrier.
+\end{remark}
+
+% ============================================================
+\subsection{Implementation summary}\label{sec:gen_impl}
+% ============================================================
+
+Table~\ref{tab:gen_impl} summarises the algorithmic flow for the general
+polynomial case as implemented in \texttt{QuTu}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{%
+    Step-by-step algorithm for the general polynomial potential solver.
+    All matrix operations are $O(M^2)$ in memory; the dense \texttt{dsyev}
+    eigensolver is $O(M^3)$.  A banded \texttt{dsbev} path is planned.%
+  }
+  \label{tab:gen_impl}
+  \ra{1.3}
+  \begin{tabular}{clp{7cm}}
+    \toprule
+    Step & Operation & Notes \\
+    \midrule
+    1 & Read $\{c_k\}$, $N$, $M$, $\mu$, $\alpha$ &
+        User input; $\alpha$ from Eq.~\eqref{eq:alpha_harm} if not given \\
+    2 & Compute $X^{(k)}$ for $k=0,\ldots,N$ &
+        Master recursion~\eqref{eq:master_rec}, $O(kM^2)$ per $k$ \\
+    3 & Assemble $V_{mn} = \sum_k c_k X^{(k)}_{mn}$ &
+        Linear combination, $O(NM^2)$ \\
+    4 & Add $T_{mn}$; form $H_{mn}$ &
+        Analytic kinetic matrix, Section~\ref{sec:HO} \\
+    5 & Diagonalise $\mathbf{H}$ &
+        LAPACK \texttt{dsyev} (symmetric dense); banded \texttt{dsbev} planned \\
+    6 & Construct initial state $\ket{\Psi(0)}$ &
+        One of the three modes, Section~\ref{sec:gen_wp} \\
+    7 & Propagate: $c_j(t)=c_j e^{-iE_j t/\hb}$ &
+        Analytic; $O(M)$ per time step \\
+    8 & Compute observables &
+        Section~\ref{sec:observables} and~\ref{sec:additional_obs} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

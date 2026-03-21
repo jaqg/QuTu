@@ -38,6 +38,17 @@ module types
         ! Number of even and odd basis functions
         integer :: N_even = 0
         integer :: N_odd = 0
+
+        ! --- Polynomial potential mode ---
+        ! V(x) = sum_{k=0}^{poly_degree} v_poly(k+1) * x^k
+        real(dp), allocatable :: v_poly(:)
+        integer :: poly_degree = 0
+
+        ! .true. iff all odd-k coefficients are zero (auto-detected at init)
+        logical :: is_symmetric = .true.
+
+        ! .false. = legacy xe/Vb mode (default); .true. = polynomial mode
+        logical :: use_polynomial = .false.
     end type system_params_t
 
     ! -------------------------------------------------------------------------
@@ -98,6 +109,7 @@ module types
     ! Public interface for type initialization
     ! -------------------------------------------------------------------------
     public :: init_system_params
+    public :: init_system_params_poly
     public :: init_grid_params
     public :: init_time_params
     public :: init_wavepacket
@@ -190,5 +202,49 @@ contains
             wp%description = "Wavepacket"
         end if
     end subroutine init_wavepacket
+
+    ! -------------------------------------------------------------------------
+    ! Initialize system parameters for polynomial potential mode
+    ! V(x) = sum_{k=0}^{poly_degree} v_coeffs(k+1) * x^k
+    !
+    ! mass_au : reduced mass already in atomic units
+    ! v_coeffs: polynomial coefficients [v0, v1, ..., v_deg]
+    ! alpha   : HO basis width parameter (a0^-2)
+    ! -------------------------------------------------------------------------
+    subroutine init_system_params_poly(params, N, mass_au, v_coeffs, alpha)
+        use constants, only: SYMMETRY_THRESHOLD
+        type(system_params_t), intent(out) :: params
+        integer,  intent(in) :: N
+        real(dp), intent(in) :: mass_au
+        real(dp), intent(in) :: v_coeffs(:)
+        real(dp), intent(in) :: alpha
+
+        integer :: deg, k
+
+        deg = size(v_coeffs) - 1   ! poly_degree = number of coefficients - 1
+
+        params%N            = N
+        params%mass         = mass_au
+        params%alpha        = alpha
+        params%poly_degree  = deg
+        params%use_polynomial = .true.
+
+        if (allocated(params%v_poly)) deallocate(params%v_poly)
+        allocate(params%v_poly(0:deg))
+        params%v_poly(0:deg) = v_coeffs(1:deg+1)
+
+        ! Auto-detect parity symmetry: all odd-k coefficients must be zero
+        params%is_symmetric = .true.
+        do k = 1, deg, 2
+            if (abs(params%v_poly(k)) > SYMMETRY_THRESHOLD) then
+                params%is_symmetric = .false.
+                exit
+            end if
+        end do
+
+        ! Even/odd basis split (used only when is_symmetric = .true.)
+        params%N_odd  = N / 2
+        params%N_even = N - params%N_odd
+    end subroutine init_system_params_poly
 
 end module types

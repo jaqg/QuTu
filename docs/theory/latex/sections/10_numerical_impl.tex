@@ -1,0 +1,68 @@
+\section{Numerical Implementation}\label{sec:numerical_impl}
+% ============================================================
+% ============================================================
+
+\subsection{Variational method: algorithm}
+
+The following steps summarize the complete numerical procedure implemented in QuTu:
+
+\begin{enumerate}
+  \item \textbf{Read physical parameters}: $\xe$, $\Vb$, reduced mass $\mu$
+    (e.g., $\mu = 3m_H m_N/(3m_H+m_N)$ for NH$_3$), asymmetry parameter $\varepsilon$,
+    and number of basis functions $N$.
+  \item \textbf{Compute $\alpha_{\text{opt}}$} from \cref{sec:alpha_opt}:
+    use the deep-well estimate $\alpha_{\text{opt}} = 2\sqrt{\mu b}$ as starting point,
+    then refine numerically.
+  \item \textbf{Symmetric case} ($\varepsilon = 0$): build $\mathbf{H}_{\text{even}}$
+    (dimension $\lceil N/2\rceil$) and $\mathbf{H}_{\text{odd}}$ (dimension
+    $\lfloor N/2\rfloor$) using \cref{eq:T_HO,eq:x2_HO,eq:x4_HO} restricted to
+    even/odd quantum numbers; diagonalize both with a real symmetric eigensolver
+    (e.g., LAPACK \texttt{DSYEV}); interleave eigenvalues as $E_0 < E_1 < E_2 < \cdots$
+  \item \textbf{Asymmetric case} ($\varepsilon \neq 0$): build the full $N\times N$
+    matrix $\mathbf{H}^{\text{asym}}$ from \cref{eq:H_asym} (adding
+    $\varepsilon\mel{m}{\hat{x}}{n}$ from \cref{eq:x1_HO}); diagonalize with
+    \texttt{DSYEV}.
+  \item \textbf{Reconstruct wavefunctions}: from the eigenvectors
+    $\{C_n^{(k)}\}$, evaluate $\Phi_k(x) = \sum_n C_n^{(k)}\varphi_n(x;\alpha)$
+    on a real-space grid.
+  \item \textbf{Construct localized wavepackets}: symmetric case via
+    \cref{eq:Psi_pm}; asymmetric case via \cref{eq:psi_LR_asym,eq:mixing_angle}.
+  \item \textbf{Compute observables}: survival probability from \cref{sec:Ps_general},
+    $\langle\hat{x}\rangle(t)$ from \cref{sec:x_expect}, recurrence time
+    $\trec = h/\Delta_0$, and additional observables as listed in
+    \cref{sec:observables}.
+\end{enumerate}
+
+\subsection{Convergence criterion}
+
+The energy $E_k^{(N)}$ computed with $N$ basis functions converges to the exact
+value as $N\to\infty$. A practical convergence criterion is
+\begin{equation}
+  |E_k^{(N)} - E_k^{(N_{\max})}| < \delta_{\text{conv}}\,,
+\end{equation}
+where $N_{\max}$ is a large reference basis and $\delta_{\text{conv}}$ is a chosen
+tolerance (e.g., $10^{-6}~E_h$). For the quartic double-well, the lowest levels
+typically converge at $N \sim 20$--$50$.
+
+\subsection{Unit conversion table}
+
+The code works internally in atomic units. Key conversion factors:
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+  \toprule
+  Quantity & Atomic unit & Practical unit \\
+  \midrule
+  Length   & $a_0 = 0.52918\;\text{\AA}$ & angstrom (\AA) \\
+  Energy   & $E_h = 1\;\text{hartree}$   & $1\,E_h = 219474.63\;\text{cm}^{-1}$ \\
+  Mass     & $m_e$                        & $1\;\text{u} = 1822.89\,m_e$ \\
+  Time     & $\hb/E_h$                    & $1\;\hb/E_h = 24.19\;\text{as}$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+% ============================================================
+
+% ============================================================
+% ============================================================

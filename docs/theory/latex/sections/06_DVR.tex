@@ -1,0 +1,254 @@
+\section{Basis Set~IV: DVR / Fourier Grid Hamiltonian}\label{sec:DVR}
+% ============================================================
+% ============================================================
+
+The Discrete Variable Representation (DVR), specifically the Fourier Grid Hamiltonian (FGH)
+method of Marston and Balint-Kurti (based on the Colbert--Miller sinc-DVR), provides a
+conceptually simple and numerically robust approach to solving the Schr\"odinger equation.
+
+% ------------------------------------------------------------
+\subsection{Fourier Grid Hamiltonian: derivation}\label{sec:FGH}
+% ------------------------------------------------------------
+
+\subsubsection{Setup}
+
+Consider the particle confined to a box $[-L/2, L/2]$ (with $L$ large enough that the
+wavefunctions are negligible at the boundaries). Discretize the box with $N$ uniformly
+spaced grid points:
+\begin{equation}
+  x_j = -\frac{L}{2} + j\,\Delta x\,,\qquad j = 1, 2, \ldots, N\,,
+\end{equation}
+where $\Delta x = L/(N+1)$ (particle-in-a-box boundary conditions) or $\Delta x = L/N$
+(periodic boundary conditions). We use the latter convention.
+
+The corresponding $k$-space grid is
+\begin{equation}
+  k_n = \frac{2\pi n}{L} = \frac{2\pi n}{N\,\Delta x}\,,\qquad
+  n = -\frac{N-1}{2}, \ldots, \frac{N-1}{2}\quad\text{($N$ odd)}\,.
+\end{equation}
+For even $N$, $n = -N/2+1, \ldots, N/2$.
+
+\subsubsection{Kinetic energy in momentum space}
+
+The kinetic energy operator in momentum representation is diagonal:
+\begin{equation}
+  \hat{T}\ket{k_n} = \frac{\hb^2 k_n^2}{2\mu}\ket{k_n}\,.
+\end{equation}
+
+\subsubsection{Transformation to position space}
+
+The discrete Fourier transform relates position and momentum representations:
+\begin{equation}
+  \braket{x_j}{k_n} = \frac{1}{\sqrt{N}}\,e^{ik_n x_j}\,.
+\end{equation}
+The kinetic energy matrix element in position space is:
+\begin{align}\label{eq:T_DVR_sum}
+  T_{jl} &= \mel{x_j}{\hat{T}}{x_l}
+  = \sum_n \braket{x_j}{k_n}\frac{\hb^2 k_n^2}{2\mu}\braket{k_n}{x_l}\notag\\
+  &= \frac{\hb^2}{2\mu N}\sum_n k_n^2\,e^{ik_n(x_j - x_l)}\,.
+\end{align}
+
+\subsubsection{Evaluation of the kinetic energy sum}
+
+Define $p = j - l$ and $\phi = 2\pi/(N\Delta x)\cdot\Delta x = 2\pi/N$. Then
+$k_n(x_j - x_l) = k_n\,p\,\Delta x = 2\pi np/N = np\phi$.
+
+\textbf{Diagonal case ($p = 0$, $j = l$):}
+\begin{equation}
+  T_{jj} = \frac{\hb^2}{2\mu N}\sum_n k_n^2
+  = \frac{\hb^2}{2\mu N}\cdot\frac{4\pi^2}{N^2\Delta x^2}\sum_n n^2\,.
+\end{equation}
+For $N$ odd, $n$ ranges over $-(N-1)/2$ to $(N-1)/2$:
+\begin{equation}
+  \sum_{n=-(N-1)/2}^{(N-1)/2}n^2 = 2\sum_{n=1}^{(N-1)/2}n^2
+  = 2\cdot\frac{(N-1)/2\cdot((N-1)/2+1)\cdot(2(N-1)/2+1)}{6}
+  = \frac{N(N^2-1)}{12}\,.
+\end{equation}
+For large $N$, $\sum n^2 \approx N^3/12$, so
+\begin{equation}
+  T_{jj} = \frac{\hb^2}{2\mu N}\cdot\frac{4\pi^2}{N^2\Delta x^2}\cdot\frac{N(N^2-1)}{12}
+  = \frac{\hb^2\pi^2(N^2-1)}{6\mu N^2\Delta x^2}
+  \xrightarrow{N\to\infty}
+  \frac{\hb^2\pi^2}{6\mu\Delta x^2}\,.
+\end{equation}
+
+\textbf{Off-diagonal case ($p \neq 0$):}
+
+We need to evaluate the sum
+\begin{equation}
+  \Sigma_p = \sum_{n=-(N-1)/2}^{(N-1)/2} n^2\,e^{i n p\phi}\,,\qquad \phi = 2\pi/N\,.
+\end{equation}
+Using the identity $n^2 e^{in\theta} = -\frac{d^2}{d\theta^2}e^{in\theta}$ and the geometric
+series $\sum_n e^{in\theta} = \sin(N\theta/2)/\sin(\theta/2)$, one can show (after careful
+differentiation and evaluation) that for $N$ odd and $p \neq 0$ mod $N$:
+\begin{equation}
+  \Sigma_p = (-1)^p\frac{N}{2}\cdot\frac{1}{\sin^2(p\pi/N)}\cdot\cos(p\pi/N)\cdot\frac{1}{1}\,.
+\end{equation}
+More precisely, using the exact result for the finite sum:
+\begin{equation}
+  T_{jl} = \frac{\hb^2}{2\mu\Delta x^2}\cdot\frac{(-1)^{j-l}}{N}\cdot\frac{\pi^2}{\sin^2\!\bigl(\pi(j-l)/N\bigr)}\cdot\frac{1}{3}\,.
+\end{equation}
+
+In the limit $N \to \infty$ (sinc-DVR), $\sin(\pi p/N) \to \pi p/N$, and the matrix elements
+simplify to the well-known Colbert--Miller result.
+
+% ------------------------------------------------------------
+\subsection{Sinc-DVR (Colbert--Miller) kinetic energy}\label{sec:sinc_DVR}
+% ------------------------------------------------------------
+
+For an infinite uniform grid ($N \to \infty$) with spacing $\Delta x$, the kinetic energy
+matrix elements are obtained by evaluating the integral
+\begin{equation}
+  T_{jl} = -\frac{\hb^2}{2\mu}\int_{-\infty}^{\infty}\text{sinc}\!\left(\frac{x-x_j}{\Delta x}\right)\frac{d^2}{dx^2}\text{sinc}\!\left(\frac{x-x_l}{\Delta x}\right)dx\,,
+\end{equation}
+where $\text{sinc}(u) = \sin(\pi u)/(\pi u)$ and $x_j = j\Delta x$.
+
+The result, derived by Colbert and Miller (1992), is:
+
+\textbf{Diagonal:}
+\begin{equation}\label{eq:T_DVR_diag}
+  \boxed{T_{jj} = \frac{\hb^2\pi^2}{6\mu\,\Delta x^2}\,.}
+\end{equation}
+
+\textbf{Off-diagonal ($j \neq l$):}
+\begin{equation}\label{eq:T_DVR_offdiag}
+  \boxed{T_{jl} = \frac{\hb^2}{\mu\,\Delta x^2}\cdot\frac{(-1)^{j-l}}{(j-l)^2}\,.}
+\end{equation}
+
+\textbf{Derivation.} Consider the Fourier representation of the sinc function:
+\begin{equation}
+  \text{sinc}\!\left(\frac{x - x_j}{\Delta x}\right) = \frac{\Delta x}{2\pi}\int_{-\pi/\Delta x}^{\pi/\Delta x}e^{ik(x-x_j)}\,dk\,.
+\end{equation}
+The second derivative of the sinc function centered at $x_l$ gives:
+\begin{equation}
+  \frac{d^2}{dx^2}\text{sinc}\!\left(\frac{x-x_l}{\Delta x}\right)
+  = \frac{\Delta x}{2\pi}\int_{-\pi/\Delta x}^{\pi/\Delta x}(-k^2)\,e^{ik(x-x_l)}\,dk\,.
+\end{equation}
+The matrix element becomes:
+\begin{align}
+  T_{jl} &= \frac{\hb^2}{2\mu}\left(\frac{\Delta x}{2\pi}\right)^2
+  \int_{-\infty}^{\infty}dx\int dk\int dk'\,k'^2\,e^{ik(x-x_j)}\,e^{ik'(x-x_l)}\notag\\
+  &= \frac{\hb^2}{2\mu}\cdot\frac{\Delta x}{2\pi}\int_{-\pi/\Delta x}^{\pi/\Delta x}k^2\,e^{ik(x_j-x_l)}\,dk\,,
+\end{align}
+where we used the orthogonality $\int e^{i(k-k')x}dx = 2\pi\delta(k-k')$.
+Setting $x_j - x_l = (j-l)\Delta x \equiv p\,\Delta x$:
+\begin{equation}
+  T_{jl} = \frac{\hb^2}{2\mu}\cdot\frac{\Delta x}{2\pi}\int_{-\pi/\Delta x}^{\pi/\Delta x}k^2\,e^{ikp\Delta x}\,dk\,.
+\end{equation}
+Substituting $u = k\Delta x$:
+\begin{equation}\label{eq:T_integral}
+  T_{jl} = \frac{\hb^2}{2\mu\Delta x^2}\cdot\frac{1}{2\pi}\int_{-\pi}^{\pi}u^2\,e^{ipu}\,du\,.
+\end{equation}
+
+\textbf{Diagonal ($p = 0$):}
+\begin{equation}
+  \frac{1}{2\pi}\int_{-\pi}^{\pi}u^2\,du = \frac{1}{2\pi}\cdot\frac{2\pi^3}{3} = \frac{\pi^2}{3}\,.
+\end{equation}
+Therefore $T_{jj} = \frac{\hb^2\pi^2}{6\mu\Delta x^2}$. $\checkmark$
+
+\textbf{Off-diagonal ($p \neq 0$):}
+
+Integrate by parts twice. Let $I_p = \frac{1}{2\pi}\int_{-\pi}^{\pi}u^2 e^{ipu}du$.
+
+First integration by parts ($v = u^2$, $dw = e^{ipu}du$, $w = e^{ipu}/(ip)$):
+\begin{align}
+  I_p &= \frac{1}{2\pi}\left[\frac{u^2 e^{ipu}}{ip}\right]_{-\pi}^{\pi}
+       - \frac{1}{2\pi}\int_{-\pi}^{\pi}\frac{2u\,e^{ipu}}{ip}\,du\notag\\
+  &= \frac{1}{2\pi}\cdot\frac{\pi^2}{ip}\bigl(e^{ip\pi}-e^{-ip\pi}\bigr)
+     - \frac{1}{i\pi p}\int_{-\pi}^{\pi}u\,e^{ipu}\,du\notag\\
+  &= \frac{\pi^2}{2\pi ip}\cdot 2i\sin(p\pi)
+     - \frac{1}{i\pi p}\int_{-\pi}^{\pi}u\,e^{ipu}\,du\,.
+\end{align}
+Since $p$ is an integer, $\sin(p\pi) = 0$, so the first term vanishes.
+
+Second integration by parts on $\int_{-\pi}^{\pi}u\,e^{ipu}\,du$:
+\begin{align}
+  \int_{-\pi}^{\pi}u\,e^{ipu}\,du
+  &= \left[\frac{u\,e^{ipu}}{ip}\right]_{-\pi}^{\pi} - \int_{-\pi}^{\pi}\frac{e^{ipu}}{ip}\,du\notag\\
+  &= \frac{\pi e^{ip\pi}+\pi e^{-ip\pi}}{ip} - \frac{1}{ip}\underbrace{\int_{-\pi}^{\pi}e^{ipu}\,du}_{=\,2\pi\delta_{p,0}\,=\,0}\notag\\
+  &= \frac{2\pi\cos(p\pi)}{ip} = \frac{2\pi(-1)^p}{ip}\,.
+\end{align}
+Substituting back:
+\begin{equation}
+  I_p = -\frac{1}{i\pi p}\cdot\frac{2\pi(-1)^p}{ip} = \frac{2(-1)^p}{p^2}\,.
+\end{equation}
+Therefore:
+\begin{equation}
+  T_{jl} = \frac{\hb^2}{2\mu\Delta x^2}\cdot\frac{2(-1)^{j-l}}{(j-l)^2}
+  = \frac{\hb^2(-1)^{j-l}}{\mu\Delta x^2(j-l)^2}\,.\quad\checkmark
+\end{equation}
+
+\textbf{Connection to sinc functions.} The sinc-DVR basis functions are
+$\chi_j(x) = \text{sinc}((x-x_j)/\Delta x)$. These satisfy the DVR property:
+$\chi_j(x_l) = \delta_{jl}$. They form an orthonormal set on the uniform grid,
+and the kinetic energy matrix in this basis yields exactly \cref{eq:T_DVR_diag,eq:T_DVR_offdiag}.
+
+% ------------------------------------------------------------
+\subsection{Potential energy matrix in DVR}\label{sec:DVR_V}
+% ------------------------------------------------------------
+
+The fundamental advantage of the DVR is that the potential energy matrix is \emph{diagonal}:
+\begin{equation}\label{eq:V_DVR}
+  \boxed{V_{jl} = V(x_j)\,\delta_{jl}\,.}
+\end{equation}
+This follows from the DVR property $\chi_j(x_l) = \delta_{jl}$:
+\begin{equation}
+  V_{jl} = \int\chi_j(x)\,V(x)\,\chi_l(x)\,dx \approx V(x_j)\int\chi_j(x)\chi_l(x)\,dx = V(x_j)\delta_{jl}\,,
+\end{equation}
+where the approximation becomes exact in the limit of a complete DVR basis.
+No integrals need to be computed --- $V_{jl}$ is simply the potential evaluated at the grid points.
+
+The full Hamiltonian matrix is therefore:
+\begin{equation}
+  H_{jl} = T_{jl} + V(x_j)\,\delta_{jl}\,.
+\end{equation}
+
+% ------------------------------------------------------------
+\subsection{Convergence considerations}\label{sec:DVR_convergence}
+% ------------------------------------------------------------
+
+\subsubsection{Grid spacing}
+
+The DVR can resolve momenta up to $k_{\max} = \pi/\Delta x$ (Nyquist limit).
+To represent eigenstates with energy up to $E_{\max}$, the maximum kinetic energy
+is approximately $E_{\max} + |V_{\min}|$ (where $V_{\min}$ is the potential minimum),
+so $k_{\max} \sim \sqrt{2\mu(E_{\max}+|V_{\min}|)}$ and:
+\begin{equation}
+  \Delta x \lesssim \frac{\pi}{\sqrt{2\mu(E_{\max}+|V_{\min}|)}}\,.
+\end{equation}
+
+\subsubsection{Grid range}
+
+The grid must be large enough that the wavefunctions are negligible at the boundaries:
+$|\Psi(\pm L/2)|^2 \lesssim \eps_{\text{boundary}}$. For a double-well potential, a
+typical choice is $L \approx 4$--$6\,\xe$.
+
+\subsubsection{Total number of grid points}
+
+Combining both requirements: $N = L/\Delta x$. For the NH$_3$ double well,
+$N \sim 100$--$500$ typically provides convergence of the lowest $\sim 10$ levels
+to machine precision.
+
+% ------------------------------------------------------------
+\subsection{DVR as a reference method}\label{sec:DVR_benchmark}
+% ------------------------------------------------------------
+
+The DVR/FGH method has several properties that make it ideal as a benchmark:
+\begin{enumerate}
+  \item \textbf{No basis set bias:} Unlike the HO or Gaussian bases, the DVR does not
+        assume any particular functional form for the eigenstates.
+  \item \textbf{Systematically improvable:} Accuracy improves monotonically with $N$, controlled
+        by a single parameter ($\Delta x$ or $N$).
+  \item \textbf{Exact potential representation:} The potential matrix is diagonal and exact
+        (no quadrature errors for polynomial potentials).
+  \item \textbf{No overlap issues:} The basis is orthonormal by construction.
+  \item \textbf{Dense matrices:} The kinetic energy matrix is dense ($T_{jl} \neq 0$ for
+        all $j, l$), so the computational cost scales as $\mathcal{O}(N^3)$ for diagonalization.
+        This is the main disadvantage compared to sparse variational methods.
+\end{enumerate}
+
+In practice, the DVR results with sufficiently large $N$ serve as ``numerically exact''
+reference values against which the variational methods (Bases~I--III) are benchmarked.
+
+% ============================================================
+% ============================================================

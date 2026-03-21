@@ -1,0 +1,224 @@
+\section{The Double-Well Potential}\label{sec:potential}
+% ============================================================
+% ============================================================
+
+% ------------------------------------------------------------
+\subsection{Symmetric double-well}\label{sec:V_sym}
+% ------------------------------------------------------------
+
+The symmetric quartic double-well potential is written in the standard form
+\begin{equation}\label{eq:V_ab}
+  V(x) = a\,x^4 - b\,x^2, \qquad a > 0,\; b > 0.
+\end{equation}
+This potential is symmetric under parity: $V(-x) = V(x)$.
+It has a local maximum (barrier) at $x = 0$ with $V(0) = 0$, and two degenerate minima.
+
+\subsubsection{Location of the minima}
+
+Setting the first derivative to zero:
+\begin{equation}
+  V'(x) = 4a\,x^3 - 2b\,x = 2x(2a\,x^2 - b) = 0.
+\end{equation}
+The solutions are $x = 0$ (local maximum) and
+\begin{equation}
+  2a\,x^2 = b
+  \quad\Longrightarrow\quad
+  \boxed{x_{\min} = \pm\sqrt{\frac{b}{2a}}\,.}
+\end{equation}
+We verify that these are minima by computing the second derivative:
+\begin{equation}
+  V''(x) = 12a\,x^2 - 2b.
+\end{equation}
+At $x = 0$: $V''(0) = -2b < 0$ (maximum, confirmed).
+At $x_{\min}$: $V''(x_{\min}) = 12a\cdot\frac{b}{2a} - 2b = 6b - 2b = 4b > 0$ (minimum, confirmed).
+
+\subsubsection{Barrier height}
+
+The barrier height is the depth of the minima relative to the maximum at the origin:
+\begin{equation}
+  \Vb = V(0) - V(x_{\min})
+  = 0 - \left[a\left(\frac{b}{2a}\right)^2 - b\left(\frac{b}{2a}\right)\right]
+  = -\frac{b^2}{4a} + \frac{b^2}{2a}
+  = \frac{b^2}{4a}\,.
+\end{equation}
+Therefore,
+\begin{equation}
+  \boxed{\Vb = \frac{b^2}{4a}\,.}
+\end{equation}
+
+\subsubsection{Local harmonic frequency at the minima}
+
+Near each minimum, the potential is approximately harmonic with angular frequency
+\begin{equation}
+  \omega_{\text{local}} = \sqrt{\frac{V''(x_{\min})}{m}} = \sqrt{\frac{4b}{m}}\,,
+\end{equation}
+where $m$ is the mass of the particle. In atomic units ($\hb = 1$), the harmonic oscillator width parameter associated with this local frequency is
+\begin{equation}\label{eq:alpha_local}
+  \alpha_{\text{local}} = \frac{m\,\omega_{\text{local}}}{\hb} = m\,\omega_{\text{local}} = \sqrt{4\,m\,b} = 2\sqrt{m\,b}\,.
+\end{equation}
+For the reduced mass $\mu$ of the NH$_3$ inversion mode, $m \to \mu$, and
+\begin{equation}
+  \boxed{\omega_{\text{local}} = \sqrt{\frac{4b}{\mu}}\,,\qquad
+  \alpha_{\text{local}} = 2\sqrt{\mu\,b}\,.}
+\end{equation}
+
+\subsubsection{Alternative parameterization in terms of $\xe$ and $\Vb$}
+
+It is often convenient to parameterize the potential directly in terms of the
+equilibrium distance $\xe \equiv |x_{\min}|$ and the barrier height $\Vb$.
+From the results above:
+\begin{equation}
+  \xe = \sqrt{\frac{b}{2a}}\,,\qquad \Vb = \frac{b^2}{4a}\,.
+\end{equation}
+Solving for $a$ and $b$:
+\begin{align}
+  \text{From }\xe^2 &= \frac{b}{2a} \implies b = 2a\,\xe^2\,,\\
+  \text{Substitute into }\Vb &= \frac{(2a\,\xe^2)^2}{4a} = a\,\xe^4\,,
+\end{align}
+yielding
+\begin{equation}\label{eq:ab_from_xeVb}
+  \boxed{a = \frac{\Vb}{\xe^4}\,,\qquad b = \frac{2\Vb}{\xe^2}\,.}
+\end{equation}
+The potential becomes
+\begin{equation}\label{eq:V_xeVb}
+  V(x) = \frac{\Vb}{\xe^4}\,x^4 - \frac{2\Vb}{\xe^2}\,x^2
+  = \frac{\Vb}{\xe^4}(x^2 - \xe^2)^2 - \Vb\,.
+\end{equation}
+In this form, $V(\pm\xe) = -\Vb$ (the minima) and $V(0) = 0$ (the barrier top).
+Alternatively, one may shift the energy zero so that $V(\pm\xe) = 0$:
+\begin{equation}\label{eq:V_xeVb_shifted}
+  V(x) = \frac{\Vb}{\xe^4}(x^2 - \xe^2)^2\,.
+\end{equation}
+
+\subsubsection{NH$_3$-specific parameterization}
+
+For the ammonia inversion mode, the physical input consists of:
+\begin{itemize}
+  \item Equilibrium distance $\xe$ (in \AA{}ngstr\"om), to be converted to atomic units: $\xe^{\text{(a.u.)}} = \xe^{(\text{\AA})}/a_0$ with $a_0 = 0.529177\,$\AA.
+  \item Barrier height $\Vb$ (in cm$^{-1}$), to be converted to atomic units: $\Vb^{\text{(a.u.)}} = \Vb^{(\text{cm}^{-1})} / 219474.63\;E_h/\text{cm}^{-1}$.
+\end{itemize}
+Then $a$ and $b$ are computed from \cref{eq:ab_from_xeVb} in atomic units.
+
+The local harmonic frequency at the minima in cm$^{-1}$ is
+\begin{equation}
+  \nu_{\text{local}} = \frac{\omega_{\text{local}}}{2\pi c}
+  = \frac{1}{2\pi c}\sqrt{\frac{4b}{\mu}}\,,
+\end{equation}
+where $c$ is the speed of light.
+
+\subsubsection{Reduced mass for NH$_3$ inversion}
+
+The umbrella inversion mode of NH$_3$ involves the nitrogen atom moving along the
+$C_3$ symmetry axis while the three hydrogen atoms move in the opposite direction.
+In the one-dimensional model, the inversion coordinate $x$ measures the displacement
+of the nitrogen from the plane of the three hydrogens. The reduced mass for this motion is
+\begin{equation}
+  \boxed{\mu = \frac{3\,m_H\,m_N}{3\,m_H + m_N}\,.}
+\end{equation}
+\textbf{Derivation.} Let $M_H = 3m_H$ be the total mass of the hydrogen subsystem.
+In the center-of-mass frame, the reduced mass for the relative motion of the nitrogen
+atom against the hydrogen plane is
+\begin{equation}
+  \mu = \frac{M_H \cdot m_N}{M_H + m_N} = \frac{3\,m_H\,m_N}{3\,m_H + m_N}\,.
+\end{equation}
+Using $m_H = 1.00782503\,\text{u}$ and $m_N = 14.0030740\,\text{u}$
+(where $1\,\text{u} = 1822.888\,m_e$):
+\begin{equation}
+  \mu = \frac{3(1.00782503)(14.0030740)}{3(1.00782503) + 14.0030740}\,\text{u}
+  = \frac{42.3488}{17.0265}\,\text{u}
+  = 2.4871\,\text{u}
+  = 4534.2\,m_e\,.
+\end{equation}
+
+% ------------------------------------------------------------
+\subsection{Asymmetric double-well}\label{sec:V_asym}
+% ------------------------------------------------------------
+
+The asymmetric double-well potential adds a linear bias term:
+\begin{equation}\label{eq:V_asym}
+  V(x) = a\,x^4 - b\,x^2 + c\,x, \qquad c \neq 0.
+\end{equation}
+The linear term $cx$ breaks the parity symmetry $V(-x) \neq V(x)$.
+
+\subsubsection{Shift of minima: perturbative treatment}
+
+For $|c| \ll b^2/\sqrt{b/(2a)}$ (weak asymmetry), we treat $cx$ as a perturbation.
+Let the unperturbed minima be at $x_0 = \pm\sqrt{b/(2a)} \equiv \pm\xe$.
+Expanding around $x_0$, the shifted minimum is at $x_0 + \delta x$ where
+\begin{equation}
+  V'(x_0 + \delta x) = 0 \implies
+  \underbrace{V'(x_0)}_{=0} + V''(x_0)\,\delta x + c = 0
+  \implies \delta x = -\frac{c}{V''(x_0)}\,.
+\end{equation}
+Since $V'(x) = 4ax^3 - 2bx + c$ and $V''(x_0) = 12a\,x_0^2 - 2b = 4b$:
+\begin{equation}
+  \delta x = -\frac{c}{4b}\,.
+\end{equation}
+The perturbed minima are thus
+\begin{equation}\label{eq:xmin_pert}
+  x_{\pm} \approx \pm\xe - \frac{c}{4b} + \mathcal{O}(c^2)\,.
+\end{equation}
+Both minima shift by the same amount $-c/(4b)$ in the $x$-direction.
+The energy difference between the two wells to first order in $c$ is
+\begin{equation}
+  V(x_-) - V(x_+) \approx c\,x_- - c\,x_+
+  = c(-\xe - \xe) = -2c\,\xe\,,
+\end{equation}
+so $\Delta V \approx -2c\,\xe$. The well at $x = +\xe$ is deeper when $c < 0$.
+
+\subsubsection{Shift of minima: exact treatment}
+
+The exact condition for the minima is
+\begin{equation}\label{eq:cubic_roots}
+  V'(x) = 4a\,x^3 - 2b\,x + c = 0\,.
+\end{equation}
+This is a depressed cubic equation in $x$. Dividing by $4a$:
+\begin{equation}
+  x^3 - \frac{b}{2a}\,x + \frac{c}{4a} = 0\,.
+\end{equation}
+This has the form $x^3 + px + q = 0$ with $p = -b/(2a)$ and $q = c/(4a)$.
+The discriminant is
+\begin{equation}
+  \Delta_3 = -4p^3 - 27q^2 = 4\left(\frac{b}{2a}\right)^3 - 27\left(\frac{c}{4a}\right)^2
+  = \frac{b^3}{2a^3} - \frac{27c^2}{16a^2}\,.
+\end{equation}
+When $\Delta_3 > 0$, i.e., $c^2 < 8b^3/(27a)$, the cubic has three distinct real roots
+(two minima and one maximum). For $\Delta_3 = 0$, two roots coalesce (the barrier
+disappears for one well). For $\Delta_3 < 0$, there is only one real root (one minimum).
+
+The three real roots (when $\Delta_3 > 0$) are given by Cardano--Vieta's trigonometric method:
+\begin{equation}
+  x_k = 2\sqrt{\frac{b}{6a}}\cos\left[\frac{1}{3}\arccos\left(-\frac{c}{4a}\cdot\frac{1}{2}\left(\frac{6a}{b}\right)^{3/2}\right) - \frac{2\pi k}{3}\right],\quad k = 0,1,2.
+\end{equation}
+Simplifying the argument of the arccosine:
+\begin{equation}
+  x_k = 2\sqrt{\frac{b}{6a}}\cos\left[\frac{1}{3}\arccos\left(-\frac{3c}{4b}\sqrt{\frac{6a}{b}}\right) - \frac{2\pi k}{3}\right].
+\end{equation}
+
+\subsubsection{Change in barrier heights}
+
+With the asymmetric potential, there are now two distinct barrier heights. Let $x_-$, $x_{\max}$, $x_+$ be the three critical points ordered as $x_- < x_{\max} < x_+$. The left barrier is
+\begin{equation}
+  V_{b,L} = V(x_{\max}) - V(x_-)\,,
+\end{equation}
+and the right barrier is
+\begin{equation}
+  V_{b,R} = V(x_{\max}) - V(x_+)\,.
+\end{equation}
+The difference is
+\begin{equation}
+  V_{b,L} - V_{b,R} = V(x_+) - V(x_-) \approx 2c\,\xe\,.
+\end{equation}
+The barrier is higher on the side of the shallower well.
+
+\subsubsection{General polynomial potential}
+
+For maximum generality, the code supports an arbitrary polynomial potential:
+\begin{equation}\label{eq:V_poly}
+  V(x) = \sum_{k=0}^{K} v_k\,x^k\,.
+\end{equation}
+The Hamiltonian matrix elements require the integrals $\mel{n}{x^k}{m}$ for each power $k$.
+These are computed recursively using the ladder-operator formalism (see \cref{sec:HO_matrix_elements}).
+
+% ============================================================
+% ============================================================

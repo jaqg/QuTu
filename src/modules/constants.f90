@@ -69,4 +69,7 @@ module constants
     ! Energy convergence threshold
     real(dp), parameter, public :: ENERGY_CONV_THRESHOLD = 1.0e-5_dp
 
+    ! Threshold for odd-coefficient parity symmetry detection
+    real(dp), parameter, public :: SYMMETRY_THRESHOLD = 1.0e-12_dp
+
 end module constants

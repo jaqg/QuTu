@@ -1,0 +1,158 @@
+\section{Variational Method Framework}\label{sec:variational}
+% ============================================================
+% ============================================================
+
+% ------------------------------------------------------------
+\subsection{Rayleigh--Ritz variational principle}
+% ------------------------------------------------------------
+
+The time-independent Schr\"odinger equation is
+\begin{equation}\label{eq:TISE}
+  \hat{H}\ket{\Psi} = E\ket{\Psi}\,.
+\end{equation}
+The variational principle states that for any normalized trial state $\ket{\tilde{\Psi}}$,
+\begin{equation}\label{eq:variational_bound}
+  \mel{\tilde{\Psi}}{\hat{H}}{\tilde{\Psi}} \geq E_0\,,
+\end{equation}
+with equality if and only if $\ket{\tilde{\Psi}}$ is the ground state.
+More generally, the Hylleraas--Undheim--MacDonald (HUM) theorem guarantees that
+for a variational calculation in an $N$-dimensional subspace, the $k$-th eigenvalue
+$E_k^{(N)}$ is an upper bound to the $k$-th exact eigenvalue $E_k^{\text{exact}}$:
+\begin{equation}
+  E_k^{(N)} \geq E_k^{\text{exact}},\quad k = 0, 1, \ldots, N-1\,.
+\end{equation}
+Furthermore, enlarging the basis can only improve (lower) each variational eigenvalue:
+$E_k^{(N+1)} \leq E_k^{(N)}$.
+
+% ------------------------------------------------------------
+\subsection{Expansion in a finite basis}
+% ------------------------------------------------------------
+
+We expand the trial wavefunction in a set of $N$ basis functions $\{\phi_i\}_{i=1}^{N}$:
+\begin{equation}\label{eq:expansion}
+  \ket{\tilde{\Psi}} = \sum_{i=1}^{N} c_i\,\ket{\phi_i}\,.
+\end{equation}
+The energy functional is
+\begin{equation}
+  E[\{c_i\}] = \frac{\mel{\tilde{\Psi}}{\hat{H}}{\tilde{\Psi}}}{\braket{\tilde{\Psi}}}
+  = \frac{\sum_{i,j} c_i^* c_j\,H_{ij}}{\sum_{i,j} c_i^* c_j\,S_{ij}}\,,
+\end{equation}
+where $H_{ij} = \mel{\phi_i}{\hat{H}}{\phi_j}$ and $S_{ij} = \braket{\phi_i}{\phi_j}$
+are the Hamiltonian and overlap matrix elements, respectively.
+
+% ------------------------------------------------------------
+\subsection{Derivation of the generalized eigenvalue problem}
+% ------------------------------------------------------------
+
+Minimizing $E$ with respect to the coefficients $c_k^*$ (treating $c_k$ and $c_k^*$ as independent):
+\begin{align}
+  \frac{\partial}{\partial c_k^*}\left[\sum_{i,j}c_i^*c_j\,H_{ij} - E\sum_{i,j}c_i^*c_j\,S_{ij}\right] &= 0\notag\\
+  \sum_j H_{kj}\,c_j - E\sum_j S_{kj}\,c_j &= 0\,,\quad k = 1,\ldots, N\,.
+\end{align}
+In matrix form, this is the \emph{generalized eigenvalue problem}:
+\begin{equation}\label{eq:gen_eig}
+  \boxed{\mathbf{H}\,\mathbf{c} = E\,\mathbf{S}\,\mathbf{c}\,,}
+\end{equation}
+where $\mathbf{H}$ is the $N\times N$ Hamiltonian matrix, $\mathbf{S}$ is the $N\times N$
+overlap matrix, and $\mathbf{c}$ is the coefficient vector.
+
+\subsubsection{Standard eigenvalue problem (orthonormal basis)}
+
+When the basis is orthonormal, $S_{ij} = \delta_{ij}$, and the generalized problem
+reduces to the \emph{standard} eigenvalue problem:
+\begin{equation}\label{eq:std_eig}
+  \boxed{\mathbf{H}\,\mathbf{c} = E\,\mathbf{c}\,.}
+\end{equation}
+This is the case for the harmonic oscillator basis (Basis~I) and the DVR basis (Basis~IV).
+The shifted HO basis (Basis~II) and Gaussian basis (Basis~III) have non-trivial overlap
+and require either the generalized eigenvalue solver or a preliminary orthogonalization step.
+
+% ------------------------------------------------------------
+\subsection{L\"owdin canonical orthogonalization}\label{sec:Lowdin}
+% ------------------------------------------------------------
+
+When $\mathbf{S} \neq \mathbf{I}$, one can transform the generalized problem into
+a standard one by the \emph{L\"owdin symmetric orthogonalization} (also called
+canonical orthogonalization).
+
+\subsubsection{Step 1: Diagonalize the overlap matrix}
+
+Since $\mathbf{S}$ is real, symmetric, and positive semi-definite, it can be diagonalized:
+\begin{equation}
+  \mathbf{S} = \mathbf{U}\,\bm{\sigma}\,\mathbf{U}^T\,,
+\end{equation}
+where $\mathbf{U}$ is an orthogonal matrix of eigenvectors and
+$\bm{\sigma} = \text{diag}(\sigma_1, \sigma_2, \ldots, \sigma_N)$
+contains the eigenvalues $\sigma_i \geq 0$.
+
+\subsubsection{Step 2: Remove near-linear dependencies}
+
+Eigenvalues $\sigma_i < \eps_{\text{thresh}}$ (typically $\eps_{\text{thresh}} = 10^{-8}$)
+indicate near-linear dependence in the basis. The corresponding eigenvectors are
+discarded. Let $N' \leq N$ be the number of retained eigenvalues with
+$\sigma_i \geq \eps_{\text{thresh}}$, and let $\mathbf{U}'$ and $\bm{\sigma}'$
+denote the truncated matrices.
+
+\subsubsection{Step 3: Construct the transformation matrix}
+
+Define the matrix
+\begin{equation}
+  \mathbf{X} = \mathbf{U}'\,(\bm{\sigma}')^{-1/2}\,,
+\end{equation}
+where $(\bm{\sigma}')^{-1/2} = \text{diag}(\sigma_1^{-1/2}, \ldots, \sigma_{N'}^{-1/2})$.
+This is an $N \times N'$ matrix.
+
+\subsubsection{Step 4: Verify orthonormality}
+
+The transformed overlap matrix is
+\begin{equation}
+  \mathbf{X}^T\,\mathbf{S}\,\mathbf{X}
+  = (\bm{\sigma}')^{-1/2}\,(\mathbf{U}')^T\,\mathbf{U}'\,\bm{\sigma}'\,(\mathbf{U}')^T\,\mathbf{U}'\,(\bm{\sigma}')^{-1/2}
+  = (\bm{\sigma}')^{-1/2}\,\bm{\sigma}'\,(\bm{\sigma}')^{-1/2}
+  = \mathbf{I}_{N'}\,.
+\end{equation}
+The transformed basis is orthonormal.
+
+\subsubsection{Step 5: Solve the standard eigenvalue problem}
+
+Define the transformed Hamiltonian:
+\begin{equation}
+  \tilde{\mathbf{H}} = \mathbf{X}^T\,\mathbf{H}\,\mathbf{X}\,.
+\end{equation}
+This is an $N' \times N'$ real symmetric matrix. Diagonalize it:
+\begin{equation}
+  \tilde{\mathbf{H}}\,\tilde{\mathbf{c}}_k = E_k\,\tilde{\mathbf{c}}_k\,.
+\end{equation}
+The eigenvectors in the original (non-orthogonal) basis are recovered as
+\begin{equation}\label{eq:Lowdin_backtransform}
+  \mathbf{c}_k = \mathbf{X}\,\tilde{\mathbf{c}}_k\,.
+\end{equation}
+
+\begin{result}[L\"owdin procedure summary]
+\begin{equation}
+  \mathbf{S} \xrightarrow{\text{diag.}} \mathbf{U}\,\bm{\sigma}\,\mathbf{U}^T
+  \xrightarrow{\text{truncate}} \mathbf{X} = \mathbf{U}'(\bm{\sigma}')^{-1/2}
+  \xrightarrow{\text{transform}} \tilde{\mathbf{H}} = \mathbf{X}^T\mathbf{H}\mathbf{X}
+  \xrightarrow{\text{diag.}} E_k,\;\mathbf{c}_k = \mathbf{X}\tilde{\mathbf{c}}_k\,.
+\end{equation}
+\end{result}
+
+% ------------------------------------------------------------
+\subsection{Convergence and the variational upper bound}
+% ------------------------------------------------------------
+
+By the HUM theorem, the variational eigenvalues $\{E_k^{(N)}\}$ provide upper bounds to
+the exact eigenvalues and converge monotonically from above as $N \to \infty$.
+A practical convergence criterion for the $k$-th level is
+\begin{equation}
+  |E_k^{(N)} - E_k^{(N-\delta N)}| < \delta_{\text{conv}}\,,
+\end{equation}
+where $\delta N$ is the basis increment and $\delta_{\text{conv}}$ is a prescribed tolerance
+(e.g., $10^{-10}\,E_h$ for spectroscopic accuracy).
+
+For the quartic double-well, the lowest levels typically converge with $N \sim 20$--$50$
+harmonic oscillator functions. Higher excited states require larger bases due to the
+polynomial growth of the potential.
+
+% ============================================================
+% ============================================================

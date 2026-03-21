@@ -1,0 +1,124 @@
+\section{Physical Observables}\label{sec:observables}
+% ============================================================
+% ============================================================
+
+We collect here the complete working formulas for all physical observables computed by QuTu.
+
+% ------------------------------------------------------------
+\subsection{Energy levels and tunneling splitting}
+% ------------------------------------------------------------
+
+The energy eigenvalues $E_0 < E_1 < E_2 < \cdots$ are obtained by diagonalization.
+The \emph{tunneling splitting} of the $k$-th doublet is
+\begin{equation}
+  \boxed{\Delta_k = E_{2k+1} - E_{2k}\,,\qquad k = 0, 1, 2, \ldots}
+\end{equation}
+The ground-state splitting is $\Delta_0 = E_1 - E_0$.
+
+The inversion splitting in spectroscopic units (cm$^{-1}$) is
+\begin{equation}
+  \boxed{\Delta\nu = \frac{E_1 - E_0}{hc} = \frac{\Delta_0}{2\pi\hb c}\,,}
+\end{equation}
+where $c$ is the speed of light. In atomic units ($\hb = 1$, energies in $E_h$):
+$\Delta\nu\,[\text{cm}^{-1}] = \Delta_0\,[\text{a.u.}] \times 219474.63\,\text{cm}^{-1}/E_h$.
+
+% ------------------------------------------------------------
+\subsection{Survival probability (general $N$-state)}\label{sec:Ps_general}
+% ------------------------------------------------------------
+
+For a normalized wavepacket $\Psi(0) = \sum_k c_k\Phi_k$ with $\sum_k|c_k|^2 = 1$:
+\begin{equation}\label{eq:Ps_general}
+  \boxed{P_s(t) = \left|\sum_k |c_k|^2\,e^{-iE_k t/\hb}\right|^2
+  = \sum_k |c_k|^4 + 2\sum_{k<l}|c_k|^2|c_l|^2\cos\frac{(E_l-E_k)t}{\hb}\,.}
+\end{equation}
+
+Properties:
+\begin{itemize}
+  \item $P_s(0) = 1$.
+  \item $0 \leq P_s(t) \leq 1$.
+  \item Time-averaged value: $\overline{P_s} = \sum_k |c_k|^4 \leq 1$.
+  \item For two states: $\overline{P_s} = 1/2$.
+  \item For $N$ equally weighted states ($|c_k| = 1/\sqrt{N}$): $\overline{P_s} = 1/N$.
+\end{itemize}
+
+% ------------------------------------------------------------
+\subsection{Position expectation value $\langle\hat{x}\rangle(t)$}
+% ------------------------------------------------------------
+
+\begin{equation}\label{eq:xt_boxed}
+  \boxed{\langle\hat{x}\rangle(t) = \sum_k |c_k|^2 x_{kk}
+  + 2\sum_{j<k}\text{Re}\bigl[c_j^*c_k\,e^{-i(E_k-E_j)t/\hb}\bigr]x_{jk}\,,}
+\end{equation}
+where $x_{jk} = \mel{\Phi_j}{\hat{x}}{\Phi_k}$.
+For the symmetric potential, $x_{kk} = 0$ and only opposite-parity pairs contribute.
+
+% ------------------------------------------------------------
+\subsection{Momentum expectation value $\langle\hat{p}\rangle(t)$}
+% ------------------------------------------------------------
+
+By Ehrenfest's theorem, $\langle\hat{p}\rangle = \mu\,d\langle\hat{x}\rangle/dt$.
+Differentiating \cref{eq:xt_boxed} (for real $c_j$):
+\begin{equation}
+  \boxed{\langle\hat{p}\rangle(t) = 2\mu\sum_{j<k}c_j c_k\,\frac{E_k-E_j}{\hb}\,x_{jk}\sin\frac{(E_k-E_j)t}{\hb}\,.}
+\end{equation}
+
+\textbf{Derivation.} Starting from
+\begin{equation}
+  \langle\hat{x}\rangle(t) = 2\sum_{j<k}c_jc_k\,x_{jk}\cos\frac{(E_k-E_j)t}{\hb}\,,
+\end{equation}
+differentiate:
+\begin{align}
+  \frac{d\langle\hat{x}\rangle}{dt}
+  &= -2\sum_{j<k}c_jc_k\,x_{jk}\cdot\frac{E_k-E_j}{\hb}\sin\frac{(E_k-E_j)t}{\hb}\,.
+\end{align}
+Then $\langle\hat{p}\rangle = \mu\,d\langle\hat{x}\rangle/dt$:
+\begin{equation}
+  \langle\hat{p}\rangle(t) = -\frac{2\mu}{\hb}\sum_{j<k}c_jc_k\,(E_k-E_j)\,x_{jk}\sin\frac{(E_k-E_j)t}{\hb}\,.
+\end{equation}
+Note: the sign depends on convention. Here $\langle\hat{p}\rangle(0) = 0$ for a
+real wavepacket at rest, which is consistent since $\sin(0) = 0$. $\checkmark$
+
+% ------------------------------------------------------------
+\subsection{Position variance $\Delta x^2(t)$}
+% ------------------------------------------------------------
+
+The variance is
+\begin{equation}
+  \Delta x^2(t) = \langle\hat{x}^2\rangle(t) - \langle\hat{x}\rangle^2(t)\,,
+\end{equation}
+where
+\begin{equation}
+  \langle\hat{x}^2\rangle(t) = \sum_{j,k}c_j^*c_k\,e^{i(E_j-E_k)t/\hb}\mel{\Phi_j}{\hat{x}^2}{\Phi_k}\,.
+\end{equation}
+The matrix elements $\mel{\Phi_j}{\hat{x}^2}{\Phi_k}$ are computed analogously to $x_{jk}$
+using the HO matrix elements of $x^2$ (\cref{eq:x2_HO}).
+
+% ------------------------------------------------------------
+\subsection{Tunneling period and recurrence time}
+% ------------------------------------------------------------
+
+For the two-state wavepacket:
+\begin{align}
+  &\text{Tunneling period (one-way):}\quad \boxed{\ttun = \frac{\pi\hb}{E_1-E_0} = \frac{h}{2\Delta_0}\,,}\\[6pt]
+  &\text{Recurrence time (round-trip):}\quad \boxed{\trec = \frac{2\pi\hb}{E_1-E_0} = \frac{h}{\Delta_0}\,.}
+\end{align}
+
+For the four-state wavepacket, exact recurrence requires $\Delta_{01}/\Delta_{23}$ to be
+rational. The approximate recurrence time is $\trec \approx h/\Delta_{01}$ (dominated by the
+smaller splitting).
+
+% ------------------------------------------------------------
+\subsection{Inversion splitting in cm$^{-1}$}
+% ------------------------------------------------------------
+
+\begin{equation}
+  \boxed{\Delta\nu = \frac{E_1 - E_0}{hc}
+  = (E_1 - E_0)\,[\text{a.u.}]\times 219474.63\;\text{cm}^{-1}/E_h\,.}
+\end{equation}
+
+For NH$_3$, the experimental value is $\Delta\nu \approx 0.79\,\text{cm}^{-1}$ for the
+ground-state inversion splitting and $\Delta\nu \approx 35.8\,\text{cm}^{-1}$ for the
+$\nu_2 = 1$ excited state.
+
+% ============================================================
+% ============================================================

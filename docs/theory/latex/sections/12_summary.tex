@@ -1,0 +1,80 @@
+\section{Summary of Key Results}\label{sec:summary}
+% ============================================================
+% ============================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.8}
+\begin{longtable}{p{4.5cm}p{10cm}}
+  \toprule
+  \textbf{Quantity} & \textbf{Formula} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Quantity} & \textbf{Formula} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+  \multicolumn{2}{l}{\textit{Potential}} \\
+  Symmetric DW
+    & $V = ax^4 - bx^2$;\quad $x_{\min} = \pm\sqrt{b/(2a)}$;\quad $\Vb = b^2/(4a)$ \\
+  Asymmetric DW
+    & $V = ax^4 - bx^2 + cx$ \\
+  $a, b$ from $\xe, \Vb$
+    & $a = \Vb/\xe^4$;\quad $b = 2\Vb/\xe^2$ \\
+  Local frequency
+    & $\omega_{\text{loc}} = \sqrt{4b/\mu}$ \\
+  Reduced mass (NH$_3$)
+    & $\mu = 3m_Hm_N/(3m_H+m_N)$ \\[4pt]
+  \midrule
+  \multicolumn{2}{l}{\textit{Basis I: HO}} \\
+  $\mel{m}{x}{n}$
+    & $\sqrt{m_*\!+\!1}/\sqrt{2\alpha}\;\delta_{|m-n|,1}$ \\
+  $\mel{m}{x^2}{n}$
+    & $(2n\!+\!1)/(2\alpha)\;\delta_{mn}$ $+$ $\sqrt{(m_*\!+\!1)(m_*\!+\!2)}/(2\alpha)\;\delta_{|m-n|,2}$ \\
+  $\mel{m}{x^4}{n}$ (diag.)
+    & $3(2n^2\!+\!2n\!+\!1)/(4\alpha^2)$ \\
+  $T_{nn}$
+    & $\alpha(2n\!+\!1)/(4\mu)$ \\
+  $\alpha_{\text{local}}$
+    & $2\sqrt{\mu b}$ \\
+  $\alpha_{\text{quartic}}$
+    & $(6\mu\Vb/\xe^4)^{1/3}$ \\[4pt]
+  \midrule
+  \multicolumn{2}{l}{\textit{Basis III: Gaussians}} \\
+  Overlap $S_{ij}$
+    & $\sqrt{\pi/\Aij}\,e^{-\Qij}$ \\
+  $\Aij$, $\Xij$, $\Qij$
+    & $\alpha_i\!+\!\alpha_j$;\; $(\alpha_ix_i\!+\!\alpha_jx_j)/\Aij$;\; $\alpha_i\alpha_j(x_i\!-\!x_j)^2/\Aij$ \\
+  $V_{ij}$ (sym.)
+    & $e^{-\Qij}\sqrt{\pi/\Aij}\{a[\Xij^4+3\Xij^2/\Aij+3/(4\Aij^2)]-b[\Xij^2+1/(2\Aij)]\}$ \\
+  $T_{ij}$
+    & $(\alpha_j/\mu)S_{ij}[1-\alpha_j/\Aij-2\alpha_j\alpha_i^2(x_i-x_j)^2/\Aij^2]$ \\[4pt]
+  \midrule
+  \multicolumn{2}{l}{\textit{Basis IV: DVR}} \\
+  $T_{jj}$
+    & $\hb^2\pi^2/(6\mu\Delta x^2)$ \\
+  $T_{jl}\;(j\neq l)$
+    & $\hb^2(-1)^{j-l}/[\mu\Delta x^2(j-l)^2]$ \\
+  $V_{jl}$
+    & $V(x_j)\,\delta_{jl}$ \\[4pt]
+  \midrule
+  \multicolumn{2}{l}{\textit{Dynamics}} \\
+  Tunneling period
+    & $\ttun = \pi\hb/(E_1-E_0) = h/[2(E_1-E_0)]$ \\
+  Recurrence time
+    & $\trec = 2\pi\hb/(E_1-E_0) = h/(E_1-E_0)$ \\
+  Survival prob.
+    & $\sum_k|c_k|^4+2\sum_{k<l}|c_k|^2|c_l|^2\cos[(E_l-E_k)t/\hb]$ \\
+  $\langle\hat{x}\rangle(t)$
+    & $\sum_k|c_k|^2x_{kk}+2\sum_{j<k}\text{Re}[c_j^*c_ke^{-i\omega_{jk}t}]x_{jk}$ \\
+  $\langle\hat{p}\rangle(t)$
+    & $\mu\,d\langle\hat{x}\rangle/dt$ \\
+  Splitting (cm$^{-1}$)
+    & $\Delta\nu = (E_1-E_0)\times 219474.63$ \\[4pt]
+  \bottomrule
+\end{longtable}
+\end{center}
+
+% ============================================================
+% ============================================================
