@@ -66,7 +66,12 @@ class TestWavefunctionConsistency:
         )
 
     def test_density_equals_wf_squared(self, data):
-        """DENSITIES[:, 2+n] should equal WAVEFUNCTIONS[:, 2+n]² (within tolerance)."""
+        """DENSITIES[:, 2+n] should equal WAVEFUNCTIONS[:, 2+n]² (within tolerance).
+
+        Both sections use Fortran F14.6 format (6 decimal places), so values
+        below ~5e-7 are rounded to 0.000000.  We use atol=2e-6 to account for
+        this format-level truncation in either column.
+        """
         wf   = data["WAVEFUNCTIONS"]
         dens = data["DENSITIES"]
         if dens is None:
@@ -75,7 +80,7 @@ class TestWavefunctionConsistency:
             np.testing.assert_allclose(
                 dens[:, 2 + n],
                 wf[:, 2 + n] ** 2,
-                atol=1e-8,
+                atol=2e-6,
                 err_msg=f"DENSITIES col {n} does not equal WAVEFUNCTIONS col {n}²",
             )
 
