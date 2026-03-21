@@ -9,10 +9,20 @@ Usage
 from __future__ import annotations
 
 import ast
+import importlib.util
 import sys
 import textwrap
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def _import_sibling(filename: str):
+    """Import a hyphen-named .py file from the same directory as this script."""
+    path = Path(__file__).parent / filename
+    spec = importlib.util.spec_from_file_location(filename.replace("-", "_").removesuffix(".py"), path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 from typing import Optional
 
 import numpy as np
@@ -295,9 +305,15 @@ def _generate_script(state: PlotState, output_path: str) -> str:
         "import matplotlib.pyplot as plt",
         "",
         "_THIS = Path(__file__).parent",
-        "sys.path.insert(0, str(_THIS))",
-        "import parse_output as _po",
-        "from visualize import PlotEngine, PlotState",
+        "import importlib.util",
+        "def _load(fn):",
+        "    p = _THIS / fn",
+        "    s = importlib.util.spec_from_file_location(fn.replace('-','_').removesuffix('.py'), p)",
+        "    m = importlib.util.module_from_spec(s); s.loader.exec_module(m); return m",
+        "_po  = _load('qutu-parse-output.py')",
+        "_vis = _load('qutu-visualize.py')",
+        "PlotEngine = _vis.PlotEngine",
+        "PlotState  = _vis.PlotState",
         "",
         "# -- Configuration --------------------------------------------------",
         "CONFIG = {",
@@ -618,7 +634,7 @@ class QuTuApp:
             self._load_file(path)
 
     def _load_file(self, path: str):
-        import parse_output as _po
+        _po = _import_sibling("qutu-parse-output.py")
         try:
             data = _po.parse_output(path)
         except Exception as exc:

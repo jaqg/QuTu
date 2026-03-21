@@ -8,10 +8,20 @@ Usage
 
 from __future__ import annotations
 
+import importlib.util
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+
+def _import_sibling(filename: str):
+    """Import a hyphen-named .py file from the same directory as this script."""
+    path = Path(__file__).parent / filename
+    spec = importlib.util.spec_from_file_location(filename.replace("-", "_").removesuffix(".py"), path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 import numpy as np
 import matplotlib
@@ -384,7 +394,7 @@ class AnimateApp:
             self._load_file(path)
 
     def _load_file(self, path: str):
-        import parse_output as _po
+        _po = _import_sibling("qutu-parse-output.py")
         try:
             self.data = _po.parse_output(path)
         except Exception as exc:

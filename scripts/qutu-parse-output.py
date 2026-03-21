@@ -316,12 +316,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Parse and inspect QuTu OUTPUT files."
     )
-    parser.add_argument("filepath", help="Path to OUTPUT file")
-    parser.add_argument("--section", metavar="NAME",
+    parser.add_argument("filepath", nargs="?", default="OUTPUT",
+                        help="Path to OUTPUT file (default: ./OUTPUT)")
+    parser.add_argument("-s", "--section", metavar="NAME",
                         help="Section to extract (default: list all)")
-    parser.add_argument("--alpha", type=float, metavar="DEG",
+    parser.add_argument("-a", "--alpha", type=float, metavar="DEG",
                         help="Alpha value (degrees) for alpha-indexed sections")
-    parser.add_argument("--output", metavar="FILE",
+    parser.add_argument("-o", "--output", metavar="FILE",
                         help="Write section to CSV file (default: stdout)")
     args = parser.parse_args()
 

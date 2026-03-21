@@ -24,7 +24,7 @@ class TestGenerateScript:
     def test_contains_parse_output_import(self):
         state = self._state()
         src = _generate_script(state, "/tmp/fig.py")
-        assert "import parse_output" in src
+        assert "qutu-parse-output" in src
 
     def test_contains_plotengine_import(self):
         state = self._state()
