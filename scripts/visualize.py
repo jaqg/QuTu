@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """visualize.py — Interactive static visualizer for QuTu OUTPUT files.
 
 Usage

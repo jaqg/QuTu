@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """animate.py — Wavepacket dynamics animator for QuTu OUTPUT files.
 
 Usage

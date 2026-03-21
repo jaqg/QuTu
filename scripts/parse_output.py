@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """parse_output.py — Parser for QuTu OUTPUT files.
 
 Sections use $BEGIN / $END markers with # comment headers.
