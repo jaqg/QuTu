@@ -701,4 +701,11 @@ def _run(filepath: Optional[str] = None) -> None:
 
 
 if __name__ == "__main__":
-    _run(sys.argv[1] if len(sys.argv) > 1 else None)
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Wavepacket dynamics animator for QuTu OUTPUT files."
+    )
+    parser.add_argument("filepath", nargs="?", default="OUTPUT",
+                        help="Path to OUTPUT file (default: ./OUTPUT)")
+    args = parser.parse_args()
+    _run(args.filepath)
