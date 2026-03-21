@@ -93,6 +93,7 @@ program qutu
     print_level = input_params%print_level
 
     data_dir = "data/"
+    if (print_level >= 2) call execute_command_line('mkdir -p '//trim(data_dir))
 
     ! Open OUTPUT file
     open(newunit=ou, file='OUTPUT', status='replace', action='write', iostat=ierr)
