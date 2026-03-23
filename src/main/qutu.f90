@@ -20,6 +20,7 @@ program qutu
     use wavepacket
     use io
     use input_reader
+    use pib, only: build_hamiltonian_pib, phi_pib
     implicit none
 
     ! System parameters
@@ -115,6 +116,9 @@ program qutu
     if (input_params%use_polynomial) then
         write(ou,'(2X,A)') 'Mode        = polynomial'
         write(ou,'(2X,A,T20,I0)') 'poly_degree =', input_params%poly_degree
+        write(ou,'(2X,A,T20,A)')  'basis       =', trim(input_params%basis_type)
+        if (input_params%basis_type == 'PIB') &
+            write(ou,'(2X,A,T20,F10.5,2X,A)') 'box_length  =', input_params%box_length, 'a0'
         block
             integer :: kk
             do kk = 0, input_params%poly_degree
@@ -167,19 +171,26 @@ program qutu
                 mass_au = (3.0_dp * mH_au * mN_au) / (3.0_dp * mH_au + mN_au)
             end block
         end if
-        ! Determine alpha: user override or auto-compute from V''(0)
-        if (input_params%alpha_override /= 0.0_dp) then
-            call init_system_params_poly(params, N_max, mass_au, &
-                                         input_params%v_poly, input_params%alpha_override)
+
+        if (input_params%basis_type == 'PIB') then
+            ! PIB-FBR path: kinetic matrix is exact diagonal; no alpha needed
+            call init_system_params_pib(params, N_max, mass_au, &
+                                        input_params%v_poly, input_params%box_length)
         else
-            block
-                real(dp) :: alpha_auto
-                alpha_auto = compute_optimal_alpha_poly(input_params%v_poly, mass_au, 0.0_dp)
+            ! HO polynomial path: determine alpha (user override or auto-compute)
+            if (input_params%alpha_override /= 0.0_dp) then
                 call init_system_params_poly(params, N_max, mass_au, &
-                                             input_params%v_poly, alpha_auto)
-            end block
+                                             input_params%v_poly, input_params%alpha_override)
+            else
+                block
+                    real(dp) :: alpha_auto
+                    alpha_auto = compute_optimal_alpha_poly(input_params%v_poly, mass_au, 0.0_dp)
+                    call init_system_params_poly(params, N_max, mass_au, &
+                                                 input_params%v_poly, alpha_auto)
+                end block
+            end if
+            params%alpha_angstrom = params%alpha / RBOHR**2
         end if
-        params%alpha_angstrom = params%alpha / RBOHR**2
     else
         call init_system_params(params, N_max, xe_A, Vb_cm, mH_uma, mN_uma)
         params%alpha = compute_optimal_alpha(params%mass, params%xe, params%Vb)
@@ -207,9 +218,15 @@ program qutu
         write(ou,'(2X,A,T22,E12.5,2X,A)') &
             'b (V coeff.)   =', 2.0_dp*params%Vb/params%xe**2,   'Ha/a0^2'
     end if
+    write(ou,'(2X,A,T22,A)')         'Basis          =', trim(params%basis_type)
     write(ou,'(2X,A,T22,F10.5,2X,A)') 'Reduced mass   =', params%mass, 'a.u.'
-    write(ou,'(2X,A,T22,F10.5,2X,A,T42,F10.5,2X,A)') &
-        'alpha (opt.)   =', params%alpha, 'a0^-2', params%alpha_angstrom, 'A^-2'
+    if (params%basis_type == 'PIB') then
+        write(ou,'(2X,A,T22,F10.5,2X,A)') 'box_length     =', params%box_length, 'a0'
+        write(ou,'(2X,A,T22,A)')           'Kinetic mat.   =', 'exact diagonal (PIB-FBR)'
+    else
+        write(ou,'(2X,A,T22,F10.5,2X,A,T42,F10.5,2X,A)') &
+            'alpha (opt.)   =', params%alpha, 'a0^-2', params%alpha_angstrom, 'A^-2'
+    end if
     write(ou,'(2X,A,T22,I0)') 'N_max          =', N_max
     write(ou,'(A)') ''
 
@@ -273,7 +290,23 @@ program qutu
 
         allocate(E_all(params%N))
 
-        if (params%use_polynomial) then
+        if (params%basis_type == 'PIB') then
+            ! ------------------------------------------------------------------
+            ! PIB-FBR path — analytical kinetic + polynomial potential matrix
+            ! ------------------------------------------------------------------
+            call build_hamiltonian_pib(params, H_full)
+
+            lwork = 3 * params%N
+            if (allocated(work)) deallocate(work)
+            allocate(work(lwork))
+
+            call dsyev('V', 'U', params%N, H_full, params%N, E_all, work, lwork, info)
+            if (info /= 0) then
+                write(*,*) 'Error: PIB matrix diagonalization failed, info =', info
+                stop
+            end if
+
+        else if (params%use_polynomial) then
             ! ------------------------------------------------------------------
             ! Full N×N path — all polynomial cases (symmetric or asymmetric)
             ! ------------------------------------------------------------------
@@ -428,13 +461,17 @@ program qutu
             ! -----------------------------------------------------------------
             ! Wavefunctions & wavepackets
             ! -----------------------------------------------------------------
-            if (.not. params%use_polynomial) then
+            if (params%basis_type == 'PIB') then
+                ! PIB-FBR path: full eigenvectors in H_full, evaluated with phi_pib
+                call compute_wavefunctions_pib(params, H_full, x_grid, x_grid_A, &
+                                               psi_even, psi_odd, psi_even_A, psi_odd_A)
+            else if (.not. params%use_polynomial) then
                 ! Legacy path: use existing even/odd wavefunction routines
                 call build_coefficient_matrix(H_even, H_odd, params%N_even, params%N_odd, c_full)
                 call compute_wavefunctions(params, H_even, H_odd, x_grid, x_grid_A, &
                                            psi_even, psi_odd, psi_even_A, psi_odd_A)
             else
-                ! Polynomial path: full eigenvectors in H_full
+                ! HO polynomial path: full eigenvectors in H_full
                 call compute_wavefunctions_full(params, H_full, x_grid, x_grid_A, &
                                                 psi_even, psi_odd, psi_even_A, psi_odd_A)
             end if
@@ -689,6 +726,55 @@ contains
             end do
         end do
     end subroutine compute_wavefunctions_full
+
+    ! =========================================================================
+    ! PIB wavefunction evaluation (mirrors compute_wavefunctions_full but uses
+    ! phi_pib instead of the HO basis function phi)
+    ! =========================================================================
+    subroutine compute_wavefunctions_pib(params, H_full, x_grid, x_grid_A, &
+                                          psi_even, psi_odd, psi_even_A, psi_odd_A)
+        type(system_params_t), intent(in) :: params
+        real(dp), intent(in) :: H_full(:,:)
+        real(dp), intent(in) :: x_grid(:), x_grid_A(:)
+        real(dp), allocatable, intent(out) :: psi_even(:,:), psi_odd(:,:)
+        real(dp), allocatable, intent(out) :: psi_even_A(:,:), psi_odd_A(:,:)
+        integer :: ii, jj, k, n_x, n_states
+        real(dp) :: coeff, box_A
+
+        n_x      = size(x_grid)
+        n_states = 3
+        box_A    = params%box_length * RBOHR
+
+        allocate(psi_even(n_x, n_states), psi_odd(n_x, n_states))
+        allocate(psi_even_A(n_x, n_states), psi_odd_A(n_x, n_states))
+        psi_even   = 0.0_dp;  psi_odd    = 0.0_dp
+        psi_even_A = 0.0_dp;  psi_odd_A  = 0.0_dp
+
+        ! Map: psi_even(:,jj) = state 2*(jj-1)  (n=0, 2, 4)
+        !      psi_odd (:,jj) = state 2*jj-1     (n=1, 3, 5)
+        do jj = 1, n_states
+            do ii = 1, n_x
+                do k = 1, params%N
+                    coeff = H_full(k, 2*(jj-1)+1)   ! even state index
+                    if (abs(coeff) > COEFF_THRESHOLD) then
+                        psi_even(ii, jj)   = psi_even(ii, jj) &
+                                             + coeff * phi_pib(k, params%box_length, x_grid(ii))
+                        psi_even_A(ii, jj) = psi_even_A(ii, jj) &
+                                             + coeff * phi_pib(k, box_A, x_grid_A(ii))
+                    end if
+                    if (2*jj <= params%N) then
+                        coeff = H_full(k, 2*jj)      ! odd state index
+                        if (abs(coeff) > COEFF_THRESHOLD) then
+                            psi_odd(ii, jj)   = psi_odd(ii, jj) &
+                                                + coeff * phi_pib(k, params%box_length, x_grid(ii))
+                            psi_odd_A(ii, jj) = psi_odd_A(ii, jj) &
+                                                + coeff * phi_pib(k, box_A, x_grid_A(ii))
+                        end if
+                    end if
+                end do
+            end do
+        end do
+    end subroutine compute_wavefunctions_pib
 
     ! =========================================================================
     ! Section 6: EIGENSTATES

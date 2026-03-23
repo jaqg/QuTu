@@ -1,0 +1,13 @@
+# Asymmetric double-well: proton transfer in an O-H...O hydrogen bond
+# HO basis — harmonic oscillator FBR
+# V(x) = v1*x + v2*x^2 + v4*x^4   (v0=v3=0)
+# Ref: Benderskii, Makarov, Wight (1994); Garg, Am. J. Phys. 68, 430 (2000)
+# minima at x ± 1.167 a0, barrier ~ 4065 cm-1
+poly_degree = 4
+v_coeffs = 0.0, 0.002, -0.02722, 0.0, 0.01
+mass = 1.007276
+alpha = 4.7
+N_max = 80
+xmin = -3.0
+xmax =  3.0
+dx   = 0.01
