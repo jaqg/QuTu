@@ -30,6 +30,7 @@ MOD_SRCS = $(MOD_DIR)/constants.f90 \
            $(MOD_DIR)/types.f90 \
            $(MOD_DIR)/harmonic_oscillator.f90 \
            $(MOD_DIR)/hamiltonian.f90 \
+           $(MOD_DIR)/pib.f90 \
            $(MOD_DIR)/wavepacket.f90 \
            $(MOD_DIR)/io.f90 \
            $(MOD_DIR)/input_reader.f90
@@ -42,6 +43,7 @@ MOD_OBJS = $(BUILD_DIR)/constants.o \
            $(BUILD_DIR)/types.o \
            $(BUILD_DIR)/harmonic_oscillator.o \
            $(BUILD_DIR)/hamiltonian.o \
+           $(BUILD_DIR)/pib.o \
            $(BUILD_DIR)/wavepacket.o \
            $(BUILD_DIR)/io.o \
            $(BUILD_DIR)/input_reader.o
@@ -87,6 +89,10 @@ $(BUILD_DIR)/harmonic_oscillator.o: $(MOD_DIR)/harmonic_oscillator.f90 $(BUILD_D
 
 $(BUILD_DIR)/hamiltonian.o: $(MOD_DIR)/hamiltonian.f90 $(BUILD_DIR)/constants.o $(BUILD_DIR)/types.o | $(BUILD_DIR)
 	@echo "Compiling hamiltonian module..."
+	$(FC) $(FFLAGS) -I$(BUILD_DIR) -J$(BUILD_DIR) -c -o $@ $<
+
+$(BUILD_DIR)/pib.o: $(MOD_DIR)/pib.f90 $(BUILD_DIR)/constants.o $(BUILD_DIR)/types.o | $(BUILD_DIR)
+	@echo "Compiling pib module..."
 	$(FC) $(FFLAGS) -I$(BUILD_DIR) -J$(BUILD_DIR) -c -o $@ $<
 
 $(BUILD_DIR)/wavepacket.o: $(MOD_DIR)/wavepacket.f90 $(BUILD_DIR)/constants.o $(BUILD_DIR)/types.o | $(BUILD_DIR)
@@ -177,7 +183,8 @@ distclean: clean
 # Unit test executables
 TEST_UNIT_SRCS = tests/unit/test_xk_recursion.f90 \
                  tests/unit/test_parity_detection.f90 \
-                 tests/unit/test_input_parser.f90
+                 tests/unit/test_input_parser.f90 \
+                 tests/unit/test_pib_matrix.f90
 
 TEST_UNIT_EXECS = $(patsubst tests/unit/%.f90,$(BUILD_DIR)/%,$(TEST_UNIT_SRCS))
 
@@ -186,6 +193,7 @@ TEST_MOD_OBJS = $(BUILD_DIR)/constants.o \
                 $(BUILD_DIR)/types.o \
                 $(BUILD_DIR)/harmonic_oscillator.o \
                 $(BUILD_DIR)/hamiltonian.o \
+                $(BUILD_DIR)/pib.o \
                 $(BUILD_DIR)/input_reader.o
 
 # Build a unit test executable
