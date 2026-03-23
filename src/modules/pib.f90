@@ -128,9 +128,12 @@ contains
         ! Non-zero only when m+n is even (sel. rule).
         ! Diagonal:    I^(2)_nn = L^2 * (1/12 - 1/(2*n^2*pi^2))
         ! Off-diagonal (m+n even, m != n):
-        !   s = (-1)^(m+1)  [+1 if m odd/cosine family, -1 if m even/sine family]
-        !   I^(2)_mn = L^2/pi^2 * [(-1)^((m-n)/2)/(m-n)^2
-        !                          + s*(-1)^((m+n)/2)/(m+n)^2]
+        !   phi_m*phi_n = (2/L)*trig*trig = (1/L)*[cos(m-n) +/- cos(m+n)]
+        !   Each cos-integral gives J_p^(2) = 2*(-1)^(p/2)*L^3/(p^2*pi^2)
+        !   so I^(2)_mn = (1/L)*[J_{m-n} +/- J_{m+n}]
+        !              = 2*L^2/pi^2 * [(-1)^((m-n)/2)/(m-n)^2
+        !                              + s*(-1)^((m+n)/2)/(m+n)^2]
+        !   where s = (-1)^(m+1)  [+1 if both odd, -1 if both even]
             if (m == n) then
                 Imn = L**2 * (1.0_dp/12.0_dp &
                               - 1.0_dp/(2.0_dp * rn**2 * PI**2))
@@ -141,7 +144,7 @@ contains
                 s_int    = (-1)**(m + 1)   ! +1 if m odd, -1 if m even
                 rmn_diff = real((m - n)**2, dp)
                 rmn_sum  = real((m + n)**2, dp)
-                Imn = L**2 / PI**2 * ( &
+                Imn = 2.0_dp * L**2 / PI**2 * ( &
                       real((-1)**exp_diff, dp) / rmn_diff &
                       + real(s_int * (-1)**exp_sum, dp) / rmn_sum )
             end if
@@ -164,15 +167,19 @@ contains
         case (4)
         ! -----------------------------------------------------------------
         ! Non-zero only when m+n is even (sel. rule).
-        ! Diagonal:    I^(4)_nn = L^4*(1/80 - 1/(4*n^2*pi^2) + 3/(n^4*pi^4))
-        ! Off-diagonal (m+n even, m != n):
-        !   s = (-1)^(m+1)
-        !   I^(4)_mn = L^4/pi^4 * [(-1)^((m-n)/2)*((m-n)^2*pi^2-48)/(m-n)^4
-        !                          + s*(-1)^((m+n)/2)*((m+n)^2*pi^2-48)/(m+n)^4]
+        ! Diagonal: J_{2n}^(4) = (-1)^n * L^5*(n^2*pi^2-6)/(4*n^4*pi^4)
+        !   I^(4)_nn = L^4/80 + (-1)^n * L^4*(n^2*pi^2-6)/(4*n^4*pi^4)
+        !   For both parities this simplifies to:
+        !   I^(4)_nn = L^4*(1/80 - 1/(4*n^2*pi^2) + 3/(2*n^4*pi^4))
+        ! Off-diagonal: J_p^(4) = (-1)^(p/2) * L^5*(p^2*pi^2-24)/(p^4*pi^4)
+        !   I^(4)_mn = (1/L)*[J_{m-n}^(4) + s*J_{m+n}^(4)]
+        !   = L^4/pi^4 * [(-1)^((m-n)/2)*((m-n)^2*pi^2-24)/(m-n)^4
+        !                + s*(-1)^((m+n)/2)*((m+n)^2*pi^2-24)/(m+n)^4]
+        !   where s = (-1)^(m+1)
             if (m == n) then
                 Imn = L**4 * ( 1.0_dp/80.0_dp &
                                - 1.0_dp/(4.0_dp * rn**2 * PI**2) &
-                               + 3.0_dp/(rn**4 * PI**4) )
+                               + 3.0_dp/(2.0_dp * rn**4 * PI**4) )
             else
                 exp_diff = mod(abs(m - n) / 2, 2)
                 exp_sum  = mod((m + n) / 2, 2)
@@ -180,9 +187,9 @@ contains
                 rmn_diff = real((m - n)**2, dp)   ! (m-n)^2
                 rmn_sum  = real((m + n)**2, dp)   ! (m+n)^2
                 Imn = L**4 / PI**4 * ( &
-                      real((-1)**exp_diff, dp) * (rmn_diff * PI**2 - 48.0_dp) &
+                      real((-1)**exp_diff, dp) * (rmn_diff * PI**2 - 24.0_dp) &
                       / rmn_diff**2 &
-                      + real(s_int * (-1)**exp_sum, dp) * (rmn_sum * PI**2 - 48.0_dp) &
+                      + real(s_int * (-1)**exp_sum, dp) * (rmn_sum * PI**2 - 24.0_dp) &
                       / rmn_sum**2 )
             end if
 
