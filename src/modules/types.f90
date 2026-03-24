@@ -49,6 +49,12 @@ module types
 
         ! .false. = legacy xe/Vb mode (default); .true. = polynomial mode
         logical :: use_polynomial = .false.
+
+        ! Basis selector: 'HO' (default) or 'PIB'
+        character(len=8) :: basis_type = 'HO'
+
+        ! Box half-length for PIB basis (a.u.); ignored when basis_type = 'HO'
+        real(dp) :: box_length = 0.0_dp
     end type system_params_t
 
     ! -------------------------------------------------------------------------
@@ -110,6 +116,7 @@ module types
     ! -------------------------------------------------------------------------
     public :: init_system_params
     public :: init_system_params_poly
+    public :: init_system_params_pib
     public :: init_grid_params
     public :: init_time_params
     public :: init_wavepacket
@@ -246,5 +253,46 @@ contains
         params%N_odd  = N / 2
         params%N_even = N - params%N_odd
     end subroutine init_system_params_poly
+
+    ! -------------------------------------------------------------------------
+    ! Initialize system parameters for PIB-FBR basis.
+    ! Same structure as init_system_params_poly but sets basis_type = 'PIB'
+    ! and stores box_length L.  alpha is set to 0 (not used for PIB).
+    ! -------------------------------------------------------------------------
+    subroutine init_system_params_pib(params, N, mass_au, v_coeffs, box_length)
+        use constants, only: SYMMETRY_THRESHOLD
+        type(system_params_t), intent(out) :: params
+        integer,  intent(in) :: N
+        real(dp), intent(in) :: mass_au
+        real(dp), intent(in) :: v_coeffs(:)
+        real(dp), intent(in) :: box_length
+
+        integer :: deg, k
+
+        deg = size(v_coeffs) - 1
+
+        params%N              = N
+        params%mass           = mass_au
+        params%alpha          = 0.0_dp
+        params%poly_degree    = deg
+        params%use_polynomial = .true.
+        params%basis_type     = 'PIB'
+        params%box_length     = box_length
+
+        if (allocated(params%v_poly)) deallocate(params%v_poly)
+        allocate(params%v_poly(0:deg))
+        params%v_poly(0:deg) = v_coeffs(1:deg+1)
+
+        params%is_symmetric = .true.
+        do k = 1, deg, 2
+            if (abs(params%v_poly(k)) > SYMMETRY_THRESHOLD) then
+                params%is_symmetric = .false.
+                exit
+            end if
+        end do
+
+        params%N_odd  = N / 2
+        params%N_even = N - params%N_odd
+    end subroutine init_system_params_pib
 
 end module types

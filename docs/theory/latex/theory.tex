@@ -75,11 +75,12 @@
 This document presents the complete analytical framework underlying the
 \textbf{QuTu} quantum tunneling simulation code. We treat the
 one-dimensional double-well problem motivated by the ammonia inversion
-mode. Four basis-set representations are developed in full detail:
+mode. Five basis-set representations are developed in full detail:
 (I)~harmonic oscillator functions centered at the origin,
 (II)~shifted harmonic oscillator functions forming a two-center basis,
-(III)~Gaussian basis functions, and (IV)~the Fourier Grid Hamiltonian
-(DVR). For each basis, all Hamiltonian matrix elements are derived
+(III)~Gaussian basis functions, (IV)~the Fourier Grid Hamiltonian
+(DVR), and (V)~the particle-in-a-box finite basis representation (PIB-FBR).
+For each basis, all Hamiltonian matrix elements are derived
 analytically with complete intermediate algebra. The theory of
 wavepacket construction (two-state, four-state, and Gaussian initial
 states), time evolution, and the computation of physical observables
@@ -114,6 +115,7 @@ wavepackets is also treated. Throughout, atomic units
 \input{sections/03_HO_basis}
 \input{sections/04_shifted_HO}
 \input{sections/05_gaussian}
+\input{sections/05b_PIB_basis}
 \input{sections/06_DVR}
 \input{sections/07_comparison}
 \input{sections/08_wavepackets}

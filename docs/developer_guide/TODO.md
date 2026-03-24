@@ -16,6 +16,20 @@
 - [x] Validation tests: NH3 regression, polynomial equivalence, harmonic limit, asymmetric
 - [x] Integration tests: full pipeline symmetric and asymmetric
 
+## Completed in `dev/PIB-implementation`
+
+- [x] PIB-FBR basis functions φₙ(x) on box [-L/2, L/2] (cosine for odd n, sine for even n)
+- [x] Exact diagonal kinetic matrix T_mn = n²π²/(2L²) δ_mn (no quadrature)
+- [x] Closed-form potential matrix elements I^(k)_mn for k = 0,1,2,3,4 (parity selection rule)
+- [x] `src/modules/pib.f90`: phi_pib, pib_kinetic_matrix, pib_xk_element, pib_potential_matrix, build_hamiltonian_pib
+- [x] `basis = PIB` key in INPUT; `box_length` auto-derived from xmax−xmin if not given
+- [x] Dispatch in `qutu.f90`: init, Hamiltonian build, wavefunction evaluation, section output
+- [x] Unit tests (test_pib_matrix.f90): 13 tests — orthonormality, parity selection rule, k=0..4 vs quadrature, symmetry, normalization
+- [x] Integration test (test_full_run_pib.sh): full PIB pipeline
+- [x] Validation test (test_pib_vs_ho.sh): HO vs PIB agree to < 0.01 cm⁻¹ (N=80)
+- [x] Example 03: INPUT_HO, INPUT_PIB, run.sh comparison script
+- [x] Theory: docs/theory/latex/sections/05b_PIB_basis.tex (with corrected k=2,4 formulas)
+
 ## Future Enhancements
 
 - [ ] Switch LAPACK solver to banded `DSBEV` (O(K·N²) vs O(N³))

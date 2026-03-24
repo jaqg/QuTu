@@ -1,0 +1,12 @@
+# Asymmetric double-well: proton transfer in an O-H...O hydrogen bond
+# PIB-FBR basis — same potential as INPUT (HO basis)
+# V(x) = v1*x + v2*x^2 + v4*x^4   (v0=v3=0)
+# Box [-L/2, L/2] with L = xmax - xmin = 6.0 a0 (auto-derived)
+poly_degree = 4
+v_coeffs = 0.0, 0.002, -0.02722, 0.0, 0.01
+mass = 1.007276
+basis = PIB
+N_max = 80
+xmin = -3.0
+xmax =  3.0
+dx   = 0.01

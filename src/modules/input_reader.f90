@@ -31,6 +31,13 @@ module input_reader
         integer :: poly_degree = -1
         real(dp), allocatable :: v_poly(:)   ! v_poly(1:poly_degree+1) = [v0,v1,...,vN]
 
+        ! Basis selector: 'HO' (default) or 'PIB'
+        character(len=8) :: basis_type = 'HO'
+
+        ! Box length for PIB basis (a.u.); 0.0 = auto-derive from xmax-xmin
+        real(dp) :: box_length = 0.0_dp
+        logical  :: found_box_length = .false.
+
         ! Optional HO basis width override (0 = auto-compute)
         real(dp) :: alpha_override = 0.0_dp
 
@@ -237,6 +244,22 @@ contains
                     call parse_real_array(value_str, params%v_poly, n_vcoeffs, parse_ierr)
                     if (parse_ierr == 0) found_v_coeffs = .true.
 
+                case ('basis')
+                    select case (trim(adjustl(value_str)))
+                    case ('PIB', 'pib')
+                        params%basis_type = 'PIB'
+                    case ('HO', 'ho')
+                        params%basis_type = 'HO'
+                    case default
+                        write(*,'(A,A)') ' Warning: Unknown basis type: ', &
+                                         trim(adjustl(value_str))
+                        write(*,'(A)')   '          Valid options: HO, PIB. Defaulting to HO.'
+                    end select
+
+                case ('box_length')
+                    read(value_str, *, iostat=io_stat) params%box_length
+                    if (io_stat == 0) params%found_box_length = .true.
+
                 case ('alpha')
                     read(value_str, *, iostat=io_stat) params%alpha_override
                     ! (optional: no found flag needed; 0.0 means auto)
@@ -359,6 +382,27 @@ contains
             if (.not. found_mass_N) then
                 write(*,'(A)') 'ERROR: Missing required parameter: mass_N'
                 ierr = 1
+            end if
+        end if
+
+        ! --- PIB mode: derive box_length from grid if not explicitly given ---
+        if (params%basis_type == 'PIB') then
+            if (.not. params%found_box_length) then
+                if (found_xmin .and. found_xmax) then
+                    params%box_length = params%xmax - params%xmin
+                    write(*,'(A,F10.5,A)') &
+                        ' PIB: box_length not specified; using xmax-xmin = ', &
+                        params%box_length, ' a0'
+                else
+                    write(*,'(A)') 'ERROR: PIB basis requires box_length (or xmin+xmax).'
+                    ierr = 1
+                end if
+            end if
+            if (found_xmin .and. found_xmax) then
+                if (params%box_length < params%xmax - params%xmin - 1.0e-10_dp) then
+                    write(*,'(A)') ' Warning: box_length < xmax - xmin.'
+                    write(*,'(A)') '          PIB box does not cover the full grid.'
+                end if
             end if
         end if
 

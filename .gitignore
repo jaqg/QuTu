@@ -86,3 +86,7 @@ notas-*.md
 *_COMPLETE.md
 *_BRIEF.md
 restructure*.sh
+
+# Development playground folder
+dev-playground
+plans-prompts
