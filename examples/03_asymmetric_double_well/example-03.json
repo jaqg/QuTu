@@ -1,0 +1,62 @@
+{
+  "show_potential": true,
+  "show_energies": true,
+  "show_wavefunctions": false,
+  "wf_active": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "show_densities": false,
+  "dens_active": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "show_wp2": false,
+  "wp2_active": {
+    "A": true,
+    "B": true,
+    "C": true,
+    "D": true
+  },
+  "show_wp4": false,
+  "wp4_alpha": 0.0,
+  "scale_wf": 200.0,
+  "scale_dens": 200.0,
+  "x_units": "A",
+  "e_units": "cm",
+  "x_min": -1.0,
+  "x_max": 1.0,
+  "y_min": -5000.0,
+  "y_max": 10000.0,
+  "xlabel": "$x\\ (\\AA)$",
+  "ylabel": "$E\\ (\\mathrm{cm^{-1}})$",
+  "title": "",
+  "labels": {
+    "potential": "$V(x)$",
+    "wf_0": "$\\Phi_{0}$",
+    "dens_0": "$|\\Phi_{0}|^2$",
+    "wf_1": "$\\Phi_{1}$",
+    "dens_1": "$|\\Phi_{1}|^2$",
+    "wf_2": "$\\Phi_{2}$",
+    "dens_2": "$|\\Phi_{2}|^2$",
+    "wf_3": "$\\Phi_{3}$",
+    "dens_3": "$|\\Phi_{3}|^2$",
+    "wf_4": "$\\Phi_{4}$",
+    "dens_4": "$|\\Phi_{4}|^2$",
+    "wf_5": "$\\Phi_{5}$",
+    "dens_5": "$|\\Phi_{5}|^2$",
+    "wp2_A": "$|\\Psi_A|^2$",
+    "wp2_B": "$|\\Psi_B|^2$",
+    "wp2_C": "$|\\Psi_C|^2$",
+    "wp2_D": "$|\\Psi_D|^2$",
+    "wp4": "$|\\Psi(\\alpha)|^2$"
+  }
+}
