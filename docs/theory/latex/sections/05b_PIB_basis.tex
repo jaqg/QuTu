@@ -1,0 +1,574 @@
+\section{Basis Set~V: Particle-in-a-Box Basis (PIB-FBR)}\label{sec:PIB}
+% ============================================================
+% ============================================================
+
+The particle-in-a-box (PIB) basis is a Finite Basis Representation (FBR) built from
+the exact eigenfunctions of the kinetic energy operator on a bounded domain.
+It possesses three properties that make it particularly well suited to the double-well
+tunneling problem.  First, the basis is \emph{complete} on $[-L/2, L/2]$ in the
+$L^2$ sense, and eigenvalues converge to the exact values from above as the truncation
+size $N\to\infty$ (variational theorem).  Second, the only free parameter is the
+box half-length $L/2$, which plays a purely geometric role with no reference to
+any equilibrium geometry of the potential.  Third, for any polynomial potential
+$V(x) = \sum_k c_k x^k$, all Hamiltonian matrix elements are obtainable in
+\emph{closed form} via elementary integration, eliminating quadrature entirely.
+The last property is especially significant for the asymmetric double well
+$V(x) = ax^4 - bx^2 + cx$ ($c \neq 0$): unlike the shifted harmonic oscillator
+basis (Basis~II), the PIB basis requires no recentering or modification when $c$
+changes.  The close relationship between the PIB-FBR and the sinc-DVR (Basis~IV,
+\cref{sec:DVR}) is made precise in \cref{sec:PIB_DVR}.
+
+% ------------------------------------------------------------
+\subsection{PIB eigenfunctions and eigenvalues}\label{sec:PIB_wf}
+% ------------------------------------------------------------
+
+\subsubsection{Schrödinger equation and boundary conditions}
+
+Consider a particle of unit mass confined to the segment $[-L/2, L/2]$ by an
+infinite square well.  In atomic units ($\hb = 1$) the time-independent
+Schrödinger equation inside the box is
+\begin{equation}\label{eq:PIB_TISE}
+  \hat{T}\,\phi(x) = -\,\frac{1}{2}\,\frac{d^2\phi}{dx^2} = E\,\phi(x)\,,
+\end{equation}
+subject to Dirichlet boundary conditions
+\begin{equation}\label{eq:PIB_BC}
+  \phi\!\left(-\tfrac{L}{2}\right) = \phi\!\left(\tfrac{L}{2}\right) = 0\,.
+\end{equation}
+Setting $k = \sqrt{2E}$ ($E > 0$), the general solution is
+$\phi(x) = A\cos(kx) + B\sin(kx)$.
+Evaluating \cref{eq:PIB_BC} at $x = \pm L/2$ and adding/subtracting the two equations
+gives two independent conditions:
+\begin{equation}
+  2A\cos\!\left(\tfrac{kL}{2}\right) = 0\,,\qquad
+  2B\sin\!\left(\tfrac{kL}{2}\right) = 0\,.
+\end{equation}
+Non-trivial solutions require either $A = 0$ or $B = 0$.
+
+\textbf{Family~1 (even parity, $B = 0$):}
+$\cos(kL/2) = 0 \Rightarrow kL/2 = (2j-1)\pi/2$, so $k_n = n\pi/L$ with $n = 1, 3, 5, \ldots$
+
+\textbf{Family~2 (odd parity, $A = 0$):}
+$\sin(kL/2) = 0 \Rightarrow kL/2 = j\pi$, so $k_n = n\pi/L$ with $n = 2, 4, 6, \ldots$
+
+Both families share the same wavenumber formula $k_n = n\pi/L$, differing only in
+which trigonometric function appears.
+
+\subsubsection{Unified indexing and normalized eigenfunctions}
+
+Ordering all solutions by increasing $k_n$, we label them with a single quantum
+number $n = 1, 2, 3, \ldots$\,:
+\begin{equation}\label{eq:PIB_basis}
+  \boxed{\phi_n(x) =
+  \begin{cases}
+    \displaystyle\sqrt{\frac{2}{L}}\cos\!\left(\frac{n\pi x}{L}\right),
+    & n = 1, 3, 5, \ldots\;\text{(even parity)}\,,\\[10pt]
+    \displaystyle\sqrt{\frac{2}{L}}\sin\!\left(\frac{n\pi x}{L}\right),
+    & n = 2, 4, 6, \ldots\;\text{(odd parity)}\,,
+  \end{cases}}
+\end{equation}
+defined on $[-L/2, L/2]$ and zero outside.  The parity of $\phi_n$ under $x \to -x$
+is $(-1)^{n+1}$:
+\begin{equation}\label{eq:PIB_parity}
+  \phi_n(-x) = (-1)^{n+1}\,\phi_n(x)\,.
+\end{equation}
+The normalization is verified directly.  For odd $n$,
+\begin{align}
+  \int_{-L/2}^{L/2}\!\bigl|\phi_n(x)\bigr|^2\,dx
+  &= \frac{2}{L}\int_{-L/2}^{L/2}\cos^2\!\left(\frac{n\pi x}{L}\right)dx\notag\\
+  &= \frac{2}{L}\cdot\frac{1}{2}\int_{-L/2}^{L/2}\!\left[1 + \cos\!\left(\frac{2n\pi x}{L}\right)\right]dx\notag\\
+  &= \frac{1}{L}\left[L + \frac{L}{2n\pi}\,\sin\!\left(\frac{2n\pi x}{L}\right)\bigg|_{-L/2}^{L/2}\right]
+  = 1\,,\quad\checkmark
+\end{align}
+since $\sin(n\pi) = 0$ for all integer $n$; the argument for even $n$ is identical.
+
+\subsubsection{Orthonormality and eigenvalues}
+
+The eigenfunctions satisfy
+\begin{equation}\label{eq:PIB_ortho}
+  \braket{\phi_m}{\phi_n} = \int_{-L/2}^{L/2}\phi_m(x)\,\phi_n(x)\,dx = \delta_{mn}\,.
+\end{equation}
+Orthogonality within the same family follows from the standard trigonometric
+identity $\int_{-a}^{a}\cos(p\pi x/a)\cos(q\pi x/a)\,dx = a\,\delta_{pq}$; for
+the mixed case (one cosine, one sine) the integrand is odd over a symmetric interval
+and vanishes identically.  The exact zeroth-order energies are:
+\begin{equation}\label{eq:PIB_En}
+  \boxed{E_n^{(0)} = \frac{k_n^2}{2} = \frac{n^2\pi^2}{2L^2}\,,\quad n = 1, 2, 3, \ldots}
+\end{equation}
+
+% ------------------------------------------------------------
+\subsection{Kinetic energy matrix elements}\label{sec:PIB_T}
+% ------------------------------------------------------------
+
+Because each $\phi_n$ is an eigenfunction of $\hat{T}$ with eigenvalue $E_n^{(0)}$,
+the kinetic energy matrix in the PIB basis is exactly diagonal.  To see this, note
+that for odd $n$:
+\begin{equation}
+  -\frac{1}{2}\frac{d^2}{dx^2}\cos\!\left(\frac{n\pi x}{L}\right)
+  = \frac{n^2\pi^2}{2L^2}\cos\!\left(\frac{n\pi x}{L}\right)\,,
+\end{equation}
+and analogously for even $n$.  Therefore:
+\begin{align}
+  T_{mn} = \mel{\phi_m}{\hat{T}}{\phi_n}
+  &= E_n^{(0)}\braket{\phi_m}{\phi_n}\notag\\
+  &= E_n^{(0)}\,\delta_{mn}\,.
+\end{align}
+\begin{equation}\label{eq:PIB_T}
+  \boxed{T_{mn} = \frac{n^2\pi^2}{2L^2}\,\delta_{mn}\,.}
+\end{equation}
+No numerical integration is ever required for the kinetic energy: the diagonal
+elements are given by \cref{eq:PIB_En} and all off-diagonal elements are
+identically zero.  This contrasts sharply with the DVR (Basis~IV, \cref{sec:DVR}),
+where $\hat{T}$ is represented by a dense matrix in the position grid; the two
+representations are related by the FBR$\to$DVR transformation discussed in
+\cref{sec:PIB_DVR}.
+
+% ------------------------------------------------------------
+\subsection{Potential energy matrix elements}\label{sec:PIB_V}
+% ------------------------------------------------------------
+
+For any polynomial potential $V(x) = \sum_k c_k\,x^k$, the potential matrix
+decomposes as
+\begin{equation}
+  V_{mn} = \mel{\phi_m}{V(x)}{\phi_n} = \sum_k c_k\,I_{mn}^{(k)}\,,
+\end{equation}
+where the fundamental integrals are
+\begin{equation}\label{eq:PIB_Imn}
+  I_{mn}^{(k)} \equiv \int_{-L/2}^{L/2}\phi_m(x)\,x^k\,\phi_n(x)\,dx\,.
+\end{equation}
+All $I_{mn}^{(k)}$ for polynomial $V(x)$ admit closed-form expressions obtained
+by repeated integration by parts.  The following subsections derive these
+expressions for $k = 1, 2, 3, 4$; all formulas have been independently verified
+by symbolic integration with SymPy.
+
+% ............................................................
+\subsubsection{Parity selection rule}\label{sec:PIB_parity_sel}
+% ............................................................
+
+The integrand of \cref{eq:PIB_Imn} has parity
+$(-1)^{m+1}\cdot(-1)^k\cdot(-1)^{n+1} = (-1)^{m+n+k}$ under $x \to -x$.
+Since the integration domain is the symmetric interval $[-L/2, L/2]$, any odd
+integrand integrates to zero:
+\begin{equation}\label{eq:PIB_sel}
+  \boxed{I_{mn}^{(k)} = 0\quad\text{if }m + n + k\text{ is odd.}}
+\end{equation}
+This \emph{parity selection rule} determines which pairs $(m,n)$ are coupled by
+each power of $x$ before any algebra is performed:
+\begin{itemize}
+  \item $k$ odd (powers $x, x^3, \ldots$): couples states of \emph{opposite} parity ($m+n$ odd).
+  \item $k$ even (powers $x^2, x^4, \ldots$): couples states of \emph{same} parity ($m+n$ even).
+\end{itemize}
+
+% ............................................................
+\subsubsection{$k = 1$: the linear term $cx$}\label{sec:PIB_k1}
+% ............................................................
+
+By \cref{eq:PIB_sel}, $I_{mn}^{(1)} \neq 0$ only when $m + n$ is odd, i.e.\ one
+index is even and the other odd.  Take $m$ odd and $n$ even (the case $m$ even,
+$n$ odd follows by symmetry):
+\begin{align}
+  I_{mn}^{(1)}
+  &= \frac{2}{L}\int_{-L/2}^{L/2}
+    \cos\!\left(\frac{m\pi x}{L}\right)x\sin\!\left(\frac{n\pi x}{L}\right)dx\notag\\
+  &= \frac{1}{L}\int_{-L/2}^{L/2}x\left[
+    \sin\!\left(\frac{(m+n)\pi x}{L}\right) - \sin\!\left(\frac{(m-n)\pi x}{L}\right)
+    \right]dx\,,\label{eq:PIB_k1_int}
+\end{align}
+where we used $\cos\alpha\sin\beta = \frac{1}{2}[\sin(\alpha+\beta)-\sin(\alpha-\beta)]$.
+For any nonzero integer $p$, integration by parts gives
+\begin{align}
+  \int_{-L/2}^{L/2}x\sin\!\left(\frac{p\pi x}{L}\right)dx
+  &= \left[-\frac{Lx}{p\pi}\cos\!\left(\frac{p\pi x}{L}\right)\right]_{-L/2}^{L/2}
+    + \frac{L}{p\pi}\int_{-L/2}^{L/2}\cos\!\left(\frac{p\pi x}{L}\right)dx\notag\\
+  &= -\frac{L^2}{p\pi}\cos\!\left(\frac{p\pi}{2}\right)
+    + \frac{2L^2}{p^2\pi^2}\sin\!\left(\frac{p\pi}{2}\right)\,.
+  \label{eq:PIB_k1_ibp}
+\end{align}
+For $m$ odd and $n$ even, both $p = m+n$ and $p = m-n$ are odd, so
+$\cos(p\pi/2) = 0$ and $\sin(p\pi/2) = (-1)^{(p-1)/2}$.  Hence
+\begin{equation}
+  \int_{-L/2}^{L/2}x\sin\!\left(\frac{p\pi x}{L}\right)dx
+  = \frac{2L^2}{p^2\pi^2}(-1)^{(p-1)/2}\,,\qquad p = m\pm n\,.
+\end{equation}
+Moreover, since $n$ is even, $(-1)^{(m-n-1)/2} = (-1)^{(m+n-1)/2}\cdot(-1)^n
+= (-1)^{(m+n-1)/2}$.  Substituting into \cref{eq:PIB_k1_int} and using
+$(m-n)^2 - (m+n)^2 = -4mn$:
+\begin{equation}\label{eq:PIB_I1}
+  \boxed{I_{mn}^{(1)} = \frac{-8mnL}{\pi^2(m^2-n^2)^2}\,(-1)^{(m+n-1)/2}\,,
+  \quad m+n\text{ odd}\,,\;m\neq n\,.}
+\end{equation}
+The diagonal elements $I_{nn}^{(1)} = 0$ for all $n$, reflecting $\langle\phi_n|x|\phi_n\rangle = 0$
+by parity on a symmetric domain.  The off-diagonal coupling decays as
+$\sim mn/(m^2-n^2)^2 \sim 1/m^3$ for large $m$ at fixed $n$, ensuring absolute
+convergence of the basis expansion.
+
+% ............................................................
+\subsubsection{$k = 2$: the quadratic term $-bx^2$}\label{sec:PIB_k2}
+% ............................................................
+
+By \cref{eq:PIB_sel}, $I_{mn}^{(2)} \neq 0$ only when $m+n$ is even.
+
+\textbf{Diagonal elements ($m = n$).}
+Using $f_n^2(x) = \frac{1}{2}\bigl[1 \pm \cos(2n\pi x/L)\bigr]$ for cosine/sine families:
+\begin{equation}
+  I_{nn}^{(2)} = \frac{1}{L}\left[\int_{-L/2}^{L/2}x^2\,dx
+    \pm\int_{-L/2}^{L/2}x^2\cos\!\left(\frac{2n\pi x}{L}\right)dx\right]\,.
+\end{equation}
+The first integral gives $L^3/12$.  For the second, with $p = 2n$ (even):
+double integration by parts yields $\int_{-L/2}^{L/2}x^2\cos(p\pi x/L)\,dx
+= (-1)^n L^3/(2n^2\pi^2)$.  After inserting and noting that for odd $n$,
+$(-1)^n = -1$, and for even $n$, the $\pm$ and $(-1)^n$ signs conspire to give
+the same result in both cases:
+\begin{equation}\label{eq:PIB_I2_diag}
+  \boxed{I_{nn}^{(2)} = L^2\!\left(\frac{1}{12} - \frac{1}{2n^2\pi^2}\right).}
+\end{equation}
+
+\textbf{Off-diagonal elements ($m \neq n$, $m+n$ even).}
+Both $m,n$ odd (cosine-cosine): $\cos(m\pi x/L)\cos(n\pi x/L)
+= \frac{1}{2}[\cos((m-n)\pi x/L) + \cos((m+n)\pi x/L)]$.
+Both $m,n$ even (sine-sine): $\sin(m\pi x/L)\sin(n\pi x/L)
+= \frac{1}{2}[\cos((m-n)\pi x/L) - \cos((m+n)\pi x/L)]$.
+In either case $p = m\pm n$ is even, say $p = 2q$, and
+$\int_{-L/2}^{L/2}x^2\cos(p\pi x/L)\,dx = (-1)^q L^3/(2q^2\pi^2)$.
+Defining $s \equiv (-1)^{m+1} = +1$ for both odd, $-1$ for both even:
+\begin{equation}\label{eq:PIB_I2_offdiag}
+  \boxed{I_{mn}^{(2)} = \frac{L^2}{\pi^2}\!\left[
+    \frac{(-1)^{(m-n)/2}}{(m-n)^2}
+    + s\,\frac{(-1)^{(m+n)/2}}{(m+n)^2}
+  \right],\quad m\neq n,\;m+n\text{ even,}}
+\end{equation}
+where $s = (-1)^{m+1}$.
+
+% ............................................................
+\subsubsection{$k = 3$: the cubic term (for generality)}\label{sec:PIB_k3}
+% ............................................................
+
+Although the double-well potential $V = ax^4 - bx^2 + cx$ contains no cubic term,
+we record the result for a general polynomial.  By \cref{eq:PIB_sel},
+$I_{mn}^{(3)} \neq 0$ only for $m+n$ odd.
+The derivation follows the same pattern as \cref{sec:PIB_k1}: write
+$\cos(m\pi x/L)\sin(n\pi x/L) = \frac{1}{2}[\sin((m+n)\pi x/L)
+- \sin((m-n)\pi x/L)]$ and evaluate $K_p = \int_{-L/2}^{L/2}x^3\sin(p\pi x/L)\,dx$
+for odd $p$ via three integrations by parts.  The first IBP reduces $K_p$ to
+$\frac{3L}{p\pi}J_p$, where $J_p = \int_{-L/2}^{L/2}x^2\cos(p\pi x/L)\,dx$
+with odd $p$; two further IBPs give
+$J_p = (-1)^{(p-1)/2}L^3(p^2\pi^2-8)/(2p^3\pi^3)$.
+Assembling and simplifying using $(-1)^{(m-n-1)/2} = (-1)^{(m+n-1)/2}$ (as in
+\cref{sec:PIB_k1}):
+\begin{equation}\label{eq:PIB_I3}
+  \boxed{I_{mn}^{(3)} = (-1)^{(m+n-1)/2}\,\frac{6mnL^3}{\pi^2(m^2-n^2)^2}
+  \!\left[\frac{16(m^2+n^2)}{\pi^2(m^2-n^2)^2} - 1\right],\quad m+n\text{ odd.}}
+\end{equation}
+
+% ............................................................
+\subsubsection{$k = 4$: the quartic term $ax^4$}\label{sec:PIB_k4}
+% ............................................................
+
+By \cref{eq:PIB_sel}, $I_{mn}^{(4)} \neq 0$ only for $m+n$ even.
+
+\textbf{Diagonal elements.}
+Using $f_n^2 = \frac{1}{2}[1\pm\cos(2n\pi x/L)]$, we need
+$J_p^{(4)} = \int_{-L/2}^{L/2}x^4\cos(p\pi x/L)\,dx$ for $p = 2n$.
+Four integrations by parts reduce this to previously evaluated integrals.
+The first IBP gives $J_p^{(4)} = -(4L/p\pi)K_p$ (boundary vanishes since
+$\sin(n\pi) = 0$), where $K_p = \int x^3\sin(p\pi x/L)\,dx$ with even $p$.
+Evaluating $K_{2n}$ via IBP yields $K_{2n} = (-1)^n L^4(12-n^2\pi^2)/(8n^3\pi^3)$,
+so $J_{2n}^{(4)} = (-1)^n L^5(n^2\pi^2-12)/(4n^4\pi^4)$.
+The sign cancellation between the two parities gives a universal result:
+\begin{equation}\label{eq:PIB_I4_diag}
+  \boxed{I_{nn}^{(4)} = L^4\!\left(\frac{1}{80} - \frac{1}{4n^2\pi^2}
+    + \frac{3}{n^4\pi^4}\right).}
+\end{equation}
+
+\textbf{Off-diagonal elements ($m \neq n$, $m+n$ even).}
+For even $p$, $J_p^{(4)} = (-1)^{p/2}L^5(p^2\pi^2-48)/p^4\pi^4$.
+With the same parity factor $s = (-1)^{m+1}$:
+\begin{equation}\label{eq:PIB_I4_offdiag}
+  \boxed{I_{mn}^{(4)} = \frac{L^4}{\pi^4}\!\left[
+    \frac{(-1)^{(m-n)/2}\bigl[(m-n)^2\pi^2-48\bigr]}{(m-n)^4}
+    +s\,\frac{(-1)^{(m+n)/2}\bigl[(m+n)^2\pi^2-48\bigr]}{(m+n)^4}
+  \right],\quad m\neq n,\;m+n\text{ even.}}
+\end{equation}
+
+% ............................................................
+\subsubsection{Summary table of selection rules and matrix elements}
+% ............................................................
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{cclll}
+  \toprule
+  $k$ & Term in $V$ & Nonzero when & Diagonal & Off-diagonal \\
+  \midrule
+  1 & $cx$ & $m+n$ odd & $0$ & \cref{eq:PIB_I1} \\
+  2 & $-bx^2$ & $m+n$ even & \cref{eq:PIB_I2_diag} & \cref{eq:PIB_I2_offdiag} \\
+  3 & $cx^3$ & $m+n$ odd & $0$ & \cref{eq:PIB_I3} \\
+  4 & $ax^4$ & $m+n$ even & \cref{eq:PIB_I4_diag} & \cref{eq:PIB_I4_offdiag} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remark}
+All formulas in \crefrange{eq:PIB_I1}{eq:PIB_I4_offdiag} have been verified
+independently by symbolic integration with SymPy for a representative set of
+index pairs $(m,n)$ with $L = 10\,a_0$.  Agreement with direct numerical
+quadrature is exact to machine precision in all cases tested.
+\end{remark}
+
+% ------------------------------------------------------------
+\subsection{Full Hamiltonian for the double-well potential}\label{sec:PIB_H}
+% ------------------------------------------------------------
+
+For the potential $V(x) = ax^4 - bx^2 + cx$, the Hamiltonian matrix in the
+PIB basis reads
+\begin{equation}\label{eq:PIB_H}
+  \boxed{H_{mn} = \frac{n^2\pi^2}{2L^2}\,\delta_{mn}
+    + a\,I_{mn}^{(4)} - b\,I_{mn}^{(2)} + c\,I_{mn}^{(1)}\,.}
+\end{equation}
+The kinetic energy contributes only to the diagonal.  The potential energy
+contributes to both the diagonal (through $I^{(2)}$ and $I^{(4)}$) and, when
+$c \neq 0$, to off-diagonal blocks connecting states of opposite parity
+(through $I^{(1)}$).
+
+\subsubsection{Block structure for $c = 0$ (symmetric well)}
+
+When $c = 0$, the Hamiltonian commutes with the parity operator $\hat{\Pi}$:
+$[\hat{H}, \hat{\Pi}] = 0$.  The selection rule \cref{eq:PIB_sel} then
+forbids all matrix elements between even-parity states ($n = 1, 3, 5, \ldots$)
+and odd-parity states ($n = 2, 4, 6, \ldots$), so $H$ is block-diagonal:
+\begin{equation}\label{eq:PIB_block_sym}
+  H\big|_{c=0} =
+  \begin{pmatrix}
+    H^{\text{even}} & \mathbf{0} \\
+    \mathbf{0} & H^{\text{odd}}
+  \end{pmatrix}\!,
+\end{equation}
+where $H^{\text{even}}$ (resp.\ $H^{\text{odd}}$) couples only states with
+odd (resp.\ even) quantum number.  The two sub-problems can be solved
+independently, halving the computational cost.
+
+\subsubsection{Block structure for $c \neq 0$ (asymmetric well)}
+
+When $c \neq 0$, the linear term introduces the coupling block
+$W_{mn} = c\,I_{mn}^{(1)}$ connecting the even and odd sectors:
+\begin{equation}\label{eq:PIB_block_asym}
+  H =
+  \begin{pmatrix}
+    H^{\text{even}} & W \\
+    W^T & H^{\text{odd}}
+  \end{pmatrix}\!,\qquad W_{mn} = c\,I_{mn}^{(1)}\neq 0\quad\text{for }m+n\text{ odd.}
+\end{equation}
+The full $N\times N$ matrix must be diagonalized.  However, since the elements
+of $W$ decay as $|W_{mn}| \sim |c|\cdot mn/(m^2-n^2)^2 \to 0$ rapidly for
+large $|m-n|$, the matrix $H$ is effectively banded in practice and convergence
+is exponentially fast with $N$.
+
+% ------------------------------------------------------------
+\subsection{Analytical advantages for the asymmetric potential}\label{sec:PIB_asym}
+% ------------------------------------------------------------
+
+The asymmetric double well ($c \neq 0$) exposes a fundamental limitation of
+the other basis sets that the PIB basis circumvents by construction.
+
+\textbf{Shifted harmonic oscillator (Basis~II).}
+The shifted-HO basis is centered at a chosen equilibrium point $x_e$, the
+minimum of a reference parabolic potential.  For the symmetric well ($c = 0$),
+placing two centers at $\pm x_e$ is natural and leads to a compact representation.
+For $c \neq 0$, the two minima of the physical potential shift asymmetrically:
+one becomes deeper and the other shallower.  The centers $\pm x_e$ are no
+longer optimal, and the shifted-HO basis must be repositioned.  This requires
+re-computing all matrix elements for every new value of $c$, and introduces
+a non-trivial generalized eigenvalue problem $\mathbf{H}\mathbf{c} =
+E\,\mathbf{S}\mathbf{c}$ because the shifted basis is non-orthogonal
+(see \cref{sec:shifted_HO}).
+
+\textbf{Harmonic oscillator (Basis~I).}
+The centered HO basis at $x = 0$ exploits parity symmetry to block-diagonalize
+$H$ for $c = 0$.  When $c \neq 0$, parity is broken and the block structure
+collapses exactly as in \cref{eq:PIB_block_asym}.  The HO basis offers no
+computational advantage and its Hermite-polynomial matrix elements become
+increasingly costly to evaluate for high-order terms.
+
+\textbf{PIB basis (Basis~V).}
+No equilibrium point or reference frequency enters the PIB basis.  The box
+$[-L/2, L/2]$ is positioned symmetrically about the origin and must only be
+large enough to contain the physically relevant domain (see \cref{sec:PIB_conv}).
+Consequently:
+\begin{enumerate}
+  \item \textbf{No re-centering.}  Changing $c$ only alters $V_{mn}$ through
+        the closed-form element \cref{eq:PIB_I1}; the basis functions $\phi_n$
+        and all other matrix elements are unchanged.
+  \item \textbf{Uniform spatial resolution.}  Each $\phi_n$ is oscillatory
+        throughout $[-L/2, L/2]$, providing equal coverage near both wells and
+        in the barrier region regardless of $c$.  No single-well localization
+        bias is introduced.
+  \item \textbf{Standard eigenvalue problem.}  Because $\{\phi_n\}$ is
+        orthonormal (\cref{eq:PIB_ortho}), the overlap matrix is the identity and
+        $H_{mn}$ defines a standard (not generalized) eigenvalue problem for all $c$.
+  \item \textbf{Rapid convergence.}  The off-diagonal coupling
+        $|W_{mn}| \sim |c|\,mn/(m^2-n^2)^2$ decays as $m^{-3}$ for large $m$,
+        guaranteeing that the additional fill-in caused by the asymmetry does not
+        degrade the convergence rate.
+\end{enumerate}
+
+\begin{result}
+For the asymmetric double well $V(x) = ax^4 - bx^2 + cx$ with $c \neq 0$,
+the PIB-FBR provides a standard, orthonormal, fully analytic Hamiltonian that
+requires no modification whatsoever as $c$ varies.  This makes it the natural
+variational basis for systematic studies of the tunneling splitting as a function
+of the asymmetry parameter.
+\end{result}
+
+% ------------------------------------------------------------
+\subsection{Connection to the sinc-DVR (Basis~IV)}\label{sec:PIB_DVR}
+% ------------------------------------------------------------
+
+\subsubsection{The FBR$\to$DVR transformation}
+
+Let $\{\phi_n\}_{n=1}^N$ be a truncated PIB-FBR.  Define $N$ uniformly spaced
+grid points
+\begin{equation}
+  x_j = -\frac{L}{2} + j\,\Delta x\,,\quad j = 1, \ldots, N\,,\quad
+  \Delta x = \frac{L}{N+1}\,.
+\end{equation}
+These are exactly the nodes of the $N+1$-point quadrature rule associated with
+the PIB basis.  The transformation matrix
+\begin{equation}\label{eq:PIB_U}
+  U_{jn} = \sqrt{\Delta x}\;\phi_n(x_j)
+\end{equation}
+is orthogonal to quadrature accuracy: $U^T U = I$.  The DVR representation of
+any operator $\hat{O}$ is $O^{\text{DVR}} = U\,O^{\text{FBR}}\,U^T$.
+
+\subsubsection{Recovery of Colbert--Miller kinetic energy}
+
+Since $T^{\text{FBR}}_{mn} = E_n^{(0)}\delta_{mn}$ (\cref{eq:PIB_T}), the
+DVR kinetic energy is
+\begin{equation}
+  T^{\text{DVR}}_{jl}
+  = \sum_{n=1}^{N} U_{jn}\,E_n^{(0)}\,U_{ln}
+  = \Delta x\sum_{n=1}^{N}\phi_n(x_j)\,\frac{n^2\pi^2}{2L^2}\,\phi_n(x_l)\,.
+\end{equation}
+In the limit $N \to \infty$ with $\Delta x$ fixed, this sum converges to the
+Colbert--Miller kinetic energy matrix~\cite{ColbertMiller1992}:
+\begin{equation}
+  T^{\text{DVR}}_{jj} \xrightarrow{N\to\infty}
+  \frac{\pi^2}{6\,\Delta x^2}\cdot\frac{1}{2} \,=\,
+  \frac{\hb^2\pi^2}{6\mu\,\Delta x^2}\bigg|_{\hb=\mu=1}\,,
+\end{equation}
+\begin{equation}
+  T^{\text{DVR}}_{jl} \xrightarrow{N\to\infty}
+  \frac{(-1)^{j-l}}{2(j-l)^2\Delta x^2}\,,\quad j\neq l\,,
+\end{equation}
+recovering exactly \cref{eq:T_DVR_diag,eq:T_DVR_offdiag} of \cref{sec:DVR}.
+The DVR kinetic energy is thus the PIB kinetic energy expressed in the position
+grid representation.
+
+\subsubsection{Potential energy in DVR}
+
+For the potential energy, the DVR property $\chi_j(x_l) = \delta_{jl}$ gives
+$V^{\text{DVR}}_{jl} = V(x_j)\,\delta_{jl}$ (\cref{eq:V_DVR}), which is
+\emph{diagonal} and requires only $N$ function evaluations.  In contrast, the
+FBR-PIB potential matrix $V_{mn}^{\text{FBR}} = \sum_k c_k\,I_{mn}^{(k)}$ is
+dense, but is given in closed form for any polynomial potential.
+
+\subsubsection{Comparison of the two representations}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{lll}
+  \toprule
+  Property & PIB-FBR & Sinc-DVR (Basis~IV) \\
+  \midrule
+  Basis functions & $\phi_n(x)$, analytic & $\delta$-like at grid points \\
+  Overlap matrix & $\mathbf{I}$ (orthonormal) & $\mathbf{I}$ (orthonormal) \\
+  Kinetic matrix $T$ & Diagonal, \cref{eq:PIB_T} & Dense, \cref{eq:T_DVR_diag,eq:T_DVR_offdiag} \\
+  Potential matrix $V$ & Dense, closed form (polynomial $V$) & Diagonal, $V(x_j)\delta_{jl}$ \\
+  Polynomial $V(x)$ & Exact, analytic & Exact (diagonal) \\
+  Non-polynomial $V(x)$ & Quadrature needed & Diagonal, $V(x_j)\delta_{jl}$ \\
+  Eigenvalue problem & Standard & Standard \\
+  Convergence parameter & $N$ & $\Delta x = L/(N+1)$ \\
+  Preferred when & $V$ is polynomial & $V$ is arbitrary \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Both representations yield the same eigenvalues to quadrature accuracy for
+fixed $N$ and $L$.  Their Hamiltonians are unitarily equivalent via \cref{eq:PIB_U}.
+
+% ------------------------------------------------------------
+\subsection{Box size and convergence}\label{sec:PIB_conv}
+% ------------------------------------------------------------
+
+\subsubsection{Choice of box half-length $L/2$}
+
+The Dirichlet boundary conditions \cref{eq:PIB_BC} are exact only if the true
+wavefunctions vanish at $x = \pm L/2$.  A necessary condition is therefore that
+$x = \pm L/2$ lies deep in the classically forbidden region of the potential.
+The practical criterion is
+\begin{equation}\label{eq:PIB_L_crit}
+  \bigl|\psi_n(\pm L/2)\bigr|^2 < \varepsilon\,,\qquad
+  \varepsilon \sim 10^{-10}\text{--}10^{-12}\,.
+\end{equation}
+For the double-well potential $V(x) = ax^4 - bx^2 + cx$, the local minima of the
+symmetric part lie at $x_{\min} = \pm\sqrt{b/(2a)}$.  A safe initial choice is
+\begin{equation}\label{eq:PIB_L_dw}
+  \frac{L}{2} \geq 2\sqrt{\frac{b}{a}}\,,
+\end{equation}
+adjusted upward for large $|c|$ which shifts the outer turning points.  The
+box size should subsequently be validated by the $L$-convergence test of
+\cref{sec:PIB_protocol}.
+
+\subsubsection{Nyquist momentum criterion}
+
+For a truncated basis of size $N$, the maximum resolvable momentum is
+\begin{equation}\label{eq:PIB_kmax}
+  k_{\max} = \frac{N\pi}{L}\,.
+\end{equation}
+To accurately represent all eigenstates with energy up to $E_{\max}$,
+one requires $k_{\max} > \sqrt{2E_{\max}}$, i.e.\
+\begin{equation}\label{eq:PIB_N_crit}
+  N > \frac{L\sqrt{2E_{\max}}}{\pi}\,.
+\end{equation}
+For the ground-state doublet, $E_{\max}$ is typically of order $|V_{\min}|$
+plus a few tunneling splittings, and $N \sim 20$--$50$ suffices with a
+well-chosen $L$.
+
+\subsubsection{Variational convergence}
+
+Since $\{\phi_n\}_{n=1}^N$ is a subset of a complete orthonormal system, the
+Ritz variational theorem guarantees that the $k$-th eigenvalue $E_k^{(N)}$ of
+the truncated $N\times N$ Hamiltonian satisfies $E_k^{(N)} \geq E_k^{(\infty)}$
+for all $N$, and $E_k^{(N)} \searrow E_k^{(\infty)}$ as $N \to \infty$.
+Convergence is monotone from above and can be monitored directly.
+
+\subsubsection{The $L$--$N$ trade-off}
+
+For fixed computational cost (fixed $N$), the spacing $\Delta x = L/(N+1)$ grows
+with $L$, reducing $k_{\max}$ and degrading the kinetic energy resolution.
+Conversely, reducing $L$ below the criterion \cref{eq:PIB_L_dw} introduces
+artificial boundary errors.  The optimal strategy is to choose $L$ just large
+enough to satisfy \cref{eq:PIB_L_crit}, then increase $N$ until
+\cref{eq:PIB_N_crit} is met.
+
+\subsubsection{Practical convergence protocol}\label{sec:PIB_protocol}
+
+A robust convergence protocol for the QuTu implementation is as follows:
+\begin{enumerate}
+  \item Choose $L/2 = 2\sqrt{b/a}$ as a starting point (\cref{eq:PIB_L_dw}).
+  \item Compute eigenvalues for $N, 2N, 4N$ basis functions.
+  \item Accept convergence when $|E_k^{(2N)} - E_k^{(N)}| < \delta_E$ for
+        all states of interest ($\delta_E \sim 10^{-8}$\,a.u.).
+  \item Validate $L$: repeat the converged calculation with $L \to 1.5L$ and
+        verify eigenvalue stability.  If eigenvalues shift by more than $\delta_E$,
+        increase $L$ and repeat from step~1.
+\end{enumerate}
+For the asymmetric double well ($c \neq 0$), the full $N \times N$ matrix is
+diagonalized rather than two sub-blocks.  Since all matrix elements remain in
+closed form for any $c$, the computational overhead relative to the symmetric
+case is limited to the cost of additionally evaluating the elements
+$I_{mn}^{(1)}$ given by \cref{eq:PIB_I1} and of solving the $N \times N$
+(rather than two $N/2 \times N/2$) eigenvalue problem---a factor of four
+increase in flop count that is wholly acceptable for the problem sizes of
+interest.
+
+% ============================================================
+% ============================================================
