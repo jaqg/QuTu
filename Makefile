@@ -51,7 +51,7 @@ MOD_OBJS = $(BUILD_DIR)/constants.o \
 MAIN_OBJ = $(BUILD_DIR)/qutu.o
 
 # Executables
-EXEC = QuTu
+EXEC = qutu
 EXEC_PATH = $(BUILD_DIR)/$(EXEC)
 
 # =============================================================================
