@@ -22,4 +22,4 @@ jobs:
         run: |
           cp examples/01_basic_NH3/INPUT INPUT
           ./build/QuTu
-          ls data/out-*.dat
+          ls OUTPUT
